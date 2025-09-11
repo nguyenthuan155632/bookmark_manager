@@ -126,7 +126,7 @@ function BookmarksContent() {
           {/* Desktop Layout */}
           <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4 min-w-0">
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-2xl">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder="Search bookmarks, tags, or descriptions..."
