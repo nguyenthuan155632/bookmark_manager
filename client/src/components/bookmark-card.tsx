@@ -87,7 +87,7 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
     }
   };
 
-  const timeAgo = formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
+  const timeAgo = isProtected ? "—" : formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
 
   return (
     <Card 
@@ -106,7 +106,7 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
                 <Lock size={14} className="text-muted-foreground flex-shrink-0" data-testid={`lock-icon-${bookmark.id}`} />
               )}
               <h3 className="font-medium text-foreground line-clamp-2" data-testid={`bookmark-title-${bookmark.id}`}>
-                {bookmark.name}
+                {isProtected ? "••• Protected Bookmark •••" : bookmark.name}
               </h3>
             </div>
             {isProtected ? (
@@ -130,12 +130,12 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
               variant="ghost"
               className="h-8 w-8 p-0 text-muted-foreground hover:text-accent"
               onClick={() => toggleFavoriteMutation.mutate()}
-              disabled={toggleFavoriteMutation.isPending}
+              disabled={toggleFavoriteMutation.isPending || isProtected}
               data-testid={`button-favorite-${bookmark.id}`}
             >
               <Star
                 size={16}
-                className={bookmark.isFavorite ? "fill-current text-accent" : ""}
+                className={isProtected ? "" : (bookmark.isFavorite ? "fill-current text-accent" : "")}
               />
             </Button>
             <Button
