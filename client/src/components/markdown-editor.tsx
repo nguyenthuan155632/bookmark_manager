@@ -120,15 +120,15 @@ export function MarkdownEditor({
             onChange={handleTextareaChange}
             placeholder={placeholder}
             disabled={disabled}
-            rows={4}
-            className="resize-y min-h-[100px] font-mono text-sm"
+            rows={10}
+            className="resize-y min-h-[240px] font-mono text-sm"
             data-testid={testId}
           />
         </TabsContent>
         
         <TabsContent value="preview" className="mt-3">
           <div 
-            className="min-h-[100px] p-3 border rounded-md bg-background"
+            className="min-h-[240px] p-3 border rounded-md bg-background"
             data-testid="markdown-preview"
           >
             {value.trim() ? (
