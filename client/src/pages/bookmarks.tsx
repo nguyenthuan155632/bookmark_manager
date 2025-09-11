@@ -26,6 +26,7 @@ function BookmarksContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [tagInputValue, setTagInputValue] = useState("");
   const [sortBy, setSortBy] = useState<"createdAt" | "name" | "isFavorite">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -164,10 +165,26 @@ function BookmarksContent() {
     setSelectedTags(prev => prev.filter(tag => tag !== tagToRemove));
   };
 
+  const handleAddTag = () => {
+    const trimmedTag = tagInputValue.trim();
+    if (trimmedTag && !selectedTags.includes(trimmedTag)) {
+      setSelectedTags(prev => [...prev, trimmedTag]);
+      setTagInputValue("");
+    }
+  };
+
+  const handleTagKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("");
     setSelectedTags([]);
+    setTagInputValue("");
   };
 
   const hasActiveFilters = searchQuery || selectedCategory || selectedTags.length > 0;
@@ -289,6 +306,31 @@ function BookmarksContent() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
                 <span className="text-sm text-muted-foreground">Filters:</span>
+                
+                {/* Tag Input */}
+                <div className="relative">
+                  <Input
+                    placeholder="Add tag filter"
+                    className="w-32 h-8 text-xs"
+                    value={tagInputValue}
+                    onChange={(e) => setTagInputValue(e.target.value)}
+                    onKeyPress={handleTagKeyPress}
+                    data-testid="input-tag-filter"
+                  />
+                  {tagInputValue && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="absolute right-0 top-0 h-8 w-8 p-0"
+                      onClick={handleAddTag}
+                      data-testid="button-add-tag-filter"
+                    >
+                      <Plus size={12} />
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Active Tags */}
                 {selectedTags.map((tag) => (
                   <Badge
                     key={tag}
@@ -343,9 +385,33 @@ function BookmarksContent() {
 
           {/* Mobile Layout - Two Lines */}
           <div className="sm:hidden space-y-2">
-            {/* Line 1: Filters Label + Active Filter Tags */}
+            {/* Line 1: Filters Label + Tag Input + Active Filter Tags */}
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-sm text-muted-foreground shrink-0">Filters:</span>
+              
+              {/* Tag Input for Mobile */}
+              <div className="relative">
+                <Input
+                  placeholder="Add tag filter"
+                  className="w-28 h-8 text-xs"
+                  value={tagInputValue}
+                  onChange={(e) => setTagInputValue(e.target.value)}
+                  onKeyPress={handleTagKeyPress}
+                  data-testid="input-tag-filter"
+                />
+                {tagInputValue && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="absolute right-0 top-0 h-8 w-8 p-0"
+                    onClick={handleAddTag}
+                    data-testid="button-add-tag-filter"
+                  >
+                    <Plus size={12} />
+                  </Button>
+                )}
+              </div>
+              
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedTags.map((tag) => (
                   <Badge
