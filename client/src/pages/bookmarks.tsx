@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Menu, Search, Grid, List, Plus, Moon, Sun, Filter, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation, useRoute } from "wouter";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useTheme } from "@/lib/theme";
 import { Sidebar } from "@/components/sidebar";
@@ -24,6 +25,18 @@ function BookmarksContent() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { theme, setTheme } = useTheme();
+  
+  const [location] = useLocation();
+  const [match, params] = useRoute("/category/:id");
+
+  // Extract category ID from URL and handle special routes
+  useEffect(() => {
+    if (match && params?.id) {
+      setSelectedCategory(params.id);
+    } else {
+      setSelectedCategory("");
+    }
+  }, [match, params, location]);
 
   // Fetch stats
   const { data: stats } = useQuery<{
@@ -40,6 +53,7 @@ function BookmarksContent() {
   if (searchQuery) bookmarkQueryParams.set('search', searchQuery);
   if (selectedCategory) bookmarkQueryParams.set('categoryId', selectedCategory);
   if (selectedTags.length > 0) bookmarkQueryParams.set('tags', selectedTags.join(','));
+  if (location === "/favorites") bookmarkQueryParams.set('isFavorite', 'true');
   bookmarkQueryParams.set('sortBy', sortBy);
   bookmarkQueryParams.set('sortOrder', sortOrder);
   
