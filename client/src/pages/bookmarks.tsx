@@ -1,5 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
-import { Menu, Search, Grid, List, Plus, Moon, Sun, Filter, X } from "lucide-react";
+import {
+  Menu,
+  Search,
+  Grid,
+  List,
+  Plus,
+  Moon,
+  Sun,
+  Filter,
+  X,
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -11,7 +21,13 @@ import { AddCategoryModal } from "@/components/add-category-modal";
 import { PasscodeModal } from "@/components/passcode-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,35 +42,47 @@ function BookmarksContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<"createdAt" | "name" | "isFavorite">("createdAt");
+  const [sortBy, setSortBy] = useState<"createdAt" | "name" | "isFavorite">(
+    "createdAt",
+  );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  
+
   // Passcode modal state
   const [isPasscodeModalOpen, setIsPasscodeModalOpen] = useState(false);
-  const [selectedProtectedBookmark, setSelectedProtectedBookmark] = useState<(Bookmark & { category?: Category; hasPasscode?: boolean }) | null>(null);
-  
+  const [selectedProtectedBookmark, setSelectedProtectedBookmark] = useState<
+    (Bookmark & { category?: Category; hasPasscode?: boolean }) | null
+  >(null);
+
   // Track unlocked bookmarks in session (bookmark IDs that have been unlocked)
-  const [unlockedBookmarks, setUnlockedBookmarks] = useState<Set<number>>(new Set());
+  const [unlockedBookmarks, setUnlockedBookmarks] = useState<Set<number>>(
+    new Set(),
+  );
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
 
   // Fetch preferences from database
-  const { data: preferences } = useQuery<{ theme?: "light" | "dark"; viewMode?: "grid" | "list" }>({
+  const { data: preferences } = useQuery<{
+    theme?: "light" | "dark";
+    viewMode?: "grid" | "list";
+  }>({
     queryKey: ["/api/preferences"],
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Update preferences mutation
   const updatePreferencesMutation = useMutation({
-    mutationFn: async (data: { theme?: "light" | "dark"; viewMode?: "grid" | "list" }) => {
+    mutationFn: async (data: {
+      theme?: "light" | "dark";
+      viewMode?: "grid" | "list";
+    }) => {
       return await apiRequest("PATCH", "/api/preferences", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
-    }
+    },
   });
-  
+
   const [location] = useLocation();
   const [match, params] = useRoute("/category/:id");
 
@@ -92,45 +120,54 @@ function BookmarksContent() {
 
   // Fetch bookmarks with filters
   const bookmarkQueryParams = new URLSearchParams();
-  if (searchQuery) bookmarkQueryParams.set('search', searchQuery);
-  if (selectedCategory) bookmarkQueryParams.set('categoryId', selectedCategory);
-  if (selectedTags.length > 0) bookmarkQueryParams.set('tags', selectedTags.join(','));
-  if (location === "/favorites") bookmarkQueryParams.set('isFavorite', 'true');
-  bookmarkQueryParams.set('sortBy', sortBy);
-  bookmarkQueryParams.set('sortOrder', sortOrder);
-  
-  const { data: bookmarks = [], isLoading } = useQuery<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>({
+  if (searchQuery) bookmarkQueryParams.set("search", searchQuery);
+  if (selectedCategory) bookmarkQueryParams.set("categoryId", selectedCategory);
+  if (selectedTags.length > 0)
+    bookmarkQueryParams.set("tags", selectedTags.join(","));
+  if (location === "/favorites") bookmarkQueryParams.set("isFavorite", "true");
+  bookmarkQueryParams.set("sortBy", sortBy);
+  bookmarkQueryParams.set("sortOrder", sortOrder);
+
+  const { data: bookmarks = [], isLoading } = useQuery<
+    (Bookmark & { category?: Category; hasPasscode?: boolean })[]
+  >({
     queryKey: [`/api/bookmarks?${bookmarkQueryParams.toString()}`],
   });
 
   const filteredBookmarks = useMemo(() => {
-    return bookmarks.filter(bookmark => {
+    return bookmarks.filter((bookmark) => {
       if (selectedTags.length > 0) {
-        return selectedTags.some(tag => 
-          bookmark.tags?.some(bookmarkTag => 
-            bookmarkTag.toLowerCase().includes(tag.toLowerCase())
-          )
+        return selectedTags.some((tag) =>
+          bookmark.tags?.some((bookmarkTag) =>
+            bookmarkTag.toLowerCase().includes(tag.toLowerCase()),
+          ),
         );
       }
       return true;
     });
   }, [bookmarks, selectedTags]);
 
-  const handleEdit = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
+  const handleEdit = (
+    bookmark: Bookmark & { category?: Category; hasPasscode?: boolean },
+  ) => {
     setEditingBookmark(bookmark);
     setIsAddModalOpen(true);
   };
 
   // Handle protected bookmark unlock
-  const handleUnlockBookmark = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
+  const handleUnlockBookmark = (
+    bookmark: Bookmark & { category?: Category; hasPasscode?: boolean },
+  ) => {
     setSelectedProtectedBookmark(bookmark);
     setIsPasscodeModalOpen(true);
   };
 
   // Handle protected bookmark lock
-  const handleLockBookmark = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
+  const handleLockBookmark = (
+    bookmark: Bookmark & { category?: Category; hasPasscode?: boolean },
+  ) => {
     // Remove bookmark ID from unlocked set to lock it again
-    setUnlockedBookmarks(prev => {
+    setUnlockedBookmarks((prev) => {
       const newSet = new Set(prev);
       newSet.delete(bookmark.id);
       return newSet;
@@ -141,8 +178,11 @@ function BookmarksContent() {
   const handlePasscodeSuccess = () => {
     if (selectedProtectedBookmark) {
       // Add bookmark ID to unlocked set
-      setUnlockedBookmarks(prev => new Set(Array.from(prev).concat(selectedProtectedBookmark.id)));
-      
+      setUnlockedBookmarks(
+        (prev) =>
+          new Set(Array.from(prev).concat(selectedProtectedBookmark.id)),
+      );
+
       // Close modal and clear selected bookmark
       setIsPasscodeModalOpen(false);
       setSelectedProtectedBookmark(null);
@@ -161,7 +201,7 @@ function BookmarksContent() {
   };
 
   const removeTag = (tagToRemove: string) => {
-    setSelectedTags(prev => prev.filter(tag => tag !== tagToRemove));
+    setSelectedTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
   const clearFilters = () => {
@@ -170,7 +210,8 @@ function BookmarksContent() {
     setSelectedTags([]);
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory || selectedTags.length > 0;
+  const hasActiveFilters =
+    searchQuery || selectedCategory || selectedTags.length > 0;
 
   if (!stats) {
     return (
@@ -178,7 +219,9 @@ function BookmarksContent() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
           <h2 className="text-lg font-medium text-foreground mb-2">Memorize</h2>
-          <p className="text-sm text-muted-foreground">Loading your bookmarks...</p>
+          <p className="text-sm text-muted-foreground">
+            Loading your bookmarks...
+          </p>
         </div>
       </div>
     );
@@ -195,12 +238,18 @@ function BookmarksContent() {
 
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4" data-testid="header">
+        <header
+          className="bg-card border-b border-border px-6 py-4"
+          data-testid="header"
+        >
           {/* Desktop Layout */}
           <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4 min-w-0">
               <div className="relative flex-1 max-w-4xl">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                  size={16}
+                />
                 <Input
                   placeholder="Search anything"
                   className="pl-10 w-full"
@@ -232,7 +281,6 @@ function BookmarksContent() {
                   <List size={16} />
                 </Button>
               </div>
-
 
               <Button
                 variant="ghost"
@@ -270,7 +318,10 @@ function BookmarksContent() {
 
             {/* Bottom Section: Search Bar */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                size={16}
+              />
               <Input
                 placeholder="Search anything"
                 className="pl-10 w-full"
@@ -283,17 +334,20 @@ function BookmarksContent() {
         </header>
 
         {/* Filter Bar */}
-        <div className="bg-card border-b border-border px-6 py-3" data-testid="filter-bar">
+        <div
+          className="bg-card border-b border-border px-6 py-3"
+          data-testid="filter-bar"
+        >
           {/* Desktop Layout - Single Line */}
           <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground">Filters:</span>
                 {selectedTags.map((tag) => (
                   <Badge
                     key={tag}
                     className="bg-primary text-primary-foreground flex items-center space-x-1"
-                    data-testid={`active-filter-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                    data-testid={`active-filter-${tag.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     <span>{tag}</span>
                     <button
@@ -319,23 +373,35 @@ function BookmarksContent() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
-                const [newSortBy, newSortOrder] = value.split('-') as [typeof sortBy, typeof sortOrder];
-                setSortBy(newSortBy);
-                setSortOrder(newSortOrder);
-              }}>
+              <Select
+                value={`${sortBy}-${sortOrder}`}
+                onValueChange={(value) => {
+                  const [newSortBy, newSortOrder] = value.split("-") as [
+                    typeof sortBy,
+                    typeof sortOrder,
+                  ];
+                  setSortBy(newSortBy);
+                  setSortOrder(newSortOrder);
+                }}
+              >
                 <SelectTrigger className="w-56" data-testid="select-sort">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="createdAt-desc">Sort by Date Added</SelectItem>
+                  <SelectItem value="createdAt-desc">
+                    Sort by Date Added
+                  </SelectItem>
                   <SelectItem value="name-asc">Sort by Name</SelectItem>
-                  <SelectItem value="isFavorite-desc">Sort by Favorites</SelectItem>
+                  <SelectItem value="isFavorite-desc">
+                    Sort by Favorites
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <span data-testid="bookmark-count">{filteredBookmarks.length}</span>
+                <span data-testid="bookmark-count">
+                  {filteredBookmarks.length}
+                </span>
                 <span>bookmarks</span>
               </div>
             </div>
@@ -345,13 +411,15 @@ function BookmarksContent() {
           <div className="sm:hidden space-y-2">
             {/* Line 1: Filters Label + Active Filter Tags */}
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm text-muted-foreground shrink-0">Filters:</span>
+              <span className="text-sm text-muted-foreground shrink-0">
+                Filters:
+              </span>
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedTags.map((tag) => (
                   <Badge
                     key={tag}
                     className="bg-primary text-primary-foreground flex items-center space-x-1"
-                    data-testid={`active-filter-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                    data-testid={`active-filter-${tag.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     <span>{tag}</span>
                     <button
@@ -379,22 +447,34 @@ function BookmarksContent() {
             {/* Line 2: Sort Select + Bookmark Count */}
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <span data-testid="bookmark-count">{filteredBookmarks.length}</span>
+                <span data-testid="bookmark-count">
+                  {filteredBookmarks.length}
+                </span>
                 <span>bookmarks</span>
               </div>
-              
-              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
-                const [newSortBy, newSortOrder] = value.split('-') as [typeof sortBy, typeof sortOrder];
-                setSortBy(newSortBy);
-                setSortOrder(newSortOrder);
-              }}>
+
+              <Select
+                value={`${sortBy}-${sortOrder}`}
+                onValueChange={(value) => {
+                  const [newSortBy, newSortOrder] = value.split("-") as [
+                    typeof sortBy,
+                    typeof sortOrder,
+                  ];
+                  setSortBy(newSortBy);
+                  setSortOrder(newSortOrder);
+                }}
+              >
                 <SelectTrigger className="w-48" data-testid="select-sort">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="createdAt-desc">Sort by Date Added</SelectItem>
+                  <SelectItem value="createdAt-desc">
+                    Sort by Date Added
+                  </SelectItem>
                   <SelectItem value="name-asc">Sort by Name</SelectItem>
-                  <SelectItem value="isFavorite-desc">Sort by Favorites</SelectItem>
+                  <SelectItem value="isFavorite-desc">
+                    Sort by Favorites
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -420,7 +500,7 @@ function BookmarksContent() {
                         <Skeleton className="h-8 w-8 rounded" />
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2 mb-3">
                       <Skeleton className="h-3 w-3 rounded-full" />
                       <Skeleton className="h-3 w-24" />
@@ -440,14 +520,17 @@ function BookmarksContent() {
               ))}
             </div>
           ) : filteredBookmarks.length > 0 ? (
-            <div className={viewMode === "grid" 
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-              : "space-y-4"
-            }>
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                  : "space-y-4"
+              }
+            >
               {filteredBookmarks.map((bookmark) => {
                 const isUnlocked = unlockedBookmarks.has(bookmark.id);
                 const isProtected = bookmark.hasPasscode && !isUnlocked;
-                
+
                 return (
                   <BookmarkCard
                     key={bookmark.id}
@@ -469,10 +552,9 @@ function BookmarksContent() {
                 No bookmarks found
               </h3>
               <p className="text-muted-foreground mb-6">
-                {hasActiveFilters 
+                {hasActiveFilters
                   ? "Try adjusting your search criteria or clearing filters."
-                  : "Get started by adding your first bookmark."
-                }
+                  : "Get started by adding your first bookmark."}
               </p>
               <Button onClick={() => setIsAddModalOpen(true)}>
                 Add Your First Bookmark
@@ -501,7 +583,7 @@ function BookmarksContent() {
         isOpen={isAddCategoryModalOpen}
         onClose={() => setIsAddCategoryModalOpen(false)}
       />
-      
+
       <PasscodeModal
         isOpen={isPasscodeModalOpen}
         onClose={handlePasscodeModalClose}
