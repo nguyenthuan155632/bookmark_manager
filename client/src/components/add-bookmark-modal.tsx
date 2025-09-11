@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 // Create a permissive validation schema - detailed validation is handled in onSubmit
 const createFormSchema = () => {
@@ -278,16 +279,14 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Optional description of the bookmark"
-              rows={3}
-              {...form.register("description")}
-              data-testid="input-description"
-            />
-          </div>
+          <MarkdownEditor
+            id="description"
+            value={form.watch("description") || ""}
+            onChange={(value) => form.setValue("description", value)}
+            placeholder="Optional description with markdown support..."
+            error={form.formState.errors.description?.message}
+            data-testid="input-description"
+          />
 
           <div className="space-y-2">
             <Label className="text-sm font-medium">Folder</Label>

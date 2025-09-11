@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Star, Globe, Edit, Trash2, ExternalLink, Lock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,9 +120,31 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock, 
               </p>
             ) : (
               bookmark.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
-                  {bookmark.description}
-                </p>
+                <div className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => <span className="inline">{children}</span>,
+                      h1: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h2: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h3: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h4: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h5: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h6: ({ children }) => <span className="font-semibold">{children}</span>,
+                      strong: ({ children }) => <span className="font-bold">{children}</span>,
+                      em: ({ children }) => <span className="italic">{children}</span>,
+                      code: ({ children }) => <span className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</span>,
+                      a: ({ children, href }) => <span className="text-primary underline">{children}</span>,
+                      ul: ({ children }) => <span className="inline">{children}</span>,
+                      ol: ({ children }) => <span className="inline">{children}</span>,
+                      li: ({ children }) => <span className="inline">{children} • </span>,
+                      pre: () => null, // Hide code blocks in card preview
+                      blockquote: ({ children }) => <span className="italic border-l-2 border-primary/30 pl-2">{children}</span>
+                    }}
+                  >
+                    {bookmark.description}
+                  </ReactMarkdown>
+                </div>
               )
             )}
           </div>
