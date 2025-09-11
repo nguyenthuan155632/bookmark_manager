@@ -11,7 +11,6 @@ function Router() {
     <Switch>
       <Route path="/" component={Bookmarks} />
       <Route path="/favorites" component={Bookmarks} />
-      <Route path="/tags" component={Bookmarks} />
       <Route path="/category/:id" component={Bookmarks} />
       <Route component={NotFound} />
     </Switch>
