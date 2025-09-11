@@ -143,6 +143,7 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
               variant="ghost"
               className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
               onClick={() => onEdit?.(bookmark)}
+              disabled={isProtected}
               data-testid={`button-edit-${bookmark.id}`}
             >
               <Edit size={16} />
