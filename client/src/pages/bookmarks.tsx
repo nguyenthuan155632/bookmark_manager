@@ -135,11 +135,11 @@ function BookmarksContent() {
                 <Menu size={20} />
               </Button>
               
-              <div className="relative">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
                   placeholder="Search bookmarks, tags, or descriptions..."
-                  className="pl-10 w-80"
+                  className="pl-10 w-full"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   data-testid="input-search"
