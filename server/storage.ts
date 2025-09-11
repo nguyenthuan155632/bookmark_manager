@@ -82,6 +82,9 @@ export class DatabaseStorage implements IStorage {
         or(
           ilike(bookmarks.name, `%${params.search}%`),
           ilike(bookmarks.description, `%${params.search}%`),
+          ilike(bookmarks.url, `%${params.search}%`),
+          // Search within tags array - convert array to string and search
+          sql`array_to_string(${bookmarks.tags}, ' ') ILIKE ${`%${params.search}%`}`,
         )
       );
     }
