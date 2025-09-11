@@ -26,8 +26,9 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"], type: "all" });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"], type: "all" });
+      queryClient.invalidateQueries();
+      queryClient.refetchQueries();
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
         description: bookmark.isFavorite 
           ? "Removed from favorites" 
@@ -47,8 +48,9 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
       return await apiRequest("DELETE", `/api/bookmarks/${bookmark.id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"], type: "all" });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"], type: "all" });
+      queryClient.invalidateQueries();
+      queryClient.refetchQueries();
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
         description: "Bookmark deleted",
       });
