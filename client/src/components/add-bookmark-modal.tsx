@@ -169,16 +169,16 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
           <div className="space-y-2">
             <Label className="text-sm font-medium">Folder</Label>
             <Select
-              value={form.watch("categoryId")?.toString() || ""}
+              value={form.watch("categoryId")?.toString() || "none"}
               onValueChange={(value) => {
-                form.setValue("categoryId", value ? parseInt(value) : undefined);
+                form.setValue("categoryId", value === "none" ? undefined : parseInt(value));
               }}
             >
               <SelectTrigger data-testid="select-folder">
                 <SelectValue placeholder="No folder" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No folder</SelectItem>
+                <SelectItem value="none">No folder</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}

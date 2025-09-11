@@ -36,14 +36,15 @@ function BookmarksContent() {
   });
 
   // Fetch bookmarks with filters
+  const bookmarkQueryParams = new URLSearchParams();
+  if (searchQuery) bookmarkQueryParams.set('search', searchQuery);
+  if (selectedCategory) bookmarkQueryParams.set('categoryId', selectedCategory);
+  if (selectedTags.length > 0) bookmarkQueryParams.set('tags', selectedTags.join(','));
+  bookmarkQueryParams.set('sortBy', sortBy);
+  bookmarkQueryParams.set('sortOrder', sortOrder);
+  
   const { data: bookmarks = [], isLoading } = useQuery<(Bookmark & { category?: Category })[]>({
-    queryKey: ["/api/bookmarks", { 
-      search: searchQuery, 
-      categoryId: selectedCategory ? parseInt(selectedCategory) : undefined,
-      tags: selectedTags.length > 0 ? selectedTags : undefined,
-      sortBy,
-      sortOrder
-    }],
+    queryKey: [`/api/bookmarks?${bookmarkQueryParams.toString()}`],
   });
 
   const filteredBookmarks = useMemo(() => {
