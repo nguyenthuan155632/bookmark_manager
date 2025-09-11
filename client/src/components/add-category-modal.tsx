@@ -34,7 +34,7 @@ export function AddCategoryModal({ isOpen, onClose }: AddCategoryModalProps) {
       return await apiRequest("POST", "/api/categories", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/categories?withCounts=true"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
         description: "Folder created successfully!",
