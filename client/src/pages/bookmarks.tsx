@@ -284,9 +284,10 @@ function BookmarksContent() {
 
         {/* Filter Bar */}
         <div className="bg-card border-b border-border px-6 py-3" data-testid="filter-bar">
-          <div className="flex items-center justify-between">
+          {/* Desktop Layout - Single Line */}
+          <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <span className="text-sm text-muted-foreground">Filters:</span>
                 {selectedTags.map((tag) => (
                   <Badge
@@ -337,6 +338,65 @@ function BookmarksContent() {
                 <span data-testid="bookmark-count">{filteredBookmarks.length}</span>
                 <span>bookmarks</span>
               </div>
+            </div>
+          </div>
+
+          {/* Mobile Layout - Two Lines */}
+          <div className="sm:hidden space-y-3">
+            {/* Line 1: Filters Label + Active Filter Tags */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm text-muted-foreground shrink-0">Filters:</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedTags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    className="bg-primary text-primary-foreground flex items-center space-x-1"
+                    data-testid={`active-filter-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <span>{tag}</span>
+                    <button
+                      onClick={() => removeTag(tag)}
+                      className="text-primary-foreground/80 hover:text-primary-foreground"
+                    >
+                      <X size={12} />
+                    </button>
+                  </Badge>
+                ))}
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="text-xs"
+                    data-testid="button-clear-filters"
+                  >
+                    Clear all
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Line 2: Sort Select + Bookmark Count */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <span data-testid="bookmark-count">{filteredBookmarks.length}</span>
+                <span>bookmarks</span>
+              </div>
+              
+              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
+                const [newSortBy, newSortOrder] = value.split('-') as [typeof sortBy, typeof sortOrder];
+                setSortBy(newSortBy);
+                setSortOrder(newSortOrder);
+              }}>
+                <SelectTrigger className="w-40" data-testid="select-sort">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="createdAt-desc">Sort by Date Added</SelectItem>
+                  <SelectItem value="name-asc">Sort by Name</SelectItem>
+                  <SelectItem value="isFavorite-desc">Sort by Favorites</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
