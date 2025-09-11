@@ -153,7 +153,7 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
               variant="ghost"
               className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
               onClick={handleDelete}
-              disabled={deleteBookmarkMutation.isPending}
+              disabled={deleteBookmarkMutation.isPending || isProtected}
               data-testid={`button-delete-${bookmark.id}`}
             >
               <Trash2 size={16} />
