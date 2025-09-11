@@ -1,4 +1,4 @@
-import { bookmarks, categories, users, type Bookmark, type InsertBookmark, type Category, type InsertCategory, type User, type InsertUser } from "@shared/schema";
+import { bookmarks, categories, users, userPreferences, type Bookmark, type InsertBookmark, type Category, type InsertCategory, type User, type InsertUser, type UserPreferences, type InsertUserPreferences } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, or, desc, asc, and, isNull, sql } from "drizzle-orm";
 
@@ -37,6 +37,10 @@ export interface IStorage {
     categories: number;
     tags: string[];
   }>;
+  
+  // User Preferences methods
+  getUserPreferences(): Promise<UserPreferences | undefined>;
+  updateUserPreferences(preferences: Partial<InsertUserPreferences>): Promise<UserPreferences>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -272,6 +276,40 @@ export class DatabaseStorage implements IStorage {
       categories: categoriesResult.count,
       tags: Array.from(allTags),
     };
+  }
+
+  // User Preferences methods
+  async getUserPreferences(): Promise<UserPreferences | undefined> {
+    const [preferences] = await db.select().from(userPreferences).limit(1);
+    return preferences || undefined;
+  }
+
+  async updateUserPreferences(preferences: Partial<InsertUserPreferences>): Promise<UserPreferences> {
+    // Check if preferences record exists
+    const existingPreferences = await this.getUserPreferences();
+    
+    if (existingPreferences) {
+      // Update existing record
+      const [updatedPreferences] = await db
+        .update(userPreferences)
+        .set({
+          ...preferences,
+          updatedAt: new Date(),
+        })
+        .where(eq(userPreferences.id, existingPreferences.id))
+        .returning();
+      return updatedPreferences;
+    } else {
+      // Create new record with defaults
+      const [newPreferences] = await db
+        .insert(userPreferences)
+        .values({
+          theme: preferences.theme || "light",
+          viewMode: preferences.viewMode || "grid",
+        })
+        .returning();
+      return newPreferences;
+    }
   }
 }
 

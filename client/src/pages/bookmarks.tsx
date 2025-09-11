@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Menu, Search, Grid, List, Plus, Moon, Sun, Filter, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useTheme } from "@/lib/theme";
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Bookmark, Category } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 function BookmarksContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -28,9 +29,33 @@ function BookmarksContent() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
+
+  // Fetch preferences from database
+  const { data: preferences } = useQuery<{ theme?: "light" | "dark"; viewMode?: "grid" | "list" }>({
+    queryKey: ["/api/preferences"],
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  // Update preferences mutation
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (data: { theme?: "light" | "dark"; viewMode?: "grid" | "list" }) => {
+      return await apiRequest("PATCH", "/api/preferences", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+    }
+  });
   
   const [location] = useLocation();
   const [match, params] = useRoute("/category/:id");
+
+  // Initialize view mode from database preferences
+  useEffect(() => {
+    if (preferences?.viewMode) {
+      setViewMode(preferences.viewMode);
+    }
+  }, [preferences]);
 
   // Extract category ID from URL and handle special routes
   useEffect(() => {
@@ -40,6 +65,12 @@ function BookmarksContent() {
       setSelectedCategory("");
     }
   }, [match, params, location]);
+
+  // Handle view mode change with database persistence
+  const handleSetViewMode = (newViewMode: "grid" | "list") => {
+    setViewMode(newViewMode);
+    updatePreferencesMutation.mutate({ viewMode: newViewMode });
+  };
 
   // Fetch stats
   const { data: stats } = useQuery<{
@@ -144,7 +175,7 @@ function BookmarksContent() {
                   size="sm"
                   variant={viewMode === "grid" ? "default" : "ghost"}
                   className="p-2"
-                  onClick={() => setViewMode("grid")}
+                  onClick={() => handleSetViewMode("grid")}
                   data-testid="button-grid-view"
                 >
                   <Grid size={16} />
@@ -153,7 +184,7 @@ function BookmarksContent() {
                   size="sm"
                   variant={viewMode === "list" ? "default" : "ghost"}
                   className="p-2"
-                  onClick={() => setViewMode("list")}
+                  onClick={() => handleSetViewMode("list")}
                   data-testid="button-list-view"
                 >
                   <List size={16} />

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertBookmarkSchema, insertCategorySchema } from "@shared/schema";
+import { insertBookmarkSchema, insertCategorySchema, insertUserPreferencesSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -165,6 +165,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // User Preferences routes
+  app.get("/api/preferences", async (req, res) => {
+    try {
+      const preferences = await storage.getUserPreferences();
+      if (!preferences) {
+        // Return default preferences if none exist
+        return res.json({
+          theme: "light",
+          viewMode: "grid"
+        });
+      }
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching preferences:", error);
+      res.status(500).json({ message: "Failed to fetch preferences" });
+    }
+  });
+
+  app.patch("/api/preferences", async (req, res) => {
+    try {
+      const data = insertUserPreferencesSchema.partial().parse(req.body);
+      const preferences = await storage.updateUserPreferences(data);
+      res.json(preferences);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid preferences data", errors: error.errors });
+      }
+      console.error("Error updating preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
     }
   });
 

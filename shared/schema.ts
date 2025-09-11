@@ -72,3 +72,21 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// User Preferences schema
+export const userPreferences = pgTable("user_preferences", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  theme: varchar("theme", { length: 10 }).notNull().default("light"),
+  viewMode: varchar("view_mode", { length: 10 }).notNull().default("grid"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
+export type UserPreferences = typeof userPreferences.$inferSelect;
