@@ -3,8 +3,34 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookmarkSchema, insertCategorySchema, insertUserPreferencesSchema } from "@shared/schema";
 import { z } from "zod";
+import rateLimit from "express-rate-limit";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Rate limiting middleware for passcode verification
+  // Per-IP rate limiting (5 attempts per 15 minutes per IP)
+  const passcodeVerificationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // limit each IP to 5 requests per windowMs
+    message: {
+      message: "Too many passcode verification attempts. Please try again in 15 minutes.",
+      retryAfter: 900 // seconds
+    },
+    standardHeaders: true, // Return rate limit info in headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    // Use default IP-based key generation (handles IPv6 properly)
+    skip: (req) => {
+      // Skip rate limiting if bookmark ID is invalid
+      const bookmarkId = parseInt(req.params.id);
+      return isNaN(bookmarkId);
+    },
+    handler: (req, res) => {
+      console.warn(`Rate limit exceeded for IP ${req.ip} on passcode verification`);
+      res.status(429).json({
+        message: "Too many passcode verification attempts. Please try again later.",
+        retryAfter: 900
+      });
+    }
+  });
   // Bookmark routes
   app.get("/api/bookmarks", async (req, res) => {
     try {
@@ -84,6 +110,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting bookmark:", error);
       res.status(500).json({ message: "Failed to delete bookmark" });
+    }
+  });
+
+  // Passcode verification endpoint with rate limiting
+  app.post("/api/bookmarks/:id/verify-passcode", passcodeVerificationLimiter, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Validate bookmark ID
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bookmark ID" });
+      }
+      
+      const { passcode } = req.body;
+      
+      // Validate passcode input
+      if (!passcode || typeof passcode !== 'string') {
+        return res.status(400).json({ message: "Passcode is required and must be a string" });
+      }
+      
+      if (passcode.length < 4 || passcode.length > 64) {
+        return res.status(400).json({ message: "Invalid passcode format" });
+      }
+      
+      // Check if bookmark exists first (avoid revealing existence through timing)
+      const bookmark = await storage.getBookmark(id);
+      if (!bookmark) {
+        return res.status(404).json({ message: "Bookmark not found" });
+      }
+      
+      const isValid = await storage.verifyBookmarkPasscode(id, passcode);
+      
+      // Log failed attempts for monitoring
+      if (!isValid) {
+        console.warn(`Failed passcode attempt for bookmark ${id} from IP ${req.ip}`);
+      }
+      
+      res.json({ valid: isValid });
+    } catch (error) {
+      console.error("Error verifying passcode:", error);
+      res.status(500).json({ message: "Failed to verify passcode" });
     }
   });
 

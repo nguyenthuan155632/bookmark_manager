@@ -1,6 +1,7 @@
-import { bookmarks, categories, users, userPreferences, type Bookmark, type InsertBookmark, type Category, type InsertCategory, type User, type InsertUser, type UserPreferences, type InsertUserPreferences } from "@shared/schema";
+import { bookmarks, categories, users, userPreferences, type Bookmark, type InsertBookmark, type InsertBookmarkInternal, type Category, type InsertCategory, type User, type InsertUser, type UserPreferences, type InsertUserPreferences } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, or, desc, asc, and, isNull, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User methods
@@ -21,6 +22,7 @@ export interface IStorage {
   createBookmark(bookmark: InsertBookmark): Promise<Bookmark>;
   updateBookmark(id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark>;
   deleteBookmark(id: number): Promise<void>;
+  verifyBookmarkPasscode(id: number, passcode: string): Promise<boolean>;
   
   // Category methods
   getCategories(): Promise<Category[]>;
@@ -167,30 +169,74 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBookmark(bookmark: InsertBookmark): Promise<Bookmark> {
+    // Map client-facing 'passcode' to internal 'passcodeHash'
+    const { passcode, ...bookmarkWithoutPasscode } = bookmark;
+    let bookmarkData: InsertBookmarkInternal = {
+      ...bookmarkWithoutPasscode,
+      updatedAt: new Date(),
+    };
+    
+    // Hash passcode if provided and not null/undefined
+    if (passcode && typeof passcode === 'string') {
+      bookmarkData.passcodeHash = await bcrypt.hash(passcode, 12);
+    } else if (passcode === null) {
+      // Explicitly set to null if passcode was null (remove passcode)
+      bookmarkData.passcodeHash = null;
+    }
+    
     const [newBookmark] = await db
       .insert(bookmarks)
-      .values({
-        ...bookmark,
-        updatedAt: new Date(),
-      })
+      .values(bookmarkData)
       .returning();
-    return newBookmark;
+    
+    // Remove passcodeHash from response
+    const { passcodeHash, ...bookmarkResponse } = newBookmark;
+    return bookmarkResponse as Bookmark;
   }
 
   async updateBookmark(id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark> {
+    // Map client-facing 'passcode' to internal 'passcodeHash'
+    const { passcode, ...bookmarkWithoutPasscode } = bookmark;
+    let updateData: Partial<InsertBookmarkInternal> = {
+      ...bookmarkWithoutPasscode,
+      updatedAt: new Date(),
+    };
+    
+    // Hash passcode if provided and not null/undefined
+    if (passcode !== undefined) {
+      if (passcode && typeof passcode === 'string') {
+        updateData.passcodeHash = await bcrypt.hash(passcode, 12);
+      } else if (passcode === null) {
+        // Explicitly set to null if passcode was null (remove passcode)
+        updateData.passcodeHash = null;
+      }
+    }
+    
     const [updatedBookmark] = await db
       .update(bookmarks)
-      .set({
-        ...bookmark,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(bookmarks.id, id))
       .returning();
-    return updatedBookmark;
+    
+    // Remove passcodeHash from response
+    const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
+    return bookmarkResponse as Bookmark;
   }
 
   async deleteBookmark(id: number): Promise<void> {
     await db.delete(bookmarks).where(eq(bookmarks.id, id));
+  }
+
+  async verifyBookmarkPasscode(id: number, passcode: string): Promise<boolean> {
+    const [bookmark] = await db.select({
+      passcodeHash: bookmarks.passcodeHash,
+    }).from(bookmarks).where(eq(bookmarks.id, id));
+    
+    if (!bookmark || !bookmark.passcodeHash) {
+      return false; // No bookmark found or no passcode set
+    }
+    
+    return await bcrypt.compare(passcode, bookmark.passcodeHash);
   }
 
   // Category methods

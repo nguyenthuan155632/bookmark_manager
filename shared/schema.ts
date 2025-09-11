@@ -19,6 +19,7 @@ export const bookmarks = pgTable("bookmarks", {
   tags: text("tags").array().default([]),
   isFavorite: boolean("is_favorite").default(false),
   categoryId: integer("category_id"),
+  passcodeHash: text("passcode_hash"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -46,7 +47,24 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 
+// Client-facing bookmark schemas (using 'passcode' instead of 'passcodeHash')
 export const insertBookmarkSchema = createInsertSchema(bookmarks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  passcodeHash: true, // Exclude internal hash field from client API
+}).extend({
+  // Add client-facing passcode field with validation
+  passcode: z.string()
+    .min(4, "Passcode must be at least 4 characters long")
+    .max(64, "Passcode must be no more than 64 characters long")
+    .transform(val => val === "" ? null : val) // Transform empty string to null
+    .nullable()
+    .optional(),
+});
+
+// Internal server-side schema that includes the passcodeHash field
+export const insertBookmarkInternalSchema = createInsertSchema(bookmarks).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -56,7 +74,8 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks).omit({
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
-export type Bookmark = typeof bookmarks.$inferSelect;
+export type InsertBookmarkInternal = z.infer<typeof insertBookmarkInternalSchema>;
+export type Bookmark = Omit<typeof bookmarks.$inferSelect, 'passcodeHash'>; // Remove passcodeHash from public type
 
 // User schema (keeping existing)
 export const users = pgTable("users", {
