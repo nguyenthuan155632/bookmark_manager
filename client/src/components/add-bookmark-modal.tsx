@@ -235,7 +235,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="modal-add-bookmark">
+      <DialogContent className="max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="modal-add-bookmark">
         <DialogHeader>
           <DialogTitle data-testid="modal-title">
             {editingBookmark ? "Edit Bookmark" : "Add New Bookmark"}
