@@ -191,10 +191,6 @@ function BookmarksContent() {
                 </Button>
               </div>
 
-              <Button onClick={() => setIsAddModalOpen(true)} data-testid="button-add-bookmark">
-                <Plus size={16} className="mr-2" />
-                Add Bookmark
-              </Button>
 
               <Button
                 variant="ghost"
@@ -230,31 +226,16 @@ function BookmarksContent() {
               </Button>
             </div>
 
-            {/* Bottom Section: Search and Add Button */}
-            <div className="space-y-3">
-              {/* Search Bar - Full Width */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
-                <Input
-                  placeholder="Search anything"
-                  className="pl-10 w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  data-testid="input-search"
-                />
-              </div>
-
-              {/* Add Button - Right Aligned */}
-              <div className="flex justify-end">
-                <Button 
-                  size="sm"
-                  onClick={() => setIsAddModalOpen(true)} 
-                  data-testid="button-add-bookmark"
-                  className="px-3"
-                >
-                  <Plus size={18} />
-                </Button>
-              </div>
+            {/* Bottom Section: Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+              <Input
+                placeholder="Search anything"
+                className="pl-10 w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                data-testid="input-search"
+              />
             </div>
           </div>
         </header>
@@ -389,6 +370,16 @@ function BookmarksContent() {
             </div>
           )}
         </div>
+
+        {/* Floating Action Button */}
+        <Button
+          size="lg"
+          onClick={() => setIsAddModalOpen(true)}
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+          data-testid="button-add-bookmark-fab"
+        >
+          <Plus size={24} />
+        </Button>
       </main>
 
       <AddBookmarkModal
