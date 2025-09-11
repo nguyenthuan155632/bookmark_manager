@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Folder, Home, Star, Tag, Trash2, Plus, BookmarkIcon } from "lucide-react";
+import { Folder, Home, Star, Tag, Plus, BookmarkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { Category } from "@shared/schema";
@@ -47,13 +47,6 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       icon: Tag, 
       label: "Tags", 
       active: isActive("/tags")
-    },
-    { 
-      path: "/trash", 
-      icon: Trash2, 
-      label: "Trash", 
-      count: 0,
-      active: isActive("/trash")
     },
   ];
 
