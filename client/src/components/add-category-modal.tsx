@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertCategorySchema, type InsertCategory } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -63,6 +63,9 @@ export function AddCategoryModal({ isOpen, onClose }: AddCategoryModalProps) {
       <DialogContent data-testid="add-category-modal">
         <DialogHeader>
           <DialogTitle>Create New Folder</DialogTitle>
+          <DialogDescription>
+            Create a new folder to organize your bookmarks
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
