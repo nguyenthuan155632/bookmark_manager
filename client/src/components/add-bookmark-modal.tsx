@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,15 +43,42 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: editingBookmark?.name || "",
-      description: editingBookmark?.description || "",
-      url: editingBookmark?.url || "",
-      categoryId: editingBookmark?.categoryId || undefined,
-      isFavorite: editingBookmark?.isFavorite || false,
-      tags: editingBookmark?.tags || [],
+      name: "",
+      description: "",
+      url: "",
+      categoryId: undefined,
+      isFavorite: false,
+      tags: [],
       tagInput: "",
     },
   });
+
+  // Reset form when editingBookmark changes
+  useEffect(() => {
+    if (editingBookmark) {
+      form.reset({
+        name: editingBookmark.name || "",
+        description: editingBookmark.description || "",
+        url: editingBookmark.url || "",
+        categoryId: editingBookmark.categoryId || undefined,
+        isFavorite: editingBookmark.isFavorite || false,
+        tags: editingBookmark.tags || [],
+        tagInput: "",
+      });
+      setTags(editingBookmark.tags || []);
+    } else {
+      form.reset({
+        name: "",
+        description: "",
+        url: "",
+        categoryId: undefined,
+        isFavorite: false,
+        tags: [],
+        tagInput: "",
+      });
+      setTags([]);
+    }
+  }, [editingBookmark, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertBookmark) => {
