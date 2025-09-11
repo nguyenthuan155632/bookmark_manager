@@ -7,6 +7,7 @@ import { useTheme } from "@/lib/theme";
 import { Sidebar } from "@/components/sidebar";
 import { BookmarkCard } from "@/components/bookmark-card";
 import { AddBookmarkModal } from "@/components/add-bookmark-modal";
+import { AddCategoryModal } from "@/components/add-category-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +19,7 @@ import type { Bookmark, Category } from "@shared/schema";
 function BookmarksContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -114,6 +116,7 @@ function BookmarksContent() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onCreateFolder={() => setIsAddCategoryModalOpen(true)}
         stats={stats}
       />
 
@@ -319,6 +322,11 @@ function BookmarksContent() {
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         editingBookmark={editingBookmark}
+      />
+
+      <AddCategoryModal
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
       />
     </div>
   );

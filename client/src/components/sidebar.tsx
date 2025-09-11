@@ -9,6 +9,7 @@ import type { Category } from "@shared/schema";
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onCreateFolder: () => void;
   stats: {
     total: number;
     favorites: number;
@@ -17,7 +18,7 @@ interface SidebarProps {
   };
 }
 
-export function Sidebar({ isOpen, onClose, stats }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps) {
   const [location] = useLocation();
   
   const { data: categories = [] } = useQuery<(Category & { bookmarkCount: number })[]>({
@@ -123,6 +124,7 @@ export function Sidebar({ isOpen, onClose, stats }: SidebarProps) {
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                onClick={onCreateFolder}
                 data-testid="button-create-folder"
               >
                 <Plus size={12} />
