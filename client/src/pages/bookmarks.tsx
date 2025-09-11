@@ -373,9 +373,8 @@ function BookmarksContent() {
 
         {/* Floating Action Button */}
         <Button
-          size="lg"
           onClick={() => setIsAddModalOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50 p-0 flex items-center justify-center"
           data-testid="button-add-bookmark-fab"
         >
           <Plus size={24} />
