@@ -123,18 +123,9 @@ function BookmarksContent() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="bg-card border-b border-border px-6 py-4" data-testid="header">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="lg:hidden"
-                onClick={() => setIsSidebarOpen(true)}
-                data-testid="button-mobile-menu"
-              >
-                <Menu size={20} />
-              </Button>
-              
+          {/* Desktop Layout */}
+          <div className="hidden sm:flex items-center justify-between">
+            <div className="flex items-center space-x-4 min-w-0">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                 <Input
@@ -171,7 +162,7 @@ function BookmarksContent() {
 
               <Button onClick={() => setIsAddModalOpen(true)} data-testid="button-add-bookmark">
                 <Plus size={16} className="mr-2" />
-                <span className="hidden sm:inline">Add Bookmark</span>
+                Add Bookmark
               </Button>
 
               <Button
@@ -182,6 +173,57 @@ function BookmarksContent() {
               >
                 {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
               </Button>
+            </div>
+          </div>
+
+          {/* Mobile Layout */}
+          <div className="sm:hidden space-y-3">
+            {/* Top Row: Menu + Theme */}
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSidebarOpen(true)}
+                data-testid="button-mobile-menu"
+              >
+                <Menu size={20} />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                data-testid="button-theme-toggle"
+              >
+                {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+              </Button>
+            </div>
+
+            {/* Bottom Section: Search and Add Button */}
+            <div className="space-y-3">
+              {/* Search Bar - Full Width */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                <Input
+                  placeholder="Search bookmarks, tags, or descriptions..."
+                  className="pl-10 w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  data-testid="input-search"
+                />
+              </div>
+
+              {/* Add Button - Right Aligned */}
+              <div className="flex justify-end">
+                <Button 
+                  size="sm"
+                  onClick={() => setIsAddModalOpen(true)} 
+                  data-testid="button-add-bookmark"
+                  className="px-3"
+                >
+                  <Plus size={18} />
+                </Button>
+              </div>
             </div>
           </div>
         </header>
