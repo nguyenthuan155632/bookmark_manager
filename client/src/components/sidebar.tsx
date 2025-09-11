@@ -56,8 +56,8 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       
       {/* Sidebar */}
       <aside className={`
-        w-64 bg-card border-r border-border flex flex-col transition-transform duration-300 transform 
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+        w-64 bg-card border-r border-border flex flex-col transition-transform duration-300 
+        -translate-x-full ${isOpen ? 'translate-x-0' : ''} 
         lg:translate-x-0 fixed lg:relative z-30 h-full
       `}>
         {/* Sidebar Header */}
