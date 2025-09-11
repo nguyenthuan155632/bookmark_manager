@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Lock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,15 +14,34 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-const formSchema = insertBookmarkSchema.extend({
-  tagInput: z.string().optional(),
-});
+// Create a conditional validation schema
+const createFormSchema = (isProtected: boolean, isEditing: boolean) => {
+  return insertBookmarkSchema.extend({
+    tagInput: z.string().optional(),
+  }).refine((data) => {
+    // If protection is enabled, passcode is required for new bookmarks
+    // For editing, passcode is only required if changing protection settings
+    if (isProtected) {
+      if (!isEditing) {
+        // Creating new bookmark - passcode required
+        return data.passcode && data.passcode.trim().length >= 4;
+      }
+      // Editing existing bookmark - allow empty passcode to keep existing one
+      return !data.passcode || data.passcode.trim().length >= 4;
+    }
+    return true;
+  }, {
+    message: "Passcode is required when protection is enabled and must be at least 4 characters long",
+    path: ["passcode"]
+  });
+};
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<typeof insertBookmarkSchema> & { tagInput?: string };
 
 interface AddBookmarkModalProps {
   isOpen: boolean;
@@ -33,6 +52,7 @@ interface AddBookmarkModalProps {
 export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookmarkModalProps) {
   const [tags, setTags] = useState<string[]>(editingBookmark?.tags || []);
   const [tagInput, setTagInput] = useState("");
+  const [isProtected, setIsProtected] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -41,7 +61,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   });
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createFormSchema(isProtected, !!editingBookmark)),
     defaultValues: {
       name: "",
       description: "",
@@ -50,12 +70,24 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       isFavorite: false,
       tags: [],
       tagInput: "",
+      passcode: "",
     },
   });
+
+  // Clear passcode errors when protection state changes
+  useEffect(() => {
+    if (!isProtected && form.formState.errors.passcode) {
+      form.clearErrors("passcode");
+    }
+  }, [isProtected, form]);
 
   // Reset form when editingBookmark changes
   useEffect(() => {
     if (editingBookmark) {
+      // Check if bookmark has existing passcode protection
+      const hasPasscode = editingBookmark.hasPasscode || false;
+      setIsProtected(hasPasscode);
+      
       form.reset({
         name: editingBookmark.name || "",
         description: editingBookmark.description || "",
@@ -64,9 +96,11 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         isFavorite: editingBookmark.isFavorite || false,
         tags: editingBookmark.tags || [],
         tagInput: "",
+        passcode: "", // Always start with empty passcode for security
       });
       setTags(editingBookmark.tags || []);
     } else {
+      setIsProtected(false);
       form.reset({
         name: "",
         description: "",
@@ -75,6 +109,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         isFavorite: false,
         tags: [],
         tagInput: "",
+        passcode: "",
       });
       setTags([]);
     }
@@ -111,6 +146,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     form.reset();
     setTags([]);
     setTagInput("");
+    setIsProtected(false);
     onClose();
   };
 
@@ -130,6 +166,43 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   };
 
   const onSubmit = (data: FormData) => {
+    // Comprehensive pre-submit validation guards for all scenarios
+    
+    if (!editingBookmark) {
+      // SCENARIO: Creating new bookmark
+      if (isProtected && (!data.passcode || data.passcode.trim().length < 4)) {
+        form.setError("passcode", {
+          type: "manual",
+          message: "Passcode is required when protection is enabled and must be at least 4 characters long"
+        });
+        return;
+      }
+    } else {
+      // SCENARIO: Editing existing bookmark
+      const wasProtected = editingBookmark.hasPasscode || false;
+      
+      if (isProtected && !wasProtected) {
+        // CRITICAL FIX: Transitioning from unprotected → protected REQUIRES passcode
+        if (!data.passcode || data.passcode.trim().length < 4) {
+          form.setError("passcode", {
+            type: "manual",
+            message: "A passcode is required when enabling protection on this bookmark"
+          });
+          return;
+        }
+      } else if (isProtected && wasProtected) {
+        // Transitioning from protected → protected: allow empty (keeps existing) or new passcode
+        if (data.passcode && data.passcode.trim().length > 0 && data.passcode.trim().length < 4) {
+          form.setError("passcode", {
+            type: "manual",
+            message: "Passcode must be at least 4 characters long"
+          });
+          return;
+        }
+      }
+      // protected → unprotected: no validation needed (will be set to null)
+    }
+
     const bookmarkData: InsertBookmark = {
       name: data.name,
       description: data.description || null,
@@ -138,6 +211,30 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       isFavorite: data.isFavorite || false,
       tags: tags,
     };
+
+    // Handle passcode logic based on scenario
+    if (isProtected) {
+      if (editingBookmark) {
+        const wasProtected = editingBookmark.hasPasscode || false;
+        
+        if (!wasProtected) {
+          // unprotected → protected: use the required new passcode
+          bookmarkData.passcode = data.passcode?.trim() || null;
+        } else {
+          // protected → protected: use new passcode if provided, otherwise omit to keep existing
+          if (data.passcode && data.passcode.trim()) {
+            bookmarkData.passcode = data.passcode.trim();
+          }
+          // If no passcode provided, omit field to keep existing passcode
+        }
+      } else {
+        // Create scenario: include the passcode
+        bookmarkData.passcode = data.passcode?.trim() || null;
+      }
+    } else {
+      // Protection disabled: explicitly set to null to remove any existing protection
+      bookmarkData.passcode = null;
+    }
 
     createMutation.mutate(bookmarkData);
   };
@@ -259,6 +356,61 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             <Label htmlFor="favorite" className="text-sm font-medium cursor-pointer">
               Mark as favorite
             </Label>
+          </div>
+
+          <div className="space-y-3 border-t border-border pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Lock size={16} className="text-muted-foreground" />
+                <div>
+                  <Label htmlFor="protection-toggle" className="text-sm font-medium cursor-pointer">
+                    Protect with passcode
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Require a passcode to view this bookmark
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="protection-toggle"
+                checked={isProtected}
+                onCheckedChange={(checked) => {
+                  setIsProtected(checked);
+                  if (!checked) {
+                    form.setValue("passcode", "");
+                    form.clearErrors("passcode");
+                  }
+                  // Update form resolver when protection state changes
+                  form.clearErrors();
+                }}
+                data-testid="switch-protection"
+              />
+            </div>
+
+            {isProtected && (
+              <div className="space-y-2">
+                <Label htmlFor="passcode" className="text-sm font-medium">
+                  Passcode {!editingBookmark && "*"}
+                </Label>
+                <Input
+                  id="passcode"
+                  type="password"
+                  placeholder={editingBookmark ? "Enter new passcode or leave empty to keep current" : "Enter a secure passcode (required)"}
+                  {...form.register("passcode")}
+                  data-testid="input-passcode"
+                />
+                {form.formState.errors.passcode && (
+                  <p className="text-sm text-destructive" data-testid="error-passcode">
+                    {form.formState.errors.passcode.message}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {editingBookmark 
+                    ? "Must be 4-64 characters long. Leave empty to keep current passcode." 
+                    : "Must be 4-64 characters long. Required for protection."}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end space-x-3 pt-4">
