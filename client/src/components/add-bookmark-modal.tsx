@@ -7,7 +7,7 @@ import { insertBookmarkSchema } from "@shared/schema";
 import type { InsertBookmark, Category } from "@shared/schema";
 import { z } from "zod";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,25 +19,18 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-// Create a conditional validation schema
-const createFormSchema = (isProtected: boolean, isEditing: boolean) => {
+// Create a permissive validation schema - detailed validation is handled in onSubmit
+const createFormSchema = () => {
   return insertBookmarkSchema.extend({
     tagInput: z.string().optional(),
-  }).refine((data) => {
-    // If protection is enabled, passcode is required for new bookmarks
-    // For editing, passcode is only required if changing protection settings
-    if (isProtected) {
-      if (!isEditing) {
-        // Creating new bookmark - passcode required
-        return data.passcode && data.passcode.trim().length >= 4;
-      }
-      // Editing existing bookmark - allow empty passcode to keep existing one
-      return !data.passcode || data.passcode.trim().length >= 4;
-    }
-    return true;
-  }, {
-    message: "Passcode is required when protection is enabled and must be at least 4 characters long",
-    path: ["passcode"]
+    passcode: z.string().optional(), // Make passcode always optional at form level
+  }).omit({ passcode: true }).extend({
+    passcode: z.string().optional().refine((val) => {
+      // Only validate length if passcode is provided
+      return !val || val.trim().length >= 4;
+    }, {
+      message: "Passcode must be at least 4 characters long if provided"
+    })
   });
 };
 
@@ -61,7 +54,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   });
 
   const form = useForm<FormData>({
-    resolver: zodResolver(createFormSchema(isProtected, !!editingBookmark)),
+    resolver: zodResolver(createFormSchema()),
     defaultValues: {
       name: "",
       description: "",
@@ -246,6 +239,11 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
           <DialogTitle data-testid="modal-title">
             {editingBookmark ? "Edit Bookmark" : "Add New Bookmark"}
           </DialogTitle>
+          <DialogDescription>
+            {editingBookmark 
+              ? "Update bookmark details. Protected bookmarks can be edited without re-entering the passcode."
+              : "Create a new bookmark with optional password protection."}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -378,9 +376,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                   setIsProtected(checked);
                   if (!checked) {
                     form.setValue("passcode", "");
-                    form.clearErrors("passcode");
                   }
-                  // Update form resolver when protection state changes
+                  // Clear all form errors when toggling protection
                   form.clearErrors();
                 }}
                 data-testid="switch-protection"
