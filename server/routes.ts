@@ -3,34 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookmarkSchema, insertCategorySchema, insertUserPreferencesSchema } from "@shared/schema";
 import { z } from "zod";
-import rateLimit from "express-rate-limit";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Rate limiting middleware for passcode verification
-  // Per-IP rate limiting (5 attempts per 15 minutes per IP)
-  const passcodeVerificationLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // limit each IP to 5 requests per windowMs
-    message: {
-      message: "Too many passcode verification attempts. Please try again in 15 minutes.",
-      retryAfter: 900 // seconds
-    },
-    standardHeaders: true, // Return rate limit info in headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    // Use default IP-based key generation (handles IPv6 properly)
-    skip: (req) => {
-      // Skip rate limiting if bookmark ID is invalid
-      const bookmarkId = parseInt(req.params.id);
-      return isNaN(bookmarkId);
-    },
-    handler: (req, res) => {
-      console.warn(`Rate limit exceeded for IP ${req.ip} on passcode verification`);
-      res.status(429).json({
-        message: "Too many passcode verification attempts. Please try again later.",
-        retryAfter: 900
-      });
-    }
-  });
 
   // Helper function to verify passcode for protected bookmark operations
   const verifyProtectedBookmarkAccess = async (bookmarkId: number, providedPasscode: string | undefined, req: any): Promise<{ success: boolean; error?: { status: number; message: string } }> => {
@@ -85,24 +59,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return { success: true };
   };
 
-  // Rate limiting middleware for bookmark operations (PATCH/DELETE)
-  const bookmarkOperationLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // limit each IP to 10 requests per windowMs
-    message: {
-      message: "Too many bookmark operations. Please try again later.",
-      retryAfter: 900 // seconds
-    },
-    standardHeaders: true,
-    legacyHeaders: false,
-    handler: (req, res) => {
-      console.warn(`Rate limit exceeded for IP ${req.ip} on bookmark operations`);
-      res.status(429).json({
-        message: "Too many bookmark operations. Please try again later.",
-        retryAfter: 900
-      });
-    }
-  });
 
   // Bookmark routes
   app.get("/api/bookmarks", async (req, res) => {
@@ -160,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/bookmarks/:id", bookmarkOperationLimiter, async (req, res) => {
+  app.patch("/api/bookmarks/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -193,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/bookmarks/:id", bookmarkOperationLimiter, async (req, res) => {
+  app.delete("/api/bookmarks/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
@@ -220,8 +176,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Passcode verification endpoint with rate limiting
-  app.post("/api/bookmarks/:id/verify-passcode", passcodeVerificationLimiter, async (req, res) => {
+  // Passcode verification endpoint
+  app.post("/api/bookmarks/:id/verify-passcode", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       
