@@ -31,6 +31,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Helper function to verify passcode for protected bookmark operations
+  const verifyProtectedBookmarkAccess = async (bookmarkId: number, providedPasscode: string | undefined, req: any): Promise<{ success: boolean; error?: { status: number; message: string } }> => {
+    // Get the bookmark to check if it's protected
+    const bookmark = await storage.getBookmark(bookmarkId);
+    if (!bookmark) {
+      return { success: false, error: { status: 404, message: "Bookmark not found" } };
+    }
+
+    // If bookmark is not protected, allow access
+    if (!bookmark.hasPasscode) {
+      return { success: true };
+    }
+
+    // If bookmark is protected, require passcode
+    if (!providedPasscode || typeof providedPasscode !== 'string') {
+      return { 
+        success: false, 
+        error: { 
+          status: 401, 
+          message: "Passcode required for protected bookmark" 
+        } 
+      };
+    }
+
+    // Validate passcode format
+    if (providedPasscode.length < 4 || providedPasscode.length > 64) {
+      return { 
+        success: false, 
+        error: { 
+          status: 400, 
+          message: "Invalid passcode format" 
+        } 
+      };
+    }
+
+    // Verify the passcode
+    const isValid = await storage.verifyBookmarkPasscode(bookmarkId, providedPasscode);
+    
+    // Log failed attempts for monitoring
+    if (!isValid) {
+      console.warn(`Failed passcode attempt for protected bookmark ${bookmarkId} from IP ${req.ip}`);
+      return { 
+        success: false, 
+        error: { 
+          status: 401, 
+          message: "Invalid passcode" 
+        } 
+      };
+    }
+
+    return { success: true };
+  };
+
+  // Rate limiting middleware for bookmark operations (PATCH/DELETE)
+  const bookmarkOperationLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // limit each IP to 10 requests per windowMs
+    message: {
+      message: "Too many bookmark operations. Please try again later.",
+      retryAfter: 900 // seconds
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+      console.warn(`Rate limit exceeded for IP ${req.ip} on bookmark operations`);
+      res.status(429).json({
+        message: "Too many bookmark operations. Please try again later.",
+        retryAfter: 900
+      });
+    }
+  });
+
   // Bookmark routes
   app.get("/api/bookmarks", async (req, res) => {
     try {
@@ -87,10 +160,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/bookmarks/:id", async (req, res) => {
+  app.patch("/api/bookmarks/:id", bookmarkOperationLimiter, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Validate bookmark ID
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bookmark ID" });
+      }
+      
+      // Parse and validate the data first
       const data = insertBookmarkSchema.partial().parse(req.body);
+      
+      // Extract passcode from request body for security verification
+      const { passcode } = req.body;
+      
+      // Verify access for protected bookmarks
+      const accessResult = await verifyProtectedBookmarkAccess(id, passcode, req);
+      if (!accessResult.success) {
+        return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
+      }
+      
+      // Proceed with update if access is granted
       const bookmark = await storage.updateBookmark(id, data);
       res.json(bookmark);
     } catch (error) {
@@ -102,9 +193,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/bookmarks/:id", async (req, res) => {
+  app.delete("/api/bookmarks/:id", bookmarkOperationLimiter, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      
+      // Validate bookmark ID
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bookmark ID" });
+      }
+      
+      // Extract passcode from request body for security verification
+      const { passcode } = req.body;
+      
+      // Verify access for protected bookmarks
+      const accessResult = await verifyProtectedBookmarkAccess(id, passcode, req);
+      if (!accessResult.success) {
+        return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
+      }
+      
+      // Proceed with deletion if access is granted
       await storage.deleteBookmark(id);
       res.status(204).send();
     } catch (error) {
