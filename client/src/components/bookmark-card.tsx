@@ -14,9 +14,10 @@ interface BookmarkCardProps {
   onEdit?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
   isProtected?: boolean;
   onUnlock?: () => void;
+  onLock?: () => void;
 }
 
-export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }: BookmarkCardProps) {
+export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock, onLock }: BookmarkCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -73,8 +74,10 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
 
   const handleVisit = () => {
     if (isProtected) {
+      // Protected and locked - show unlock
       onUnlock?.();
     } else {
+      // Unlocked (regardless of hasPasscode) - visit the URL
       window.open(bookmark.url, '_blank', 'noopener,noreferrer');
     }
   };
@@ -148,6 +151,17 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
             >
               <Edit size={16} />
             </Button>
+            {bookmark.hasPasscode && !isProtected && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-500"
+                onClick={() => onLock?.()}
+                data-testid={`button-lock-${bookmark.id}`}
+              >
+                <Lock size={16} />
+              </Button>
+            )}
             <Button
               size="sm"
               variant="ghost"
@@ -203,14 +217,16 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }
           size="sm"
           className="p-0 h-auto text-primary hover:text-primary/80 font-medium"
           onClick={handleVisit}
-          data-testid={`button-visit-${bookmark.id}`}
+          data-testid={isProtected ? `button-unlock-${bookmark.id}` : `button-visit-${bookmark.id}`}
         >
           {isProtected ? (
+            // Protected and locked - show unlock
             <>
               <span>Unlock</span>
               <Lock size={12} className="ml-1" />
             </>
           ) : (
+            // Unlocked (or never protected) - show visit
             <>
               <span>Visit</span>
               <ExternalLink size={12} className="ml-1" />

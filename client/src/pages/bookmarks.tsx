@@ -127,6 +127,16 @@ function BookmarksContent() {
     setIsPasscodeModalOpen(true);
   };
 
+  // Handle protected bookmark lock
+  const handleLockBookmark = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
+    // Remove bookmark ID from unlocked set to lock it again
+    setUnlockedBookmarks(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(bookmark.id);
+      return newSet;
+    });
+  };
+
   // Handle successful passcode verification
   const handlePasscodeSuccess = () => {
     if (selectedProtectedBookmark) {
@@ -385,6 +395,7 @@ function BookmarksContent() {
                     onEdit={handleEdit}
                     isProtected={isProtected}
                     onUnlock={() => handleUnlockBookmark(bookmark)}
+                    onLock={() => handleLockBookmark(bookmark)}
                   />
                 );
               })}
