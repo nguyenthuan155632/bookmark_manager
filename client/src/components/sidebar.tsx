@@ -87,7 +87,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 <item.icon size={20} />
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.count !== undefined && (
-                  <span className={`text-xs px-2 py-1 rounded-full ${
+                  <span className={`text-xs min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center ${
                     item.active 
                       ? "bg-primary-foreground text-primary" 
                       : "bg-secondary text-secondary-foreground"
