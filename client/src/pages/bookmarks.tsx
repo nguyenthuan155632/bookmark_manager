@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/sidebar";
 import { BookmarkCard } from "@/components/bookmark-card";
 import { AddBookmarkModal } from "@/components/add-bookmark-modal";
 import { AddCategoryModal } from "@/components/add-category-modal";
+import { PasscodeModal } from "@/components/passcode-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,6 +29,13 @@ function BookmarksContent() {
   const [sortBy, setSortBy] = useState<"createdAt" | "name" | "isFavorite">("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  
+  // Passcode modal state
+  const [isPasscodeModalOpen, setIsPasscodeModalOpen] = useState(false);
+  const [selectedProtectedBookmark, setSelectedProtectedBookmark] = useState<(Bookmark & { category?: Category; hasPasscode?: boolean }) | null>(null);
+  
+  // Track unlocked bookmarks in session (bookmark IDs that have been unlocked)
+  const [unlockedBookmarks, setUnlockedBookmarks] = useState<Set<number>>(new Set());
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
 
@@ -91,7 +99,7 @@ function BookmarksContent() {
   bookmarkQueryParams.set('sortBy', sortBy);
   bookmarkQueryParams.set('sortOrder', sortOrder);
   
-  const { data: bookmarks = [], isLoading } = useQuery<(Bookmark & { category?: Category })[]>({
+  const { data: bookmarks = [], isLoading } = useQuery<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>({
     queryKey: [`/api/bookmarks?${bookmarkQueryParams.toString()}`],
   });
 
@@ -108,9 +116,33 @@ function BookmarksContent() {
     });
   }, [bookmarks, selectedTags]);
 
-  const handleEdit = (bookmark: Bookmark & { category?: Category }) => {
+  const handleEdit = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
     setEditingBookmark(bookmark);
     setIsAddModalOpen(true);
+  };
+
+  // Handle protected bookmark unlock
+  const handleUnlockBookmark = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
+    setSelectedProtectedBookmark(bookmark);
+    setIsPasscodeModalOpen(true);
+  };
+
+  // Handle successful passcode verification
+  const handlePasscodeSuccess = () => {
+    if (selectedProtectedBookmark) {
+      // Add bookmark ID to unlocked set
+      setUnlockedBookmarks(prev => new Set(Array.from(prev).concat(selectedProtectedBookmark.id)));
+      
+      // Close modal and clear selected bookmark
+      setIsPasscodeModalOpen(false);
+      setSelectedProtectedBookmark(null);
+    }
+  };
+
+  // Handle passcode modal close
+  const handlePasscodeModalClose = () => {
+    setIsPasscodeModalOpen(false);
+    setSelectedProtectedBookmark(null);
   };
 
   const handleCloseModal = () => {
@@ -342,13 +374,20 @@ function BookmarksContent() {
               ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               : "space-y-4"
             }>
-              {filteredBookmarks.map((bookmark) => (
-                <BookmarkCard
-                  key={bookmark.id}
-                  bookmark={bookmark}
-                  onEdit={handleEdit}
-                />
-              ))}
+              {filteredBookmarks.map((bookmark) => {
+                const isUnlocked = unlockedBookmarks.has(bookmark.id);
+                const isProtected = bookmark.hasPasscode && !isUnlocked;
+                
+                return (
+                  <BookmarkCard
+                    key={bookmark.id}
+                    bookmark={bookmark}
+                    onEdit={handleEdit}
+                    isProtected={isProtected}
+                    onUnlock={() => handleUnlockBookmark(bookmark)}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12" data-testid="empty-state">
@@ -390,6 +429,13 @@ function BookmarksContent() {
       <AddCategoryModal
         isOpen={isAddCategoryModalOpen}
         onClose={() => setIsAddCategoryModalOpen(false)}
+      />
+      
+      <PasscodeModal
+        isOpen={isPasscodeModalOpen}
+        onClose={handlePasscodeModalClose}
+        bookmark={selectedProtectedBookmark || undefined}
+        onSuccess={handlePasscodeSuccess}
       />
     </div>
   );

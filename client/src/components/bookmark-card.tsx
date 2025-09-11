@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink } from "lucide-react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,11 +10,13 @@ import type { Bookmark, Category } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 
 interface BookmarkCardProps {
-  bookmark: Bookmark & { category?: Category };
-  onEdit?: (bookmark: Bookmark & { category?: Category }) => void;
+  bookmark: Bookmark & { category?: Category; hasPasscode?: boolean };
+  onEdit?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
+  isProtected?: boolean;
+  onUnlock?: () => void;
 }
 
-export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
+export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock }: BookmarkCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,7 +72,11 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
   };
 
   const handleVisit = () => {
-    window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+    if (isProtected) {
+      onUnlock?.();
+    } else {
+      window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const getDomain = (url: string) => {
@@ -85,7 +91,9 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
 
   return (
     <Card 
-      className="group hover:shadow-md transition-shadow"
+      className={`group hover:shadow-md transition-shadow ${
+        isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       data-testid={`bookmark-card-${bookmark.id}`}
@@ -93,13 +101,24 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <h3 className="font-medium text-foreground mb-1 line-clamp-2" data-testid={`bookmark-title-${bookmark.id}`}>
-              {bookmark.name}
-            </h3>
-            {bookmark.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
-                {bookmark.description}
+            <div className="flex items-center gap-2 mb-1">
+              {isProtected && (
+                <Lock size={14} className="text-muted-foreground flex-shrink-0" data-testid={`lock-icon-${bookmark.id}`} />
+              )}
+              <h3 className="font-medium text-foreground line-clamp-2" data-testid={`bookmark-title-${bookmark.id}`}>
+                {bookmark.name}
+              </h3>
+            </div>
+            {isProtected ? (
+              <p className="text-sm text-muted-foreground italic line-clamp-2" data-testid={`bookmark-protected-text-${bookmark.id}`}>
+                Protected content - click to unlock
               </p>
+            ) : (
+              bookmark.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
+                  {bookmark.description}
+                </p>
+              )
             )}
           </div>
           
@@ -144,13 +163,13 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
         <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
           <Globe size={12} />
           <span className="truncate" data-testid={`bookmark-domain-${bookmark.id}`}>
-            {getDomain(bookmark.url)}
+            {isProtected ? "••••••••" : getDomain(bookmark.url)}
           </span>
           <span>•</span>
           <span data-testid={`bookmark-date-${bookmark.id}`}>{timeAgo}</span>
         </div>
 
-        {bookmark.tags && bookmark.tags.length > 0 && (
+        {!isProtected && bookmark.tags && bookmark.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {bookmark.tags.map((tag, index) => (
               <Badge
@@ -164,6 +183,19 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
             ))}
           </div>
         )}
+        
+        {isProtected && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            <Badge
+              variant="outline"
+              className="text-xs text-muted-foreground border-muted-foreground/30"
+              data-testid={`protected-badge-${bookmark.id}`}
+            >
+              <Lock size={10} className="mr-1" />
+              Protected
+            </Badge>
+          </div>
+        )}
 
         <Button
           variant="ghost"
@@ -172,8 +204,17 @@ export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
           onClick={handleVisit}
           data-testid={`button-visit-${bookmark.id}`}
         >
-          <span>Visit</span>
-          <ExternalLink size={12} className="ml-1" />
+          {isProtected ? (
+            <>
+              <span>Unlock</span>
+              <Lock size={12} className="ml-1" />
+            </>
+          ) : (
+            <>
+              <span>Visit</span>
+              <ExternalLink size={12} className="ml-1" />
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>

@@ -17,8 +17,8 @@ export interface IStorage {
     tags?: string[];
     sortBy?: 'name' | 'createdAt' | 'isFavorite';
     sortOrder?: 'asc' | 'desc';
-  }): Promise<(Bookmark & { category?: Category })[]>;
-  getBookmark(id: number): Promise<(Bookmark & { category?: Category }) | undefined>;
+  }): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>;
+  getBookmark(id: number): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean }) | undefined>;
   createBookmark(bookmark: InsertBookmark): Promise<Bookmark>;
   updateBookmark(id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark>;
   deleteBookmark(id: number): Promise<void>;
@@ -73,7 +73,7 @@ export class DatabaseStorage implements IStorage {
     tags?: string[];
     sortBy?: 'name' | 'createdAt' | 'isFavorite';
     sortOrder?: 'asc' | 'desc';
-  }): Promise<(Bookmark & { category?: Category })[]> {
+  }): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]> {
     // Build conditions
     const conditions = [];
 
@@ -115,6 +115,7 @@ export class DatabaseStorage implements IStorage {
       categoryId: bookmarks.categoryId,
       createdAt: bookmarks.createdAt,
       updatedAt: bookmarks.updatedAt,
+      passcodeHash: bookmarks.passcodeHash,
       category: categories,
     }).from(bookmarks)
     .leftJoin(categories, eq(bookmarks.categoryId, categories.id));
@@ -138,13 +139,17 @@ export class DatabaseStorage implements IStorage {
     }
 
     const results = await finalQuery;
-    return results.map(row => ({
-      ...row,
-      category: row.category || undefined,
-    }));
+    return results.map(row => {
+      const { passcodeHash, ...bookmarkData } = row;
+      return {
+        ...bookmarkData,
+        category: row.category || undefined,
+        hasPasscode: !!passcodeHash,
+      };
+    });
   }
 
-  async getBookmark(id: number): Promise<(Bookmark & { category?: Category }) | undefined> {
+  async getBookmark(id: number): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean }) | undefined> {
     const [result] = await db.select({
       id: bookmarks.id,
       name: bookmarks.name,
@@ -155,6 +160,7 @@ export class DatabaseStorage implements IStorage {
       categoryId: bookmarks.categoryId,
       createdAt: bookmarks.createdAt,
       updatedAt: bookmarks.updatedAt,
+      passcodeHash: bookmarks.passcodeHash,
       category: categories,
     }).from(bookmarks)
     .leftJoin(categories, eq(bookmarks.categoryId, categories.id))
@@ -162,9 +168,11 @@ export class DatabaseStorage implements IStorage {
 
     if (!result) return undefined;
 
+    const { passcodeHash, ...bookmarkData } = result;
     return {
-      ...result,
+      ...bookmarkData,
       category: result.category || undefined,
+      hasPasscode: !!passcodeHash,
     };
   }
 
@@ -173,7 +181,6 @@ export class DatabaseStorage implements IStorage {
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     let bookmarkData: InsertBookmarkInternal = {
       ...bookmarkWithoutPasscode,
-      updatedAt: new Date(),
     };
     
     // Hash passcode if provided and not null/undefined
@@ -199,7 +206,6 @@ export class DatabaseStorage implements IStorage {
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     let updateData: Partial<InsertBookmarkInternal> = {
       ...bookmarkWithoutPasscode,
-      updatedAt: new Date(),
     };
     
     // Hash passcode if provided and not null/undefined
