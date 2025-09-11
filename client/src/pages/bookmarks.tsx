@@ -324,7 +324,7 @@ function BookmarksContent() {
                 setSortBy(newSortBy);
                 setSortOrder(newSortOrder);
               }}>
-                <SelectTrigger className="w-48" data-testid="select-sort">
+                <SelectTrigger className="w-56" data-testid="select-sort">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -342,7 +342,7 @@ function BookmarksContent() {
           </div>
 
           {/* Mobile Layout - Two Lines */}
-          <div className="sm:hidden space-y-3">
+          <div className="sm:hidden space-y-2">
             {/* Line 1: Filters Label + Active Filter Tags */}
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-sm text-muted-foreground shrink-0">Filters:</span>
@@ -388,7 +388,7 @@ function BookmarksContent() {
                 setSortBy(newSortBy);
                 setSortOrder(newSortOrder);
               }}>
-                <SelectTrigger className="w-40" data-testid="select-sort">
+                <SelectTrigger className="w-48" data-testid="select-sort">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
