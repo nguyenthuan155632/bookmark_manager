@@ -62,8 +62,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       return await apiRequest(method, url, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"], type: "all" });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"], type: "all" });
       toast({
         description: editingBookmark 
           ? "Bookmark updated successfully!" 
