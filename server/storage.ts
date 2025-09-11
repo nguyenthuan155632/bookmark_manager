@@ -176,7 +176,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createBookmark(bookmark: InsertBookmark): Promise<Bookmark> {
+  async createBookmark(bookmark: InsertBookmark): Promise<Bookmark & { hasPasscode?: boolean }> {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     let bookmarkData: InsertBookmarkInternal = {
@@ -196,12 +196,15 @@ export class DatabaseStorage implements IStorage {
       .values(bookmarkData)
       .returning();
     
-    // Remove passcodeHash from response
+    // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = newBookmark;
-    return bookmarkResponse as Bookmark;
+    return {
+      ...bookmarkResponse,
+      hasPasscode: !!passcodeHash,
+    } as Bookmark & { hasPasscode?: boolean };
   }
 
-  async updateBookmark(id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark> {
+  async updateBookmark(id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark & { hasPasscode?: boolean }> {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     let updateData: Partial<InsertBookmarkInternal> = {
@@ -224,9 +227,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bookmarks.id, id))
       .returning();
     
-    // Remove passcodeHash from response
+    // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
-    return bookmarkResponse as Bookmark;
+    return {
+      ...bookmarkResponse,
+      hasPasscode: !!passcodeHash,
+    } as Bookmark & { hasPasscode?: boolean };
   }
 
   async deleteBookmark(id: number): Promise<void> {

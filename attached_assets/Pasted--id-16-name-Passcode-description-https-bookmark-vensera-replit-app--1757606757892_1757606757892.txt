@@ -1,0 +1,224 @@
+[
+  {
+    "id": 16,
+    "name": "Passcode",
+    "description": "https://bookmark-vensera.replit.app/",
+    "url": "https://bookmark-vensera.replit.app/",
+    "tags": [],
+    "isFavorite": false,
+    "categoryId": null,
+    "createdAt": "2025-09-11T15:37:48.531Z",
+    "updatedAt": "2025-09-11T16:02:57.982Z"
+  },
+  {
+    "id": 13,
+    "name": "Divine top up",
+    "description": "Divine top up",
+    "url": "https://divineshop.vn/topup",
+    "tags": [
+      "Divine top up",
+      "top up",
+      "divine"
+    ],
+    "isFavorite": true,
+    "categoryId": 1,
+    "createdAt": "2025-09-11T14:03:47.362Z",
+    "updatedAt": "2025-09-11T15:02:28.344Z",
+    "category": {
+      "id": 1,
+      "name": "Development",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 4,
+    "name": "MDN Web Docs",
+    "description": "Resources for developers, by developers.",
+    "url": "https://developer.mozilla.org",
+    "tags": [
+      "web",
+      "documentation",
+      "reference"
+    ],
+    "isFavorite": true,
+    "categoryId": 1,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 1,
+      "name": "Development",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Tailwind CSS",
+    "description": "A utility-first CSS framework packed with classes.",
+    "url": "https://tailwindcss.com",
+    "tags": [
+      "css",
+      "framework",
+      "frontend"
+    ],
+    "isFavorite": false,
+    "categoryId": 1,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 1,
+      "name": "Development",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Figma",
+    "description": "The collaborative interface design tool.",
+    "url": "https://www.figma.com",
+    "tags": [
+      "design",
+      "prototyping",
+      "collaboration"
+    ],
+    "isFavorite": true,
+    "categoryId": 2,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 2,
+      "name": "Design",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 2,
+    "name": "TypeScript Handbook",
+    "description": "Complete guide to TypeScript for JavaScript developers.",
+    "url": "https://www.typescriptlang.org/docs/",
+    "tags": [
+      "typescript",
+      "javascript",
+      "programming"
+    ],
+    "isFavorite": true,
+    "categoryId": 3,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 3,
+      "name": "JavaScript",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Unsplash",
+    "description": "Beautiful, free images and photos that you can download and use.",
+    "url": "https://unsplash.com",
+    "tags": [
+      "photos",
+      "free",
+      "stock"
+    ],
+    "isFavorite": false,
+    "categoryId": 2,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 2,
+      "name": "Design",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 12,
+    "name": "npm",
+    "description": "The package manager for JavaScript and the world's largest software registry.",
+    "url": "https://www.npmjs.com",
+    "tags": [
+      "javascript",
+      "packages",
+      "node"
+    ],
+    "isFavorite": false,
+    "categoryId": 3,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 3,
+      "name": "JavaScript",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 1,
+    "name": "React Documentation",
+    "description": "Official React documentation with guides, tutorials, and API reference.",
+    "url": "https://react.dev",
+    "tags": [
+      "react",
+      "frontend",
+      "documentation"
+    ],
+    "isFavorite": false,
+    "categoryId": 1,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T14:37:08.435Z",
+    "category": {
+      "id": 1,
+      "name": "Development",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 7,
+    "name": "JavaScript.info",
+    "description": "The Modern JavaScript Tutorial.",
+    "url": "https://javascript.info",
+    "tags": [
+      "javascript",
+      "tutorial",
+      "learning"
+    ],
+    "isFavorite": false,
+    "categoryId": 4,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 4,
+      "name": "Learning",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Dribbble",
+    "description": "Discover the world's top designers & creative professionals.",
+    "url": "https://dribbble.com",
+    "tags": [
+      "design",
+      "inspiration",
+      "ui",
+      "ux"
+    ],
+    "isFavorite": false,
+    "categoryId": 2,
+    "createdAt": "2025-09-11T13:57:10.920Z",
+    "updatedAt": "2025-09-11T13:57:10.920Z",
+    "category": {
+      "id": 2,
+      "name": "Design",
+      "parentId": null,
+      "createdAt": "2025-09-11T13:57:10.784Z"
+    }
+  }
+]
