@@ -1,0 +1,179 @@
+import { useState } from "react";
+import { Star, Globe, Edit, Trash2, ExternalLink } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import type { Bookmark, Category } from "@shared/schema";
+import { formatDistanceToNow } from "date-fns";
+
+interface BookmarkCardProps {
+  bookmark: Bookmark & { category?: Category };
+  onEdit?: (bookmark: Bookmark & { category?: Category }) => void;
+}
+
+export function BookmarkCard({ bookmark, onEdit }: BookmarkCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("PATCH", `/api/bookmarks/${bookmark.id}`, {
+        isFavorite: !bookmark.isFavorite
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({
+        description: bookmark.isFavorite 
+          ? "Removed from favorites" 
+          : "Added to favorites",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        description: "Failed to update favorite status",
+      });
+    }
+  });
+
+  const deleteBookmarkMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", `/api/bookmarks/${bookmark.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({
+        description: "Bookmark deleted",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        description: "Failed to delete bookmark",
+      });
+    }
+  });
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this bookmark?")) {
+      deleteBookmarkMutation.mutate();
+    }
+  };
+
+  const handleVisit = () => {
+    window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+  };
+
+  const getDomain = (url: string) => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return url;
+    }
+  };
+
+  const timeAgo = formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
+
+  return (
+    <Card 
+      className="group hover:shadow-md transition-shadow"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      data-testid={`bookmark-card-${bookmark.id}`}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="font-medium text-foreground mb-1 line-clamp-2" data-testid={`bookmark-title-${bookmark.id}`}>
+              {bookmark.name}
+            </h3>
+            {bookmark.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
+                {bookmark.description}
+              </p>
+            )}
+          </div>
+          
+          <div className={`flex items-center space-x-1 transition-opacity ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-accent"
+              onClick={() => toggleFavoriteMutation.mutate()}
+              disabled={toggleFavoriteMutation.isPending}
+              data-testid={`button-favorite-${bookmark.id}`}
+            >
+              <Star
+                size={16}
+                className={bookmark.isFavorite ? "fill-current text-accent" : ""}
+              />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+              onClick={() => onEdit?.(bookmark)}
+              data-testid={`button-edit-${bookmark.id}`}
+            >
+              <Edit size={16} />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              onClick={handleDelete}
+              disabled={deleteBookmarkMutation.isPending}
+              data-testid={`button-delete-${bookmark.id}`}
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
+          <Globe size={12} />
+          <span className="truncate" data-testid={`bookmark-domain-${bookmark.id}`}>
+            {getDomain(bookmark.url)}
+          </span>
+          <span>•</span>
+          <span data-testid={`bookmark-date-${bookmark.id}`}>{timeAgo}</span>
+        </div>
+
+        {bookmark.tags && bookmark.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {bookmark.tags.map((tag, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="text-xs hover:bg-secondary/80 cursor-pointer"
+                data-testid={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}-${bookmark.id}`}
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-0 h-auto text-primary hover:text-primary/80 font-medium"
+          onClick={handleVisit}
+          data-testid={`button-visit-${bookmark.id}`}
+        >
+          <span>Visit</span>
+          <ExternalLink size={12} className="ml-1" />
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
