@@ -98,7 +98,15 @@ function BookmarksContent() {
   const hasActiveFilters = searchQuery || selectedCategory || selectedTags.length > 0;
 
   if (!stats) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+          <h2 className="text-lg font-medium text-foreground mb-2">Memorize</h2>
+          <p className="text-sm text-muted-foreground">Loading your bookmarks...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
