@@ -2,14 +2,25 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookmarkSchema, insertCategorySchema, insertUserPreferencesSchema } from "@shared/schema";
+import { requireAuth, setupAuth } from "./auth";
 import { z } from "zod";
 
+// Vensera user ID for temporary fallback access
+const VENSERA_USER_ID = 'c73053f2-ec15-438c-8af0-3bf8c7954454';
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication first - this adds passport middleware and session support
+  setupAuth(app);
+
+  // Helper function to get userId from request or fallback to vensera
+  const getUserId = (req: any): string => {
+    return req.isAuthenticated() ? req.user.id : VENSERA_USER_ID;
+  };
 
   // Helper function to verify passcode for protected bookmark operations
-  const verifyProtectedBookmarkAccess = async (bookmarkId: number, providedPasscode: string | undefined, req: any): Promise<{ success: boolean; error?: { status: number; message: string } }> => {
+  const verifyProtectedBookmarkAccess = async (userId: string, bookmarkId: number, providedPasscode: string | undefined, req: any): Promise<{ success: boolean; error?: { status: number; message: string } }> => {
     // Get the bookmark to check if it's protected
-    const bookmark = await storage.getBookmark(bookmarkId);
+    const bookmark = await storage.getBookmark(userId, bookmarkId);
     if (!bookmark) {
       return { success: false, error: { status: 404, message: "Bookmark not found" } };
     }
@@ -42,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Verify the passcode
-    const isValid = await storage.verifyBookmarkPasscode(bookmarkId, providedPasscode);
+    const isValid = await storage.verifyBookmarkPasscode(userId, bookmarkId, providedPasscode);
     
     // Log failed attempts for monitoring
     if (!isValid) {
@@ -63,6 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bookmark routes
   app.get("/api/bookmarks", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const search = req.query.search as string;
       const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
       const isFavorite = req.query.isFavorite === "true" ? true : undefined;
@@ -70,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sortBy = (req.query.sortBy as "name" | "createdAt" | "isFavorite") || "createdAt";
       const sortOrder = (req.query.sortOrder as "asc" | "desc") || "desc";
 
-      const bookmarks = await storage.getBookmarks({
+      const bookmarks = await storage.getBookmarks(userId, {
         search,
         categoryId,
         isFavorite,
@@ -88,8 +100,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/bookmarks/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const bookmark = await storage.getBookmark(id);
+      const bookmark = await storage.getBookmark(userId, id);
       
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
@@ -102,10 +115,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bookmarks", async (req, res) => {
+  app.post("/api/bookmarks", requireAuth, async (req, res) => {
     try {
+      const userId = req.user!.id;
       const data = insertBookmarkSchema.parse(req.body);
-      const bookmark = await storage.createBookmark(data);
+      const bookmark = await storage.createBookmark(userId, data);
       res.status(201).json(bookmark);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -116,8 +130,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/bookmarks/:id", async (req, res) => {
+  app.patch("/api/bookmarks/:id", requireAuth, async (req, res) => {
     try {
+      const userId = req.user!.id;
       const id = parseInt(req.params.id);
       
       // Validate bookmark ID
@@ -132,13 +147,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { passcode } = req.body;
       
       // Verify access for protected bookmarks
-      const accessResult = await verifyProtectedBookmarkAccess(id, passcode, req);
+      const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
       
       // Proceed with update if access is granted
-      const bookmark = await storage.updateBookmark(id, data);
+      const bookmark = await storage.updateBookmark(userId, id, data);
       res.json(bookmark);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -149,8 +164,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/bookmarks/:id", async (req, res) => {
+  app.delete("/api/bookmarks/:id", requireAuth, async (req, res) => {
     try {
+      const userId = req.user!.id;
       const id = parseInt(req.params.id);
       
       // Validate bookmark ID
@@ -162,13 +178,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { passcode } = req.body;
       
       // Verify access for protected bookmarks
-      const accessResult = await verifyProtectedBookmarkAccess(id, passcode, req);
+      const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
       
       // Proceed with deletion if access is granted
-      await storage.deleteBookmark(id);
+      await storage.deleteBookmark(userId, id);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting bookmark:", error);
@@ -179,6 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Passcode verification endpoint
   app.post("/api/bookmarks/:id/verify-passcode", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
       
       // Validate bookmark ID
@@ -198,12 +215,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Check if bookmark exists first (avoid revealing existence through timing)
-      const bookmark = await storage.getBookmark(id);
+      const bookmark = await storage.getBookmark(userId, id);
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
       }
       
-      const isValid = await storage.verifyBookmarkPasscode(id, passcode);
+      const isValid = await storage.verifyBookmarkPasscode(userId, id, passcode);
       
       // Log failed attempts for monitoring
       if (!isValid) {
@@ -220,10 +237,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Category routes
   app.get("/api/categories", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const withCounts = req.query.withCounts === "true";
       const categories = withCounts 
-        ? await storage.getCategoriesWithCounts()
-        : await storage.getCategories();
+        ? await storage.getCategoriesWithCounts(userId)
+        : await storage.getCategories(userId);
       res.json(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -233,8 +251,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/categories/:id", async (req, res) => {
     try {
+      const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      const category = await storage.getCategory(id);
+      const category = await storage.getCategory(userId, id);
       
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
@@ -247,10 +266,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", async (req, res) => {
+  app.post("/api/categories", requireAuth, async (req, res) => {
     try {
+      const userId = req.user!.id;
       const data = insertCategorySchema.parse(req.body);
-      const category = await storage.createCategory(data);
+      const category = await storage.createCategory(userId, data);
       res.status(201).json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -261,11 +281,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/categories/:id", async (req, res) => {
+  app.patch("/api/categories/:id", requireAuth, async (req, res) => {
     try {
+      const userId = req.user!.id;
       const id = parseInt(req.params.id);
       const data = insertCategorySchema.partial().parse(req.body);
-      const category = await storage.updateCategory(id, data);
+      const category = await storage.updateCategory(userId, id, data);
       res.json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -276,10 +297,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", async (req, res) => {
+  app.delete("/api/categories/:id", requireAuth, async (req, res) => {
     try {
+      const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      await storage.deleteCategory(id);
+      await storage.deleteCategory(userId, id);
       res.status(204).send();
     } catch (error) {
       console.error("Error deleting category:", error);
@@ -290,7 +312,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stats route
   app.get("/api/stats", async (req, res) => {
     try {
-      const stats = await storage.getBookmarkStats();
+      const userId = getUserId(req);
+      const stats = await storage.getBookmarkStats(userId);
       res.json(stats);
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -301,7 +324,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User Preferences routes
   app.get("/api/preferences", async (req, res) => {
     try {
-      const preferences = await storage.getUserPreferences();
+      const userId = getUserId(req);
+      const preferences = await storage.getUserPreferences(userId);
       if (!preferences) {
         // Return default preferences if none exist
         return res.json({
@@ -316,10 +340,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/preferences", async (req, res) => {
+  app.patch("/api/preferences", requireAuth, async (req, res) => {
     try {
+      const userId = req.user!.id; // Use authenticated user ID only
       const data = insertUserPreferencesSchema.partial().parse(req.body);
-      const preferences = await storage.updateUserPreferences(data);
+      const preferences = await storage.updateUserPreferences(userId, data);
       res.json(preferences);
     } catch (error) {
       if (error instanceof z.ZodError) {

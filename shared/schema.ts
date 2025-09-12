@@ -13,7 +13,8 @@ export const users = pgTable("users", {
 
 // User Preferences schema (moved up to be defined before it's referenced)
 export const userPreferences = pgTable("user_preferences", {
-  userId: varchar("user_id").primaryKey(),
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  userId: varchar("user_id").notNull(),
   theme: varchar("theme", { length: 10 }).notNull().default("light"),
   viewMode: varchar("view_mode", { length: 10 }).notNull().default("grid"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -128,6 +129,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const insertUserPreferencesSchema = createInsertSchema(userPreferences).omit({
+  id: true,
   createdAt: true,
   updatedAt: true,
   userId: true, // userId will be added server-side from authenticated user
