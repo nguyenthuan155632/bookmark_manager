@@ -59,7 +59,7 @@ function PasscodeInput({
         />
         
         {/* Visual circles */}
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           {[0, 1, 2, 3].map((index) => {
             const isFilled = index < value.length;
             const isActive = index === value.length && value.length < 4;
@@ -71,9 +71,9 @@ function PasscodeInput({
                 onClick={handleCircleClick}
                 disabled={disabled}
                 className={`
-                  size-10 rounded-full border-2 bg-background flex items-center justify-center 
+                  size-8 rounded-full border bg-background flex items-center justify-center 
                   transition-all duration-150 ring-offset-background
-                  ${isActive ? "ring-2 ring-primary border-primary" : "border-input"}
+                  ${isActive ? "ring-1 ring-primary border-primary" : "border-input"}
                   ${disabled ? "opacity-50 cursor-not-allowed" : "hover:border-ring cursor-pointer"}
                 `}
                 data-testid={`dot-password-digit-${index}`}
@@ -82,7 +82,7 @@ function PasscodeInput({
               >
                 {isFilled && (
                   <span 
-                    className="size-2.5 rounded-full bg-foreground transition-transform duration-150 animate-in zoom-in-50"
+                    className="size-2 rounded-full bg-foreground transition-transform duration-150 animate-in zoom-in-50"
                   />
                 )}
               </button>
