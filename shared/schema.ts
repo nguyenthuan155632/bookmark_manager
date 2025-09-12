@@ -39,6 +39,8 @@ export const bookmarks = pgTable("bookmarks", {
   categoryId: integer("category_id"),
   userId: varchar("user_id").notNull(),
   passcodeHash: text("passcode_hash"),
+  isShared: boolean("is_shared").default(false),
+  shareId: varchar("share_id", { length: 36 }).unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
