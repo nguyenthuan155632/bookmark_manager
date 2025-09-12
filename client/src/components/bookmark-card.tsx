@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon, CheckCircle, XCircle, HelpCircle, Link, MoreHorizontal } from "lucide-react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon, CheckCircle, XCircle, HelpCircle, Link, MoreHorizontal, RotateCcw } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -34,14 +34,14 @@ interface BookmarkCardProps {
   isShareLoading?: boolean;
 }
 
-export function BookmarkCard({ 
-  bookmark, 
-  onEdit, 
-  onView, 
-  onShare, 
+export function BookmarkCard({
+  bookmark,
+  onEdit,
+  onView,
+  onShare,
   onCopyShareLink,
-  isProtected = false, 
-  onUnlock, 
+  isProtected = false,
+  onUnlock,
   onLock,
   bulkMode = false,
   isSelected = false,
@@ -86,7 +86,7 @@ export function BookmarkCard({
   }>({
     queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`],
     enabled: !isProtected && (
-      bookmark.screenshotStatus === 'pending' || 
+      bookmark.screenshotStatus === 'pending' ||
       thumbnailRetryCount > 0
     ),
     refetchInterval: (query) => (query.state.data?.status === 'pending') ? 3000 : false,
@@ -105,14 +105,14 @@ export function BookmarkCard({
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["/api/bookmarks"],
-        exact: false 
+        exact: false
       });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
-        description: bookmark.isFavorite 
-          ? "Removed from favorites" 
+        description: bookmark.isFavorite
+          ? "Removed from favorites"
           : "Added to favorites",
       });
     },
@@ -132,9 +132,9 @@ export function BookmarkCard({
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["/api/bookmarks"],
-        exact: false 
+        exact: false
       });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
@@ -156,9 +156,9 @@ export function BookmarkCard({
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["/api/bookmarks"],
-        exact: false 
+        exact: false
       });
       queryClient.invalidateQueries({ queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`] });
       setThumbnailRetryCount(prev => prev + 1);
@@ -182,9 +182,9 @@ export function BookmarkCard({
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["/api/bookmarks"],
-        exact: false 
+        exact: false
       });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
@@ -280,7 +280,7 @@ export function BookmarkCard({
 
     const status = bookmark.linkStatus || 'unknown';
     const lastChecked = bookmark.lastLinkCheckAt;
-    const lastCheckedText = lastChecked 
+    const lastCheckedText = lastChecked
       ? `Last checked ${formatDistanceToNow(new Date(lastChecked), { addSuffix: true })}`
       : 'Never checked';
 
@@ -376,9 +376,8 @@ export function BookmarkCard({
             ref={imageRef}
             src={currentScreenshotUrl}
             alt={`Screenshot of ${bookmark.name}`}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             loading="lazy"
@@ -405,8 +404,8 @@ export function BookmarkCard({
           );
         case 'failed':
           return (
-            <div 
-              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors" 
+            <div
+              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors"
               onClick={handleGenerateScreenshot}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -423,14 +422,14 @@ export function BookmarkCard({
                 <AlertCircle size={16} className="text-muted-foreground" />
                 <RefreshCw size={14} className="text-muted-foreground group-hover/thumb:rotate-180 transition-transform" />
               </div>
-              <span className="text-xs text-muted-foreground text-center">Failed to generate<br/>Click to retry</span>
+              <span className="text-xs text-muted-foreground text-center">Failed to generate<br />Click to retry</span>
             </div>
           );
         case 'idle':
         default:
           return (
-            <div 
-              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors" 
+            <div
+              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors"
               onClick={handleGenerateScreenshot}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -447,7 +446,7 @@ export function BookmarkCard({
                 <ImageIcon size={20} className="text-muted-foreground" />
                 <Camera size={16} className="text-muted-foreground group-hover/thumb:scale-110 transition-transform" />
               </div>
-              <span className="text-xs text-muted-foreground text-center">No preview<br/>Click to generate</span>
+              <span className="text-xs text-muted-foreground text-center">No preview<br />Click to generate</span>
             </div>
           );
       }
@@ -457,13 +456,11 @@ export function BookmarkCard({
   };
 
   return (
-    <Card 
+    <Card
       ref={cardRef}
-      className={`group hover:shadow-md transition-shadow ${
-        isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
-      } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${
-        bulkMode ? 'cursor-pointer' : ''
-      }`}
+      className={`group hover:shadow-md transition-shadow ${isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
+        } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${bulkMode ? 'cursor-pointer' : ''
+        }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={bulkMode ? () => onSelect?.(bookmark.id, !isSelected) : undefined}
@@ -474,66 +471,129 @@ export function BookmarkCard({
         <div className="mb-4">
           <ThumbnailDisplay />
         </div>
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-start gap-3 flex-1">
-            {bulkMode && (
-              <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={(checked) => onSelect?.(bookmark.id, checked as boolean)}
-                  data-testid={`checkbox-select-${bookmark.id}`}
-                />
-              </div>
-            )}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                {isProtected && (
-                  <Lock size={14} className="text-muted-foreground flex-shrink-0" data-testid={`lock-icon-${bookmark.id}`} />
-                )}
-                <h3 className="font-medium text-foreground line-clamp-2" data-testid={`bookmark-title-${bookmark.id}`}>
-                  {isProtected ? "••• Protected Bookmark •••" : bookmark.name}
-                </h3>
-              </div>
-              {isProtected ? (
-                <p className="text-sm text-muted-foreground italic line-clamp-2" data-testid={`bookmark-protected-text-${bookmark.id}`}>
-                  Protected content - click to unlock
-                </p>
-              ) : (
-                bookmark.description && (
-                  <div className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        p: ({ children }) => <span className="inline">{children}</span>,
-                        h1: ({ children }) => <span className="font-semibold">{children}</span>,
-                        h2: ({ children }) => <span className="font-semibold">{children}</span>,
-                        h3: ({ children }) => <span className="font-semibold">{children}</span>,
-                        h4: ({ children }) => <span className="font-semibold">{children}</span>,
-                        h5: ({ children }) => <span className="font-semibold">{children}</span>,
-                        h6: ({ children }) => <span className="font-semibold">{children}</span>,
-                        strong: ({ children }) => <span className="font-bold">{children}</span>,
-                        em: ({ children }) => <span className="italic">{children}</span>,
-                        code: ({ children }) => <span className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</span>,
-                        a: ({ children, href }) => <span className="text-primary underline">{children}</span>,
-                        ul: ({ children }) => <span className="inline">{children}</span>,
-                        ol: ({ children }) => <span className="inline">{children}</span>,
-                        li: ({ children }) => <span className="inline">{children} • </span>,
-                        pre: () => null, // Hide code blocks in card preview
-                        blockquote: ({ children }) => <span className="italic border-l-2 border-primary/30 pl-2">{children}</span>
-                      }}
-                    >
-                      {bookmark.description}
-                    </ReactMarkdown>
-                  </div>
-                )
-              )}
+        <div className="flex items-start gap-3 mb-3">
+          {bulkMode && (
+            <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={(checked) => onSelect?.(bookmark.id, checked as boolean)}
+                data-testid={`checkbox-select-${bookmark.id}`}
+              />
             </div>
+          )}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              {isProtected && (
+                <Lock size={14} className="text-muted-foreground flex-shrink-0" data-testid={`lock-icon-${bookmark.id}`} />
+              )}
+              <h3 className="font-medium text-foreground line-clamp-2" data-testid={`bookmark-title-${bookmark.id}`}>
+                {isProtected ? "••• Protected Bookmark •••" : bookmark.name}
+              </h3>
+            </div>
+            {isProtected ? (
+              <p className="text-sm text-muted-foreground italic line-clamp-2" data-testid={`bookmark-protected-text-${bookmark.id}`}>
+                Protected content - click to unlock
+              </p>
+            ) : (
+              bookmark.description && (
+                <div className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => <span className="inline">{children}</span>,
+                      h1: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h2: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h3: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h4: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h5: ({ children }) => <span className="font-semibold">{children}</span>,
+                      h6: ({ children }) => <span className="font-semibold">{children}</span>,
+                      strong: ({ children }) => <span className="font-bold">{children}</span>,
+                      em: ({ children }) => <span className="italic">{children}</span>,
+                      code: ({ children }) => <span className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</span>,
+                      a: ({ children, href }) => <span className="text-primary underline">{children}</span>,
+                      ul: ({ children }) => <span className="inline">{children}</span>,
+                      ol: ({ children }) => <span className="inline">{children}</span>,
+                      li: ({ children }) => <span className="inline">{children} • </span>,
+                      pre: () => null, // Hide code blocks in card preview
+                      blockquote: ({ children }) => <span className="italic border-l-2 border-primary/30 pl-2">{children}</span>
+                    }}
+                  >
+                    {bookmark.description}
+                  </ReactMarkdown>
+                </div>
+              )
+            )}
           </div>
-          
-          <div className={`flex items-center space-x-1 transition-opacity ${
-            isHovered ? "opacity-100" : "opacity-0"
-          }`}>
-            {/* Priority Actions - Always Visible */}
+        </div>
+
+        <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
+          <Globe size={12} />
+          <span className="truncate" data-testid={`bookmark-domain-${bookmark.id}`}>
+            {isProtected ? "••••••••" : getDomain(bookmark.url)}
+          </span>
+          <span>•</span>
+          <span data-testid={`bookmark-date-${bookmark.id}`}>{timeAgo}</span>
+        </div>
+
+        {!isProtected && ((bookmark.tags?.length ?? 0) > 0 || bookmark.isShared || bookmark.linkStatus) && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            <LinkStatusBadge />
+            {bookmark.tags && bookmark.tags.map((tag, index) => (
+              <Badge
+                key={index}
+                variant="secondary"
+                className="text-xs hover:bg-secondary/80 cursor-pointer"
+                data-testid={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}-${bookmark.id}`}
+              >
+                {tag}
+              </Badge>
+            ))}
+            {bookmark.isShared && (
+              <Badge
+                variant="outline"
+                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
+                data-testid={`shared-badge-${bookmark.id}`}
+              >
+                <Share2 size={10} className="mr-1" />
+                Shared
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {isProtected && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            <LinkStatusBadge />
+            <Badge
+              variant="outline"
+              className="text-xs text-muted-foreground border-muted-foreground/30"
+              data-testid={`protected-badge-${bookmark.id}`}
+            >
+              <Lock size={10} className="mr-1" />
+              Protected
+            </Badge>
+          </div>
+        )}
+
+        {!isProtected && !bookmark.tags?.length && (bookmark.isShared || bookmark.linkStatus) && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            <LinkStatusBadge />
+            {bookmark.isShared && (
+              <Badge
+                variant="outline"
+                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
+                data-testid={`shared-badge-${bookmark.id}`}
+              >
+                <Share2 size={10} className="mr-1" />
+                Shared
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Action Buttons - Bottom of Card, Flex Wrap */}
+        <div className="mb-3">
+          <div className="flex flex-wrap items-center justify-center gap-1">
             <Button
               size="sm"
               variant="ghost"
@@ -568,9 +628,8 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
-                bookmark.isShared ? 'text-blue-500' : ''
-              }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${bookmark.isShared ? 'text-blue-500' : ''
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 onShare?.(bookmark);
@@ -600,268 +659,100 @@ export function BookmarkCard({
               <Trash2 size={16} />
             </Button>
 
-            {/* Desktop Only Actions - Hidden on Mobile */}
-            <div className="hidden md:flex items-center space-x-1">
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-green-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopy();
-                }}
-                data-testid={`button-copy-${bookmark.id}`}
-                title="Copy URL to clipboard"
-              >
-                <Copy size={16} />
-              </Button>
-
-              <Button
-                size="sm"
-                variant="ghost"
-                className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
-                  generateScreenshotMutation.isPending ? 'animate-pulse' : ''
-                }`}
-                onClick={handleGenerateScreenshot}
-                disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
-                title={currentScreenshotStatus === 'pending' ? 'Generating screenshot...' : 'Generate screenshot'}
-                data-testid={`button-screenshot-${bookmark.id}`}
-              >
-                {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
-                  <RefreshCw size={16} className="animate-spin" />
-                ) : (
-                  <Camera size={16} />
-                )}
-              </Button>
-
-              <Button
-                size="sm"
-                variant="ghost"
-                className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
-                  checkLinkMutation.isPending ? 'animate-pulse' : ''
-                }`}
-                onClick={handleCheckLink}
-                disabled={checkLinkMutation.isPending || isProtected}
-                title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}
-                data-testid={`button-check-link-${bookmark.id}`}
-              >
-                {checkLinkMutation.isPending ? (
-                  <RefreshCw size={16} className="animate-spin" />
-                ) : (
-                  <Link size={16} />
-                )}
-              </Button>
-
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onView?.(bookmark);
-                }}
-                disabled={isProtected}
-                data-testid={`button-view-${bookmark.id}`}
-              >
-                <Eye size={16} />
-              </Button>
-
-              {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopyShareLink?.(bookmark);
-                  }}
-                  title="Copy share link"
-                  data-testid={`button-copy-share-link-${bookmark.id}`}
-                >
-                  <Link size={16} />
-                </Button>
-              )}
-
-              {bookmark.hasPasscode && !isProtected && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-500"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLock?.();
-                  }}
-                  data-testid={`button-lock-${bookmark.id}`}
-                >
-                  <Lock size={16} />
-                </Button>
-              )}
-            </div>
-
-            {/* Mobile Overflow Menu - Visible on Mobile Only */}
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                    data-testid={`button-more-actions-${bookmark.id}`}
-                  >
-                    <MoreHorizontal size={16} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCopy();
-                    }}
-                    data-testid={`menu-copy-url-${bookmark.id}`}
-                  >
-                    <Copy size={16} className="mr-2" />
-                    Copy URL
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onView?.(bookmark);
-                    }}
-                    disabled={isProtected}
-                    data-testid={`menu-view-details-${bookmark.id}`}
-                  >
-                    <Eye size={16} className="mr-2" />
-                    View Details
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGenerateScreenshot(e as any);
-                    }}
-                    disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
-                    data-testid={`menu-screenshot-${bookmark.id}`}
-                  >
-                    {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
-                      <RefreshCw size={16} className="mr-2 animate-spin" />
-                    ) : (
-                      <Camera size={16} className="mr-2" />
-                    )}
-                    {currentScreenshotStatus === 'pending' ? 'Generating...' : 'Generate Screenshot'}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCheckLink(e as any);
-                    }}
-                    disabled={checkLinkMutation.isPending || isProtected}
-                    data-testid={`menu-check-link-${bookmark.id}`}
-                  >
-                    {checkLinkMutation.isPending ? (
-                      <RefreshCw size={16} className="mr-2 animate-spin" />
-                    ) : (
-                      <Link size={16} className="mr-2" />
-                    )}
-                    {checkLinkMutation.isPending ? 'Checking...' : 'Check Link'}
-                  </DropdownMenuItem>
-
-                  {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCopyShareLink?.(bookmark);
-                      }}
-                      data-testid={`menu-copy-share-link-${bookmark.id}`}
-                    >
-                      <Link size={16} className="mr-2" />
-                      Copy Share Link
-                    </DropdownMenuItem>
-                  )}
-
-                  {bookmark.hasPasscode && !isProtected && (
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onLock?.();
-                      }}
-                      data-testid={`menu-lock-${bookmark.id}`}
-                    >
-                      <Lock size={16} className="mr-2" />
-                      Lock Bookmark
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
-          <Globe size={12} />
-          <span className="truncate" data-testid={`bookmark-domain-${bookmark.id}`}>
-            {isProtected ? "••••••••" : getDomain(bookmark.url)}
-          </span>
-          <span>•</span>
-          <span data-testid={`bookmark-date-${bookmark.id}`}>{timeAgo}</span>
-        </div>
-
-        {!isProtected && (bookmark.tags?.length > 0 || bookmark.isShared || bookmark.linkStatus) && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            <LinkStatusBadge />
-            {bookmark.tags && bookmark.tags.map((tag, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="text-xs hover:bg-secondary/80 cursor-pointer"
-                data-testid={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}-${bookmark.id}`}
-              >
-                {tag}
-              </Badge>
-            ))}
-            {bookmark.isShared && (
-              <Badge
-                variant="outline"
-                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
-                data-testid={`shared-badge-${bookmark.id}`}
-              >
-                <Share2 size={10} className="mr-1" />
-                Shared
-              </Badge>
-            )}
-          </div>
-        )}
-        
-        {isProtected && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            <LinkStatusBadge />
-            <Badge
-              variant="outline"
-              className="text-xs text-muted-foreground border-muted-foreground/30"
-              data-testid={`protected-badge-${bookmark.id}`}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-green-500"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopy();
+              }}
+              data-testid={`button-copy-${bookmark.id}`}
+              title="Copy URL to clipboard"
             >
-              <Lock size={10} className="mr-1" />
-              Protected
-            </Badge>
-          </div>
-        )}
-        
-        {!isProtected && !bookmark.tags?.length && (bookmark.isShared || bookmark.linkStatus) && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            <LinkStatusBadge />
-            {bookmark.isShared && (
-              <Badge
-                variant="outline"
-                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
-                data-testid={`shared-badge-${bookmark.id}`}
+              <Copy size={16} />
+            </Button>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${generateScreenshotMutation.isPending ? 'animate-pulse' : ''
+                }`}
+              onClick={handleGenerateScreenshot}
+              disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
+              title={currentScreenshotStatus === 'pending' ? 'Generating screenshot...' : 'Generate screenshot'}
+              data-testid={`button-screenshot-${bookmark.id}`}
+            >
+              {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
+                <RefreshCw size={16} className="animate-spin" />
+              ) : (
+                <Camera size={16} />
+              )}
+            </Button>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${checkLinkMutation.isPending ? 'animate-pulse' : ''
+                }`}
+              onClick={handleCheckLink}
+              disabled={checkLinkMutation.isPending || isProtected}
+              title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}
+              data-testid={`button-check-link-${bookmark.id}`}
+            >
+              {checkLinkMutation.isPending ? (
+                <RefreshCw size={16} className="animate-spin" />
+              ) : (
+                <RotateCcw size={16} />
+              )}
+            </Button>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                onView?.(bookmark);
+              }}
+              disabled={isProtected}
+              data-testid={`button-view-${bookmark.id}`}
+            >
+              <Eye size={16} />
+            </Button>
+
+            {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopyShareLink?.(bookmark);
+                }}
+                title="Copy share link"
+                data-testid={`button-copy-share-link-${bookmark.id}`}
               >
-                <Share2 size={10} className="mr-1" />
-                Shared
-              </Badge>
+                <Link size={16} />
+              </Button>
+            )}
+
+            {bookmark.hasPasscode && !isProtected && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLock?.();
+                }}
+                data-testid={`button-lock-${bookmark.id}`}
+              >
+                <Lock size={16} />
+              </Button>
             )}
           </div>
-        )}
+        </div>
 
         <Button
           variant="ghost"

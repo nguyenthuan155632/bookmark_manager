@@ -12,12 +12,11 @@ import {
   LogOut,
   CheckSquare,
   Square,
-  Trash2,
-  FolderOpen,
   CheckCircle,
   XCircle,
   HelpCircle,
   Link,
+  AlertCircle,
   RefreshCw,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,18 +43,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import type { Bookmark, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -94,7 +81,6 @@ function BookmarksContent() {
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [bulkPasscodes, setBulkPasscodes] = useState<Record<string, string>>({});
-  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
   const { theme, setTheme } = useTheme();
   const { logoutMutation } = useAuth();
@@ -166,15 +152,6 @@ function BookmarksContent() {
   });
 
   // Fetch bookmarks with filters
-  const bookmarkQueryParams = new URLSearchParams();
-  if (searchQuery) bookmarkQueryParams.set("search", searchQuery);
-  if (selectedCategory) bookmarkQueryParams.set("categoryId", selectedCategory);
-  if (selectedTags.length > 0)
-    bookmarkQueryParams.set("tags", selectedTags.join(","));
-  if (selectedLinkStatus) bookmarkQueryParams.set("linkStatus", selectedLinkStatus);
-  if (location === "/favorites") bookmarkQueryParams.set("isFavorite", "true");
-  bookmarkQueryParams.set("sortBy", sortBy);
-  bookmarkQueryParams.set("sortOrder", sortOrder);
 
   const { data: bookmarks = [], isLoading } = useQuery<
     (Bookmark & { category?: Category; hasPasscode?: boolean })[]
@@ -188,6 +165,26 @@ function BookmarksContent() {
       sortBy,
       sortOrder
     }],
+    queryFn: async ({ queryKey }) => {
+      const [, params] = queryKey as [string, Record<string, any>];
+      const searchParams = new URLSearchParams();
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          searchParams.set(key, String(value));
+        }
+      });
+
+      const url = `/api/bookmarks${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+      const response = await fetch(url, { credentials: "include" });
+
+      if (!response.ok) {
+        const text = (await response.text()) || response.statusText;
+        throw new Error(`${response.status}: ${text}`);
+      }
+
+      return response.json();
+    },
   });
 
   const filteredBookmarks = useMemo(() => {
@@ -275,8 +272,8 @@ function BookmarksContent() {
         sortOrder
       }], (old: any) => {
         if (!old) return old;
-        return old.map((bookmark: any) => 
-          bookmark.id === bookmarkId 
+        return old.map((bookmark: any) =>
+          bookmark.id === bookmarkId
             ? { ...bookmark, isShared, shareId: isShared ? (bookmark.shareId || 'pending') : null }
             : bookmark
         );
@@ -317,18 +314,18 @@ function BookmarksContent() {
         sortOrder
       }], (old: any) => {
         if (!old) return old;
-        return old.map((bookmark: any) => 
+        return old.map((bookmark: any) =>
           bookmark.id === updatedBookmark.id ? { ...bookmark, ...updatedBookmark } : bookmark
         );
       });
 
       // Also invalidate all bookmark queries to ensure consistency across different views
-      queryClient.invalidateQueries({ 
+      queryClient.invalidateQueries({
         queryKey: ["/api/bookmarks"],
-        exact: false 
+        exact: false
       });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      
+
       if (updatedBookmark.isShared && updatedBookmark.shareId) {
         // Copy share URL to clipboard
         const shareUrl = `${window.location.origin}/shared/${updatedBookmark.shareId}`;
@@ -373,7 +370,7 @@ function BookmarksContent() {
     }
 
     const shareUrl = `${window.location.origin}/shared/${bookmark.shareId}`;
-    
+
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast({
@@ -390,10 +387,15 @@ function BookmarksContent() {
   // Bulk link checking mutation
   const bulkCheckLinksMutation = useMutation({
     mutationFn: async ({ ids, passcodes }: { ids?: number[]; passcodes?: Record<string, string> }) => {
-      return await apiRequest("POST", "/api/bookmarks/bulk/check-links", {
+      const response = await apiRequest("POST", "/api/bookmarks/bulk/check-links", {
         ids: ids || [],
         passcodes
       });
+      const data = await response.json();
+      return {
+        checked: data.checkedIds.length,
+        results: data.failed
+      };
     },
     onSuccess: (result: { checked: number; results: any[] }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
@@ -423,21 +425,21 @@ function BookmarksContent() {
     onSuccess: (result: { deletedIds: number[]; failed: { id: number; reason: string }[] }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      
+
       // Clear selections and exit bulk mode
       setSelectedIds([]);
       setBulkPasscodes({});
-      
+
       const { deletedIds, failed } = result;
       if (deletedIds.length > 0) {
         toast({
           description: `Successfully deleted ${deletedIds.length} bookmark(s)`,
         });
       }
-      
+
       if (failed.length > 0) {
         toast({
-          variant: "destructive", 
+          variant: "destructive",
           description: `Failed to delete ${failed.length} bookmark(s): ${failed.map(f => f.reason).join(", ")}`,
         });
       }
@@ -463,18 +465,18 @@ function BookmarksContent() {
     onSuccess: (result: { movedIds: number[]; failed: { id: number; reason: string }[] }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      
+
       // Clear selections and exit bulk mode
       setSelectedIds([]);
       setBulkPasscodes({});
-      
+
       const { movedIds, failed } = result;
       if (movedIds.length > 0) {
         toast({
           description: `Successfully moved ${movedIds.length} bookmark(s)`,
         });
       }
-      
+
       if (failed.length > 0) {
         toast({
           variant: "destructive",
@@ -526,19 +528,18 @@ function BookmarksContent() {
 
   const handleBulkDelete = () => {
     if (selectedIds.length === 0) return;
-    setShowBulkDeleteDialog(true);
+    confirmBulkDelete();
   };
 
   const confirmBulkDelete = () => {
     if (selectedIds.length === 0) return;
-    
+
     setIsBulkOperationLoading(true);
     bulkDeleteMutation.mutate(
       { ids: selectedIds, passcodes: Object.keys(bulkPasscodes).length > 0 ? bulkPasscodes : undefined },
       {
         onSettled: () => {
           setIsBulkOperationLoading(false);
-          setShowBulkDeleteDialog(false);
         }
       }
     );
@@ -546,7 +547,7 @@ function BookmarksContent() {
 
   const handleBulkMove = (categoryId: number | null) => {
     if (selectedIds.length === 0) return;
-    
+
     setIsBulkOperationLoading(true);
     bulkMoveMutation.mutate(
       { ids: selectedIds, categoryId, passcodes: Object.keys(bulkPasscodes).length > 0 ? bulkPasscodes : undefined },
@@ -830,7 +831,7 @@ function BookmarksContent() {
                     <SelectValue placeholder="Link Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="all">
                       <div className="flex items-center space-x-2">
                         <Filter size={14} className="text-muted-foreground" />
                         <span>All Links</span>

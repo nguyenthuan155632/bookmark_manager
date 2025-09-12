@@ -12,7 +12,7 @@ const isPrivateIP = (ip: string): boolean => {
   if (parts.length !== 4 || parts.some(part => isNaN(part) || part < 0 || part > 255)) {
     return true; // Invalid IP, consider it private for safety
   }
-  
+
   // IPv4 private ranges
   if (parts[0] === 10) return true; // 10.0.0.0/8
   if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true; // 172.16.0.0/12
@@ -21,7 +21,7 @@ const isPrivateIP = (ip: string): boolean => {
   if (parts[0] === 169 && parts[1] === 254) return true; // 169.254.0.0/16 (link-local)
   if (parts[0] === 224) return true; // 224.0.0.0/4 (multicast)
   if (parts[0] >= 240) return true; // 240.0.0.0/4 (reserved)
-  
+
   return false;
 };
 
@@ -29,7 +29,7 @@ const isPrivateIP = (ip: string): boolean => {
 const isPrivateIPv6 = (ip: string): boolean => {
   // IPv6 localhost
   if (ip === '::1') return true;
-  
+
   // IPv6 private ranges (simplified check)
   if (ip.startsWith('fc') || ip.startsWith('fd')) return true; // fc00::/7
   if (ip.startsWith('fe80:')) return true; // fe80::/10 (link-local)
@@ -38,7 +38,7 @@ const isPrivateIPv6 = (ip: string): boolean => {
     const ipv4Part = ip.substring(7);
     return isPrivateIP(ipv4Part);
   }
-  
+
   return false;
 };
 
@@ -54,7 +54,7 @@ const isBlockedHostname = (hostname: string): boolean => {
     'metadata.azure.com',
     'metadata.packet.net'
   ];
-  
+
   return blocked.includes(hostname.toLowerCase());
 };
 
@@ -122,17 +122,17 @@ export class LinkCheckerService {
   /**
    * Get the current status of the service
    */
-  getStatus(): { 
-    isRunning: boolean; 
+  getStatus(): {
+    isRunning: boolean;
     isCheckInProgress: boolean;
     lastRunAt: Date | null;
     nextCheckIn?: number;
     nextRunAt?: Date;
   } {
-    const nextRunAt = this.lastRunAt 
+    const nextRunAt = this.lastRunAt
       ? new Date(this.lastRunAt.getTime() + this.CHECK_INTERVAL)
       : undefined;
-      
+
     return {
       isRunning: this.isRunning,
       isCheckInProgress: this.isCheckInProgress,
@@ -185,7 +185,7 @@ export class LinkCheckerService {
     try {
       // Get bookmarks that need checking (prioritize older/unchecked)
       const bookmarksToCheck = await storage.getBookmarksForLinkCheck(this.BATCH_SIZE);
-      
+
       if (bookmarksToCheck.length === 0) {
         console.log('No bookmarks need checking at this time');
         return { checked: 0, message: 'No bookmarks need checking' };
@@ -206,13 +206,13 @@ export class LinkCheckerService {
       // Process bookmarks in smaller concurrent batches
       for (let i = 0; i < bookmarksToCheck.length; i += this.MAX_CONCURRENT_CHECKS) {
         const batch = bookmarksToCheck.slice(i, i + this.MAX_CONCURRENT_CHECKS);
-        
+
         const batchPromises = batch.map(async (bookmark) => {
           try {
             // Simulate checking as if done by system user (no specific userId)
             // We'll call the internal performLinkCheck method directly
             const result = await this.performSingleLinkCheck(bookmark.url);
-            
+
             // Update the bookmark's link status
             await storage.updateLinkStatus(
               bookmark.id,
@@ -239,7 +239,7 @@ export class LinkCheckerService {
             console.error(`✗ Failed to check bookmark ${bookmark.id}:`, error);
             results.failed++;
             results.errors.push(`Bookmark ${bookmark.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            
+
             // Update with error status
             try {
               await storage.updateLinkStatus(bookmark.id, 'broken', undefined, undefined);
@@ -251,7 +251,7 @@ export class LinkCheckerService {
 
         // Wait for this batch to complete
         await Promise.allSettled(batchPromises);
-        
+
         // Small delay between batches to be respectful to external servers
         if (i + this.MAX_CONCURRENT_CHECKS < bookmarksToCheck.length) {
           await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
@@ -265,9 +265,9 @@ export class LinkCheckerService {
       return results;
     } catch (error) {
       console.error('Error during periodic link check:', error);
-      return { 
+      return {
         error: error instanceof Error ? error.message : 'Unknown error',
-        duration: Date.now() - startTime 
+        duration: Date.now() - startTime
       };
     } finally {
       // Always reset the in-progress flag
@@ -281,54 +281,54 @@ export class LinkCheckerService {
   private async validateUrlForSsrf(url: string): Promise<{ valid: boolean; reason?: string }> {
     try {
       const parsedUrl = new URL(url);
-      
+
       // 1. Protocol validation - only allow http/https
       if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        return { 
-          valid: false, 
-          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.` 
+        return {
+          valid: false,
+          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.`
         };
       }
 
       // 2. Hostname validation
       const hostname = parsedUrl.hostname.toLowerCase();
-      
+
       // Block dangerous hostnames
       if (isBlockedHostname(hostname)) {
         console.warn(`SSRF attempt blocked: ${hostname} from URL ${url}`);
-        return { 
-          valid: false, 
-          reason: `Blocked hostname: ${hostname}` 
+        return {
+          valid: false,
+          reason: `Blocked hostname: ${hostname}`
         };
       }
 
       // 3. IP address validation via DNS lookup
       try {
         const { address, family } = await dnsLookup(hostname);
-        
+
         // Check IPv4 private ranges
         if (family === 4 && isPrivateIP(address)) {
           console.warn(`SSRF attempt blocked: Private IPv4 ${address} for hostname ${hostname}`);
-          return { 
-            valid: false, 
-            reason: `Blocked private IPv4 address: ${address}` 
+          return {
+            valid: false,
+            reason: `Blocked private IPv4 address: ${address}`
           };
         }
-        
+
         // Check IPv6 private ranges
         if (family === 6 && isPrivateIPv6(address)) {
           console.warn(`SSRF attempt blocked: Private IPv6 ${address} for hostname ${hostname}`);
-          return { 
-            valid: false, 
-            reason: `Blocked private IPv6 address: ${address}` 
+          return {
+            valid: false,
+            reason: `Blocked private IPv6 address: ${address}`
           };
         }
       } catch (dnsError) {
         // DNS lookup failed - could be invalid domain or network issue
         console.warn(`DNS lookup failed for ${hostname}:`, dnsError);
-        return { 
-          valid: false, 
-          reason: 'DNS lookup failed - invalid or unreachable hostname' 
+        return {
+          valid: false,
+          reason: 'DNS lookup failed - invalid or unreachable hostname'
         };
       }
 
@@ -356,12 +356,12 @@ export class LinkCheckerService {
           9200, // Elasticsearch
           27017 // MongoDB
         ];
-        
+
         if (blockedPorts.includes(portNum)) {
           console.warn(`SSRF attempt blocked: Dangerous port ${portNum} for URL ${url}`);
-          return { 
-            valid: false, 
-            reason: `Blocked port: ${portNum}` 
+          return {
+            valid: false,
+            reason: `Blocked port: ${portNum}`
           };
         }
       }
@@ -369,9 +369,9 @@ export class LinkCheckerService {
       return { valid: true };
     } catch (error) {
       console.warn(`URL validation error for ${url}:`, error);
-      return { 
-        valid: false, 
-        reason: 'Invalid URL format' 
+      return {
+        valid: false,
+        reason: 'Invalid URL format'
       };
     }
   }
@@ -413,26 +413,26 @@ export class LinkCheckerService {
             signal: controller.signal,
             redirect: 'manual', // Handle redirects manually for better control
           });
-          
+
           // Check content length if available
           const contentLength = fetchResponse.headers.get('content-length');
           if (contentLength && parseInt(contentLength, 10) > this.MAX_CONTENT_LENGTH) {
             throw new Error(`Content too large: ${contentLength} bytes`);
           }
-          
+
           return fetchResponse;
         };
 
         // 4. Try HEAD request first (faster), handle redirects manually
         response = await fetchWithLimits(currentUrl, 'HEAD');
-        
+
         // Handle redirects manually with limits
         while (response.status >= 300 && response.status < 400 && redirectCount < this.MAX_REDIRECTS) {
           const location = response.headers.get('location');
           if (!location) {
             break;
           }
-          
+
           // Validate redirect URL for SSRF
           const redirectUrl = new URL(location, currentUrl).toString();
           const redirectValidation = await this.validateUrlForSsrf(redirectUrl);
@@ -440,12 +440,12 @@ export class LinkCheckerService {
             console.warn(`Redirect blocked for security: ${redirectValidation.reason} - Redirect URL: ${redirectUrl}`);
             return { linkStatus: 'broken', httpStatus: response.status };
           }
-          
+
           redirectCount++;
           currentUrl = redirectUrl;
           response = await fetchWithLimits(currentUrl, 'HEAD');
         }
-        
+
         // If we hit redirect limit, return broken
         if (redirectCount >= this.MAX_REDIRECTS && response.status >= 300 && response.status < 400) {
           console.warn(`Too many redirects (${redirectCount}) for URL: ${url}`);
@@ -471,19 +471,19 @@ export class LinkCheckerService {
         }
       } catch (fetchError) {
         clearTimeout(timeoutId);
-        
+
         if (fetchError instanceof Error) {
           if (fetchError.name === 'AbortError') {
             return { linkStatus: 'timeout', httpStatus: undefined };
           }
-          
+
           // Log security-related errors differently
           if (fetchError.message.includes('Content too large')) {
             console.warn(`Content size limit exceeded for URL: ${url}`);
             return { linkStatus: 'broken', httpStatus: undefined };
           }
         }
-        
+
         // Network errors, DNS failures, etc.
         console.warn(`Network error for URL ${url}:`, fetchError);
         return { linkStatus: 'broken', httpStatus: undefined };

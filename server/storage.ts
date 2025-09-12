@@ -11,12 +11,12 @@ const PgSession = ConnectPgSimple(session);
 export interface IStorage {
   // Session store for authentication
   sessionStore: any;
-  
+
   // User methods
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Bookmark methods
   getBookmarks(userId: string, params?: {
     search?: string;
@@ -32,7 +32,7 @@ export interface IStorage {
   updateBookmark(userId: string, id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark>;
   deleteBookmark(userId: string, id: number): Promise<void>;
   verifyBookmarkPasscode(userId: string, id: number, passcode: string): Promise<boolean>;
-  
+
   // Bulk operations
   bulkDeleteBookmarks(userId: string, ids: number[], passcodes?: Record<string, string>): Promise<{
     deletedIds: number[];
@@ -42,7 +42,7 @@ export interface IStorage {
     movedIds: number[];
     failed: { id: number; reason: string }[];
   }>;
-  
+
   // Category methods
   getCategories(userId: string): Promise<Category[]>;
   getCategoriesWithCounts(userId: string): Promise<(Category & { bookmarkCount: number })[]>;
@@ -50,7 +50,7 @@ export interface IStorage {
   createCategory(userId: string, category: InsertCategory): Promise<Category>;
   updateCategory(userId: string, id: number, category: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(userId: string, id: number): Promise<void>;
-  
+
   // Stats methods
   getBookmarkStats(userId: string): Promise<{
     total: number;
@@ -65,33 +65,33 @@ export interface IStorage {
       unknown: number;
     };
   }>;
-  
+
   // User Preferences methods
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences>;
-  
+
   // Bookmark sharing methods
   generateShareId(): string;
   setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
-  getSharedBookmark(shareId: string): Promise<{ 
-    name: string; 
-    description: string | null; 
-    url: string; 
-    tags: string[] | null; 
+  getSharedBookmark(shareId: string): Promise<{
+    name: string;
+    description: string | null;
+    url: string;
+    tags: string[] | null;
     createdAt: Date;
     category?: { name: string } | null;
   } | undefined>;
-  
+
   // Auto-tagging methods
   updateBookmarkSuggestedTags(userId: string, bookmarkId: number, suggestedTags: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
   acceptSuggestedTags(userId: string, bookmarkId: number, tagsToAccept: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
   generateAutoTags(url: string, name?: string, description?: string): Promise<string[]>;
-  
+
   // Screenshot methods
   triggerScreenshot(userId: string, bookmarkId: number): Promise<{ status: string; message: string }>;
   updateScreenshotStatus(bookmarkId: number, status: string, url?: string): Promise<void>;
   getScreenshotStatus(userId: string, bookmarkId: number): Promise<{ status: string; screenshotUrl?: string; updatedAt?: Date } | undefined>;
-  
+
   // Link checking methods
   checkBookmarkLink(userId: string, bookmarkId: number): Promise<{ linkStatus: string; httpStatus?: number; lastLinkCheckAt: Date }>;
   bulkCheckBookmarkLinks(userId: string, bookmarkIds?: number[]): Promise<{
@@ -168,7 +168,7 @@ export class DatabaseStorage implements IStorage {
 
     if (params?.tags && params.tags.length > 0) {
       // Use proper array search with array_to_string for tag filtering
-      const tagCondition = or(...params.tags.map(tag => 
+      const tagCondition = or(...params.tags.map(tag =>
         sql`array_to_string(${bookmarks.tags}, ' ') ILIKE ${`%${tag}%`}`
       ));
       if (tagCondition) {
@@ -176,15 +176,18 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    if (params?.linkStatus) {
-      // Filter by link status
+    if (params?.linkStatus && params.linkStatus !== 'all') {
+      // Filter by link status (skip if 'all' is selected)
       if (params.linkStatus === 'unknown') {
         // For 'unknown' status, include both NULL values and 'unknown' values
-        conditions.push(or(
+        const unknownCondition = or(
           isNull(bookmarks.linkStatus),
           eq(bookmarks.linkStatus, 'unknown')
-        ));
-      } else {
+        );
+        if (unknownCondition) {
+          conditions.push(unknownCondition);
+        }
+      } else if (params.linkStatus) {
         conditions.push(eq(bookmarks.linkStatus, params.linkStatus));
       }
     }
@@ -214,13 +217,13 @@ export class DatabaseStorage implements IStorage {
       updatedAt: bookmarks.updatedAt,
       category: categories,
     }).from(bookmarks)
-    .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
-    .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     // Add sorting
     const sortBy = params?.sortBy || 'createdAt';
     const sortOrder = params?.sortOrder || 'desc';
-    
+
     let finalQuery;
     if (sortBy === 'name') {
       finalQuery = baseQuery.orderBy(sortOrder === 'asc' ? asc(bookmarks.name) : desc(bookmarks.name));
@@ -266,8 +269,8 @@ export class DatabaseStorage implements IStorage {
       updatedAt: bookmarks.updatedAt,
       category: categories,
     }).from(bookmarks)
-    .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
-    .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
+      .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
+      .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
 
     if (!result) return undefined;
 
@@ -286,7 +289,7 @@ export class DatabaseStorage implements IStorage {
       ...bookmarkWithoutPasscode,
       userId, // Add userId from authenticated user
     };
-    
+
     // Hash passcode if provided and not null/undefined
     if (passcode && typeof passcode === 'string') {
       bookmarkData.passcodeHash = await bcrypt.hash(passcode, 12);
@@ -294,12 +297,12 @@ export class DatabaseStorage implements IStorage {
       // Explicitly set to null if passcode was null (remove passcode)
       bookmarkData.passcodeHash = null;
     }
-    
+
     const [newBookmark] = await db
       .insert(bookmarks)
       .values(bookmarkData)
       .returning();
-    
+
     // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = newBookmark;
     return {
@@ -314,7 +317,7 @@ export class DatabaseStorage implements IStorage {
     let updateData: Partial<InsertBookmarkInternal> = {
       ...bookmarkWithoutPasscode,
     };
-    
+
     // Hash passcode if provided and not null/undefined
     if (passcode !== undefined) {
       if (passcode && typeof passcode === 'string') {
@@ -324,13 +327,13 @@ export class DatabaseStorage implements IStorage {
         updateData.passcodeHash = null;
       }
     }
-    
+
     const [updatedBookmark] = await db
       .update(bookmarks)
       .set(updateData)
       .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)))
       .returning();
-    
+
     // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
     return {
@@ -347,11 +350,11 @@ export class DatabaseStorage implements IStorage {
     const [bookmark] = await db.select({
       passcodeHash: bookmarks.passcodeHash,
     }).from(bookmarks).where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
-    
+
     if (!bookmark || !bookmark.passcodeHash) {
       return false; // No bookmark found or no passcode set
     }
-    
+
     return await bcrypt.compare(passcode, bookmark.passcodeHash);
   }
 
@@ -382,7 +385,7 @@ export class DatabaseStorage implements IStorage {
     // Process each bookmark ID
     for (const id of ids) {
       const bookmark = userBookmarkMap.get(id);
-      
+
       if (!bookmark) {
         failed.push({ id, reason: "Bookmark not found or access denied" });
         continue;
@@ -391,7 +394,7 @@ export class DatabaseStorage implements IStorage {
       // Check if bookmark is protected and requires passcode
       if (bookmark.passcodeHash) {
         const providedPasscode = passcodes?.[id.toString()];
-        
+
         if (!providedPasscode || typeof providedPasscode !== 'string') {
           failed.push({ id, reason: "Passcode required for protected bookmark" });
           continue;
@@ -457,7 +460,7 @@ export class DatabaseStorage implements IStorage {
     // Process each bookmark ID
     for (const id of ids) {
       const bookmark = userBookmarkMap.get(id);
-      
+
       if (!bookmark) {
         failed.push({ id, reason: "Bookmark not found or access denied" });
         continue;
@@ -466,7 +469,7 @@ export class DatabaseStorage implements IStorage {
       // Check if bookmark is protected and requires passcode
       if (bookmark.passcodeHash) {
         const providedPasscode = passcodes?.[id.toString()];
-        
+
         if (!providedPasscode || typeof providedPasscode !== 'string') {
           failed.push({ id, reason: "Passcode required for protected bookmark" });
           continue;
@@ -513,10 +516,10 @@ export class DatabaseStorage implements IStorage {
       createdAt: categories.createdAt,
       bookmarkCount: sql<number>`count(${bookmarks.id})::int`,
     }).from(categories)
-    .leftJoin(bookmarks, and(eq(categories.id, bookmarks.categoryId), eq(bookmarks.userId, userId)))
-    .where(eq(categories.userId, userId))
-    .groupBy(categories.id)
-    .orderBy(asc(categories.name));
+      .leftJoin(bookmarks, and(eq(categories.id, bookmarks.categoryId), eq(bookmarks.userId, userId)))
+      .where(eq(categories.userId, userId))
+      .groupBy(categories.id)
+      .orderBy(asc(categories.name));
 
     return results;
   }
@@ -596,9 +599,9 @@ export class DatabaseStorage implements IStorage {
       status: sql<string>`COALESCE(${bookmarks.linkStatus}, 'unknown')`,
       count: sql<number>`count(*)::int`,
     })
-    .from(bookmarks)
-    .where(eq(bookmarks.userId, userId))
-    .groupBy(sql`COALESCE(${bookmarks.linkStatus}, 'unknown')`);
+      .from(bookmarks)
+      .where(eq(bookmarks.userId, userId))
+      .groupBy(sql`COALESCE(${bookmarks.linkStatus}, 'unknown')`);
 
     const linkStats = {
       total: totalResult.count,
@@ -644,7 +647,7 @@ export class DatabaseStorage implements IStorage {
   async updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences> {
     // Check if preferences record exists for this user
     const existingPreferences = await this.getUserPreferences(userId);
-    
+
     if (existingPreferences) {
       // Update existing record
       const [updatedPreferences] = await db
@@ -678,7 +681,7 @@ export class DatabaseStorage implements IStorage {
   async setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark> {
     // If enabling sharing, generate a shareId; if disabling, set to null
     const shareId = isShared ? this.generateShareId() : null;
-    
+
     const [updatedBookmark] = await db
       .update(bookmarks)
       .set({
@@ -688,21 +691,21 @@ export class DatabaseStorage implements IStorage {
       })
       .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)))
       .returning();
-    
+
     if (!updatedBookmark) {
       throw new Error('Bookmark not found');
     }
-    
+
     // Remove passcodeHash from response
     const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
     return bookmarkResponse as Bookmark;
   }
 
-  async getSharedBookmark(shareId: string): Promise<{ 
-    name: string; 
-    description: string | null; 
-    url: string; 
-    tags: string[] | null; 
+  async getSharedBookmark(shareId: string): Promise<{
+    name: string;
+    description: string | null;
+    url: string;
+    tags: string[] | null;
     createdAt: Date;
     category?: { name: string } | null;
   } | undefined> {
@@ -714,11 +717,11 @@ export class DatabaseStorage implements IStorage {
       createdAt: bookmarks.createdAt,
       categoryName: categories.name,
     }).from(bookmarks)
-    .leftJoin(categories, eq(bookmarks.categoryId, categories.id))
-    .where(and(
-      eq(bookmarks.shareId, shareId),
-      eq(bookmarks.isShared, true)
-    ));
+      .leftJoin(categories, eq(bookmarks.categoryId, categories.id))
+      .where(and(
+        eq(bookmarks.shareId, shareId),
+        eq(bookmarks.isShared, true)
+      ));
 
     if (!result) return undefined;
 
@@ -736,7 +739,7 @@ export class DatabaseStorage implements IStorage {
   async updateBookmarkSuggestedTags(userId: string, bookmarkId: number, suggestedTags: string[]): Promise<Bookmark & { hasPasscode?: boolean }> {
     const [updatedBookmark] = await db
       .update(bookmarks)
-      .set({ 
+      .set({
         suggestedTags: suggestedTags,
         updatedAt: new Date(),
       })
@@ -765,13 +768,13 @@ export class DatabaseStorage implements IStorage {
     // Merge current tags with accepted suggested tags, removing duplicates
     const currentTags = bookmark.tags || [];
     const newTags = Array.from(new Set([...currentTags, ...tagsToAccept]));
-    
+
     // Remove accepted tags from suggested tags
     const remainingSuggestedTags = (bookmark.suggestedTags || []).filter(tag => !tagsToAccept.includes(tag));
 
     const [updatedBookmark] = await db
       .update(bookmarks)
-      .set({ 
+      .set({
         tags: newTags,
         suggestedTags: remainingSuggestedTags,
         updatedAt: new Date(),
@@ -926,7 +929,7 @@ export class DatabaseStorage implements IStorage {
       // Try to fetch metadata for additional context (with timeout)
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 4001); // 5 second timeout
 
         const response = await fetch(url, {
           method: 'GET',
@@ -940,7 +943,7 @@ export class DatabaseStorage implements IStorage {
 
         if (response.ok) {
           const html = await response.text();
-          
+
           // Extract title
           const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
           const pageTitle = titleMatch?.[1]?.trim();
@@ -955,7 +958,7 @@ export class DatabaseStorage implements IStorage {
 
           // Analyze extracted content for additional tags
           const metaContent = `${pageTitle || ''} ${metaDescription || ''} ${metaKeywords || ''}`.toLowerCase();
-          
+
           // Content type detection
           if (metaContent.includes('tutorial') || metaContent.includes('how to') || metaContent.includes('guide')) {
             tags.add('tutorial');
@@ -990,7 +993,7 @@ export class DatabaseStorage implements IStorage {
 
       // Convert set to array and limit to reasonable number
       const tagArray = Array.from(tags);
-      
+
       // Return up to 8 tags, prioritizing more specific ones
       return tagArray.slice(0, 8);
 
@@ -1092,11 +1095,11 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Use Screenshot Machine API (free tier)
-      const screenshotUrl = `https://api.screenshotmachine.com?key=demo&url=${encodeURIComponent(url)}&dimension=1024x768&format=png`;
-      
+      const screenshotUrl = `https://api.screenshotmachine.com?key=934e0f&url=${encodeURIComponent(url)}&dimension=1024x768&format=png`;
+
       // Test if the screenshot service is accessible with timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 4001); // 5 second timeout
 
       const response = await fetch(screenshotUrl, {
         method: 'HEAD', // Just check if the service responds
@@ -1113,7 +1116,7 @@ export class DatabaseStorage implements IStorage {
       }
     } catch (error) {
       console.warn(`Screenshot generation failed for bookmark ${bookmarkId}:`, error instanceof Error ? error.message : 'Unknown error');
-      
+
       // Fallback to a simple placeholder image service
       try {
         const fallbackUrl = `https://via.placeholder.com/300x200/4f46e5/ffffff?text=Screenshot+Unavailable`;
@@ -1139,7 +1142,7 @@ export class DatabaseStorage implements IStorage {
       if (currentFailCount > 0 && bookmark.lastLinkCheckAt) {
         const backoffMinutes = this.calculateBackoffMinutes(currentFailCount);
         const backoffEndTime = new Date(bookmark.lastLinkCheckAt.getTime() + backoffMinutes * 60 * 1000);
-        
+
         if (new Date() < backoffEndTime) {
           console.warn(`Bookmark ${bookmarkId} is in backoff period until ${backoffEndTime.toISOString()} (${currentFailCount} failures)`);
           // Return current status without checking
@@ -1153,7 +1156,7 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Checking link for bookmark ${bookmarkId}: ${bookmark.url} (${currentFailCount} previous failures)`);
       const result = await this.performLinkCheck(bookmark.url);
-      
+
       // Calculate new fail count with exponential backoff logic
       let newFailCount: number;
       if (result.linkStatus === 'ok') {
@@ -1164,12 +1167,12 @@ export class DatabaseStorage implements IStorage {
         const nextCheckIn = this.calculateBackoffMinutes(newFailCount);
         console.warn(`✗ Link check failed for bookmark ${bookmarkId}: ${result.linkStatus} (${result.httpStatus || 'N/A'}). Next check in ${nextCheckIn} minutes (${newFailCount} total failures)`);
       }
-      
+
       // Update the bookmark with link check results
       await this.updateLinkStatus(
-        bookmarkId, 
-        result.linkStatus, 
-        result.httpStatus, 
+        bookmarkId,
+        result.linkStatus,
+        result.httpStatus,
         newFailCount
       );
 
@@ -1180,15 +1183,15 @@ export class DatabaseStorage implements IStorage {
       };
     } catch (error) {
       console.error(`Error checking link for bookmark ${bookmarkId}:`, error);
-      
+
       // Increment fail count on error
       const bookmark = await this.getBookmark(userId, bookmarkId);
       const newFailCount = (bookmark?.linkFailCount || 0) + 1;
       console.warn(`Link check error for bookmark ${bookmarkId}, incrementing fail count to ${newFailCount}`);
-      
+
       // Update with error status and incremented fail count
       await this.updateLinkStatus(bookmarkId, 'broken', undefined, newFailCount);
-      
+
       throw error;
     }
   }
@@ -1199,7 +1202,7 @@ export class DatabaseStorage implements IStorage {
   }> {
     try {
       let bookmarksToCheck;
-      
+
       if (bookmarkIds && bookmarkIds.length > 0) {
         // Check specific bookmarks
         bookmarksToCheck = [];
@@ -1212,10 +1215,10 @@ export class DatabaseStorage implements IStorage {
       } else {
         // Check all user's bookmarks
         const userBookmarks = await this.getBookmarks(userId);
-        bookmarksToCheck = userBookmarks.map(b => ({ 
-          id: b.id, 
-          url: b.url, 
-          linkFailCount: b.linkFailCount || 0 
+        bookmarksToCheck = userBookmarks.map(b => ({
+          id: b.id,
+          url: b.url,
+          linkFailCount: b.linkFailCount || 0
         }));
       }
 
@@ -1226,33 +1229,33 @@ export class DatabaseStorage implements IStorage {
       const concurrencyLimit = 5;
       for (let i = 0; i < bookmarksToCheck.length; i += concurrencyLimit) {
         const batch = bookmarksToCheck.slice(i, i + concurrencyLimit);
-        
+
         const batchPromises = batch.map(async (bookmark) => {
           try {
             const result = await this.performLinkCheck(bookmark.url);
-            
+
             await this.updateLinkStatus(
               bookmark.id,
               result.linkStatus,
               result.httpStatus,
               result.linkStatus === 'ok' ? 0 : bookmark.linkFailCount + 1
             );
-            
+
             checkedIds.push(bookmark.id);
           } catch (error) {
             console.error(`Error checking link for bookmark ${bookmark.id}:`, error);
-            failed.push({ 
-              id: bookmark.id, 
-              reason: error instanceof Error ? error.message : 'Unknown error' 
+            failed.push({
+              id: bookmark.id,
+              reason: error instanceof Error ? error.message : 'Unknown error'
             });
-            
+
             // Still update with error status
             await this.updateLinkStatus(bookmark.id, 'broken', undefined, bookmark.linkFailCount + 1);
           }
         });
 
         await Promise.allSettled(batchPromises);
-        
+
         // Small delay between batches to be respectful
         if (i + concurrencyLimit < bookmarksToCheck.length) {
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1294,17 +1297,13 @@ export class DatabaseStorage implements IStorage {
   async getBookmarksForLinkCheck(limit: number, userId?: string): Promise<{ id: number; url: string; lastLinkCheckAt: Date | null; linkFailCount?: number | null }[]> {
     try {
       const conditions = [];
-      
+
       if (userId) {
         conditions.push(eq(bookmarks.userId, userId));
       }
 
-      // Implement exponential backoff - prioritize bookmarks that:
-      // 1. Have never been checked (NULL lastLinkCheckAt)
-      // 2. Have low or zero fail counts
-      // 3. Haven't been checked recently (but respect backoff for failing URLs)
-      const currentTime = new Date();
-      
+      // Get all bookmarks first, then filter by backoff logic in JavaScript
+      // This avoids complex SQL with INTERVAL calculations that cause parameter binding issues
       const query = db
         .select({
           id: bookmarks.id,
@@ -1313,27 +1312,34 @@ export class DatabaseStorage implements IStorage {
           linkFailCount: bookmarks.linkFailCount,
         })
         .from(bookmarks)
-        .where(and(
-          conditions.length > 0 ? and(...conditions) : undefined,
-          // Only include URLs that are ready for checking based on exponential backoff
-          or(
-            // Never been checked
-            isNull(bookmarks.lastLinkCheckAt),
-            // Or passed the backoff period based on fail count
-            sql`${bookmarks.lastLinkCheckAt} + 
-                INTERVAL '${this.calculateBackoffMinutes(0)}' MINUTE * 
-                POWER(2, COALESCE(${bookmarks.linkFailCount}, 0)) < NOW()`
-          )
-        ))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(
           // Prioritize by fail count (lower first), then by last check time
           asc(sql`COALESCE(${bookmarks.linkFailCount}, 0)`),
           sql`CASE WHEN ${bookmarks.lastLinkCheckAt} IS NULL THEN 0 ELSE 1 END`,
           asc(bookmarks.lastLinkCheckAt)
         )
-        .limit(limit);
+        .limit(limit * 2); // Get more than needed since we'll filter in JS
 
-      return await query;
+      const allBookmarks = await query;
+
+      // Filter by backoff logic in JavaScript
+      const currentTime = new Date();
+      const filteredBookmarks = allBookmarks.filter(bookmark => {
+        // Never been checked - always include
+        if (!bookmark.lastLinkCheckAt) {
+          return true;
+        }
+
+        // Check if enough time has passed based on exponential backoff
+        const failCount = bookmark.linkFailCount || 0;
+        const backoffMinutes = this.calculateBackoffMinutes(failCount);
+        const backoffEndTime = new Date(bookmark.lastLinkCheckAt.getTime() + backoffMinutes * 60 * 1000);
+
+        return currentTime >= backoffEndTime;
+      });
+
+      return filteredBookmarks.slice(0, limit);
     } catch (error) {
       console.error('Error getting bookmarks for link check:', error);
       return [];
@@ -1388,26 +1394,26 @@ export class DatabaseStorage implements IStorage {
             signal: controller.signal,
             redirect: 'manual', // Handle redirects manually for better control
           });
-          
+
           // Check content length if available
           const contentLength = fetchResponse.headers.get('content-length');
           if (contentLength && parseInt(contentLength, 10) > maxContentLength) {
             throw new Error(`Content too large: ${contentLength} bytes`);
           }
-          
+
           return fetchResponse;
         };
 
         // Try HEAD request first (faster), handle redirects manually
         response = await fetchWithLimits(currentUrl, 'HEAD');
-        
+
         // Handle redirects manually with limits
         while (response.status >= 300 && response.status < 400 && redirectCount < maxRedirects) {
           const location = response.headers.get('location');
           if (!location) {
             break;
           }
-          
+
           // Validate redirect URL for SSRF
           const redirectUrl = new URL(location, currentUrl).toString();
           const redirectValidation = await this.validateUrlForSsrf(redirectUrl);
@@ -1415,12 +1421,12 @@ export class DatabaseStorage implements IStorage {
             console.warn(`Redirect blocked for security: ${redirectValidation.reason} - Redirect URL: ${redirectUrl}`);
             return { linkStatus: 'broken', httpStatus: response.status };
           }
-          
+
           redirectCount++;
           currentUrl = redirectUrl;
           response = await fetchWithLimits(currentUrl, 'HEAD');
         }
-        
+
         // If we hit redirect limit, return broken
         if (redirectCount >= maxRedirects && response.status >= 300 && response.status < 400) {
           console.warn(`Too many redirects (${redirectCount}) for URL: ${url}`);
@@ -1446,19 +1452,19 @@ export class DatabaseStorage implements IStorage {
         }
       } catch (fetchError) {
         clearTimeout(timeoutId);
-        
+
         if (fetchError instanceof Error) {
           if (fetchError.name === 'AbortError') {
             return { linkStatus: 'timeout', httpStatus: undefined };
           }
-          
+
           // Log security-related errors differently
           if (fetchError.message.includes('Content too large')) {
             console.warn(`Content size limit exceeded for URL: ${url}`);
             return { linkStatus: 'broken', httpStatus: undefined };
           }
         }
-        
+
         // Network errors, DNS failures, etc.
         console.warn(`Network error for URL ${url}:`, fetchError);
         return { linkStatus: 'broken', httpStatus: undefined };
@@ -1475,15 +1481,15 @@ export class DatabaseStorage implements IStorage {
     const { URL } = await import('url');
     const dns = await import('dns');
     const { promisify } = await import('util');
-    
+
     const dnsLookup = promisify(dns.lookup);
-    
+
     const isPrivateIP = (ip: string): boolean => {
       const parts = ip.split('.').map(Number);
       if (parts.length !== 4 || parts.some(part => isNaN(part) || part < 0 || part > 255)) {
         return true; // Invalid IP, consider it private for safety
       }
-      
+
       // IPv4 private ranges
       if (parts[0] === 10) return true; // 10.0.0.0/8
       if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true; // 172.16.0.0/12
@@ -1492,10 +1498,10 @@ export class DatabaseStorage implements IStorage {
       if (parts[0] === 169 && parts[1] === 254) return true; // 169.254.0.0/16 (link-local)
       if (parts[0] === 224) return true; // 224.0.0.0/4 (multicast)
       if (parts[0] >= 240) return true; // 240.0.0.0/4 (reserved)
-      
+
       return false;
     };
-    
+
     const isPrivateIPv6 = (ip: string): boolean => {
       if (ip === '::1') return true;
       if (ip.startsWith('fc') || ip.startsWith('fd')) return true;
@@ -1506,7 +1512,7 @@ export class DatabaseStorage implements IStorage {
       }
       return false;
     };
-    
+
     const isBlockedHostname = (hostname: string): boolean => {
       const blocked = [
         'localhost', '127.0.0.1', '::1', '0.0.0.0',
@@ -1518,12 +1524,12 @@ export class DatabaseStorage implements IStorage {
 
     try {
       const parsedUrl = new URL(url);
-      
+
       // Protocol validation
       if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        return { 
-          valid: false, 
-          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.` 
+        return {
+          valid: false,
+          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.`
         };
       }
 

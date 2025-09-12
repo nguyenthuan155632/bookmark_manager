@@ -1,9 +1,12 @@
 import { db } from './db';
 import { bookmarks, categories } from '@shared/schema';
 
+// Vensera user ID for seeding
+const VENSERA_USER_ID = 'c73053f2-ec15-438c-8af0-3bf8c7954454';
+
 async function seed() {
   console.log('Starting database seed...');
-  
+
   try {
     // Clear existing data
     console.log('Clearing existing data...');
@@ -13,11 +16,11 @@ async function seed() {
     // Seed categories
     console.log('Creating categories...');
     const createdCategories = await db.insert(categories).values([
-      { name: 'Development', parentId: null },
-      { name: 'Design', parentId: null },
-      { name: 'JavaScript', parentId: null },
-      { name: 'Learning', parentId: null },
-      { name: 'Tools', parentId: null },
+      { name: 'Development', parentId: null, userId: VENSERA_USER_ID },
+      { name: 'Design', parentId: null, userId: VENSERA_USER_ID },
+      { name: 'JavaScript', parentId: null, userId: VENSERA_USER_ID },
+      { name: 'Learning', parentId: null, userId: VENSERA_USER_ID },
+      { name: 'Tools', parentId: null, userId: VENSERA_USER_ID },
     ]).returning();
 
     const devCategory = createdCategories.find(c => c.name === 'Development');
@@ -36,6 +39,7 @@ async function seed() {
         tags: ['react', 'frontend', 'documentation'],
         isFavorite: true,
         categoryId: devCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'TypeScript Handbook',
@@ -44,6 +48,7 @@ async function seed() {
         tags: ['typescript', 'javascript', 'programming'],
         isFavorite: true,
         categoryId: jsCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'Dribbble',
@@ -52,6 +57,7 @@ async function seed() {
         tags: ['design', 'inspiration', 'ui', 'ux'],
         isFavorite: false,
         categoryId: designCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'MDN Web Docs',
@@ -60,6 +66,7 @@ async function seed() {
         tags: ['web', 'documentation', 'reference'],
         isFavorite: true,
         categoryId: devCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'Tailwind CSS',
@@ -68,6 +75,7 @@ async function seed() {
         tags: ['css', 'framework', 'frontend'],
         isFavorite: false,
         categoryId: devCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'Figma',
@@ -76,6 +84,7 @@ async function seed() {
         tags: ['design', 'prototyping', 'collaboration'],
         isFavorite: true,
         categoryId: designCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'JavaScript.info',
@@ -84,6 +93,7 @@ async function seed() {
         tags: ['javascript', 'tutorial', 'learning'],
         isFavorite: false,
         categoryId: learningCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'GitHub',
@@ -92,6 +102,7 @@ async function seed() {
         tags: ['git', 'development', 'collaboration'],
         isFavorite: true,
         categoryId: toolsCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'VS Code',
@@ -100,6 +111,7 @@ async function seed() {
         tags: ['editor', 'ide', 'development'],
         isFavorite: false,
         categoryId: toolsCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'Stack Overflow',
@@ -108,6 +120,7 @@ async function seed() {
         tags: ['programming', 'community', 'q&a'],
         isFavorite: false,
         categoryId: learningCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'Unsplash',
@@ -116,6 +129,7 @@ async function seed() {
         tags: ['photos', 'free', 'stock'],
         isFavorite: false,
         categoryId: designCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
       {
         name: 'npm',
@@ -124,6 +138,7 @@ async function seed() {
         tags: ['javascript', 'packages', 'node'],
         isFavorite: false,
         categoryId: jsCategory?.id || null,
+        userId: VENSERA_USER_ID,
       },
     ]);
 
