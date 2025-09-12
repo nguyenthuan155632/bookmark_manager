@@ -3,7 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertBookmarkSchema, insertCategorySchema, insertUserPreferencesSchema } from "@shared/schema";
 import { requireAuth, setupAuth } from "./auth";
+import { linkCheckerService } from "./link-checker-service";
 import { z } from "zod";
+import rateLimit from "express-rate-limit";
 
 // Bulk operation schemas
 const bulkDeleteSchema = z.object({
@@ -19,6 +21,32 @@ const bulkMoveSchema = z.object({
 
 // Vensera user ID for temporary fallback access
 const VENSERA_USER_ID = 'c73053f2-ec15-438c-8af0-3bf8c7954454';
+
+// Rate limiting for general link checking endpoints
+const linkCheckRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 50, // Limit each user to 50 requests per hour
+  message: { message: 'Too many link check requests, try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use user ID for authenticated requests, IP for others
+  keyGenerator: (req: any) => {
+    return req.isAuthenticated() ? req.user.id : req.ip;
+  },
+});
+
+// Stricter rate limiting for manual link checker trigger (admin endpoint)
+const adminTriggerRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Only 5 manual triggers per hour per admin
+  message: { message: 'Too many manual trigger requests, try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: any) => {
+    // Use user ID for admin requests
+    return req.isAuthenticated() ? `admin_trigger_${req.user.id}` : req.ip;
+  },
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first - this adds passport middleware and session support
@@ -687,6 +715,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting screenshot status:", error);
       res.status(500).json({ message: "Failed to get screenshot status" });
+    }
+  });
+
+  // Link checking endpoints
+  app.post("/api/bookmarks/:id/check-link", linkCheckRateLimit, requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+      
+      // Validate bookmark ID
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bookmark ID" });
+      }
+      
+      // Extract passcode from request body for security verification
+      const { passcode } = req.body;
+      
+      // Verify access for protected bookmarks
+      const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
+      if (!accessResult.success) {
+        return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
+      }
+      
+      // Perform the link check
+      const result = await storage.checkBookmarkLink(userId, id);
+      res.json(result);
+    } catch (error) {
+      console.error("Error checking bookmark link:", error);
+      res.status(500).json({ message: "Failed to check bookmark link" });
+    }
+  });
+
+  app.post("/api/bookmarks/bulk/check-links", linkCheckRateLimit, requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Validate request body
+      const bulkCheckLinkSchema = z.object({
+        ids: z.array(z.number().int().positive()).optional().default([]),
+        passcodes: z.record(z.string(), z.string().min(4).max(64)).optional()
+      });
+      
+      const { ids, passcodes } = bulkCheckLinkSchema.parse(req.body);
+      
+      // Limit to prevent abuse (max 50 bookmarks per request)
+      if (ids.length > 50) {
+        return res.status(400).json({ 
+          message: "Maximum 50 bookmarks allowed per bulk check request" 
+        });
+      }
+      
+      // If specific IDs provided, verify passcode access for protected bookmarks
+      if (ids.length > 0) {
+        const accessErrors: { id: number; reason: string }[] = [];
+        
+        for (const id of ids) {
+          const providedPasscode = passcodes ? passcodes[id.toString()] : undefined;
+          const accessResult = await verifyProtectedBookmarkAccess(userId, id, providedPasscode, req);
+          if (!accessResult.success) {
+            accessErrors.push({ id, reason: accessResult.error!.message });
+          }
+        }
+        
+        // If any access errors, return them
+        if (accessErrors.length > 0) {
+          return res.status(403).json({ 
+            message: "Access denied for some bookmarks",
+            accessErrors 
+          });
+        }
+      }
+      
+      // Perform bulk link checking
+      const result = await storage.bulkCheckBookmarkLinks(userId, ids.length > 0 ? ids : undefined);
+      res.json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error in bulk link checking:", error);
+      res.status(500).json({ message: "Failed to perform bulk link checking" });
+    }
+  });
+
+  // Link checker service management endpoints
+  app.get("/api/link-checker/status", requireAuth, async (req, res) => {
+    try {
+      const status = linkCheckerService.getStatus();
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting link checker status:", error);
+      res.status(500).json({ message: "Failed to get link checker status" });
+    }
+  });
+
+  // Helper function to check admin privileges
+  const isAdminUser = (userId: string): boolean => {
+    // For now, only VENSERA_USER_ID has admin privileges
+    // In a production system, this would check against a roles table or admin user list
+    const adminUserIds = [
+      VENSERA_USER_ID,
+      // Add more admin user IDs here as needed
+    ];
+    return adminUserIds.includes(userId);
+  };
+
+  app.post("/api/link-checker/trigger", adminTriggerRateLimit, requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Enhanced admin authorization check
+      if (!isAdminUser(userId)) {
+        // Log unauthorized attempts for monitoring
+        console.warn(`Unauthorized manual trigger attempt from user ${userId} at IP ${req.ip}`);
+        return res.status(403).json({ 
+          message: "Unauthorized: Admin privileges required to trigger manual link checks" 
+        });
+      }
+
+      console.log(`Manual link check triggered by admin user: ${userId}`);
+      const result = await linkCheckerService.triggerManualCheck();
+      res.json(result);
+    } catch (error) {
+      console.error("Error triggering manual link check:", error);
+      res.status(500).json({ message: "Failed to trigger manual link check" });
     }
   });
 
