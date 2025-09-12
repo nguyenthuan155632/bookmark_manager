@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye } from "lucide-react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -15,12 +15,13 @@ interface BookmarkCardProps {
   bookmark: Bookmark & { category?: Category; hasPasscode?: boolean };
   onEdit?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
   onView?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
+  onShare?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
   isProtected?: boolean;
   onUnlock?: () => void;
   onLock?: () => void;
 }
 
-export function BookmarkCard({ bookmark, onEdit, onView, isProtected = false, onUnlock, onLock }: BookmarkCardProps) {
+export function BookmarkCard({ bookmark, onEdit, onView, onShare, isProtected = false, onUnlock, onLock }: BookmarkCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -186,6 +187,19 @@ export function BookmarkCard({ bookmark, onEdit, onView, isProtected = false, on
             >
               <Edit size={16} />
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
+                bookmark.isShared ? 'text-blue-500' : ''
+              }`}
+              onClick={() => onShare?.(bookmark)}
+              disabled={isProtected || bookmark.hasPasscode}
+              title={bookmark.hasPasscode ? "Protected bookmarks cannot be shared" : (bookmark.isShared ? "Stop sharing" : "Share bookmark")}
+              data-testid={`button-share-${bookmark.id}`}
+            >
+              <Share2 size={16} className={bookmark.isShared ? 'fill-current' : ''} />
+            </Button>
             {bookmark.hasPasscode && !isProtected && (
               <Button
                 size="sm"
@@ -231,6 +245,16 @@ export function BookmarkCard({ bookmark, onEdit, onView, isProtected = false, on
                 {tag}
               </Badge>
             ))}
+            {bookmark.isShared && (
+              <Badge
+                variant="outline"
+                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
+                data-testid={`shared-badge-${bookmark.id}`}
+              >
+                <Share2 size={10} className="mr-1" />
+                Shared
+              </Badge>
+            )}
           </div>
         )}
         
@@ -243,6 +267,19 @@ export function BookmarkCard({ bookmark, onEdit, onView, isProtected = false, on
             >
               <Lock size={10} className="mr-1" />
               Protected
+            </Badge>
+          </div>
+        )}
+        
+        {!isProtected && !bookmark.tags?.length && bookmark.isShared && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            <Badge
+              variant="outline"
+              className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
+              data-testid={`shared-badge-${bookmark.id}`}
+            >
+              <Share2 size={10} className="mr-1" />
+              Shared
             </Badge>
           </div>
         )}

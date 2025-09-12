@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Bookmarks from "@/pages/bookmarks";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
+import { SharedBookmark } from "@/pages/shared-bookmark";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
@@ -16,6 +17,7 @@ function Router() {
       <ProtectedRoute path="/favorites" component={Bookmarks} />
       <ProtectedRoute path="/category/:id" component={Bookmarks} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/shared/:shareId" component={SharedBookmark} />
       <Route component={NotFound} />
     </Switch>
   );

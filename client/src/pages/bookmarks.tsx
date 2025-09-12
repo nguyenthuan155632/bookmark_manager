@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Bookmark, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 function BookmarksContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -65,6 +66,7 @@ function BookmarksContent() {
   const { theme, setTheme } = useTheme();
   const { logoutMutation } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch preferences from database
   const { data: preferences } = useQuery<{
@@ -182,6 +184,56 @@ function BookmarksContent() {
       const newSet = new Set(prev);
       newSet.delete(bookmark.id);
       return newSet;
+    });
+  };
+
+  // Share bookmark mutation
+  const shareBookmarkMutation = useMutation({
+    mutationFn: async ({ bookmarkId, isShared }: { bookmarkId: number; isShared: boolean }): Promise<Bookmark> => {
+      const response = await apiRequest("PATCH", `/api/bookmarks/${bookmarkId}/share`, {
+        isShared
+      });
+      return response.json();
+    },
+    onSuccess: (updatedBookmark: Bookmark) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      
+      if (updatedBookmark.isShared && updatedBookmark.shareId) {
+        // Copy share URL to clipboard
+        const shareUrl = `${window.location.origin}/shared/${updatedBookmark.shareId}`;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          toast({
+            description: "Share link copied to clipboard! Bookmark is now public.",
+          });
+        }).catch(() => {
+          toast({
+            description: `Bookmark is now shared! Share URL: ${shareUrl}`,
+          });
+        });
+      } else {
+        toast({
+          description: "Bookmark sharing disabled",
+        });
+      }
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || "Failed to update bookmark sharing";
+      toast({
+        variant: "destructive",
+        description: errorMessage,
+      });
+    }
+  });
+
+  const handleShare = (
+    bookmark: Bookmark & { category?: Category; hasPasscode?: boolean },
+  ) => {
+    // Toggle sharing status
+    const newSharingStatus = !bookmark.isShared;
+    shareBookmarkMutation.mutate({
+      bookmarkId: bookmark.id,
+      isShared: newSharingStatus
     });
   };
 
@@ -573,6 +625,7 @@ function BookmarksContent() {
                     bookmark={bookmark}
                     onEdit={handleEdit}
                     onView={handleView}
+                    onShare={handleShare}
                     isProtected={isProtected}
                     onUnlock={() => handleUnlockBookmark(bookmark)}
                     onLock={() => handleLockBookmark(bookmark)}

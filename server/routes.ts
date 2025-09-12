@@ -234,6 +234,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bookmark sharing endpoints
+  app.patch("/api/bookmarks/:id/share", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+      
+      // Validate bookmark ID
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid bookmark ID" });
+      }
+      
+      // Validate request body using Zod
+      const shareSchema = z.object({
+        isShared: z.boolean()
+      });
+      
+      const { isShared } = shareSchema.parse(req.body);
+      
+      // Get the bookmark first to check if it's protected
+      const bookmark = await storage.getBookmark(userId, id);
+      if (!bookmark) {
+        return res.status(404).json({ message: "Bookmark not found" });
+      }
+      
+      // Prevent sharing of protected bookmarks
+      if (bookmark.hasPasscode && isShared) {
+        return res.status(403).json({ message: "Protected bookmarks cannot be shared" });
+      }
+      
+      // Update bookmark sharing status
+      const updatedBookmark = await storage.setBookmarkSharing(userId, id, isShared);
+      res.json(updatedBookmark);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      }
+      console.error("Error updating bookmark sharing:", error);
+      res.status(500).json({ message: "Failed to update bookmark sharing" });
+    }
+  });
+
+  // Public shared bookmark access (no authentication required)
+  app.get("/api/shared/:shareId", async (req, res) => {
+    try {
+      const shareId = req.params.shareId;
+      
+      if (!shareId) {
+        return res.status(400).json({ message: "Share ID is required" });
+      }
+      
+      const sharedBookmark = await storage.getSharedBookmark(shareId);
+      
+      if (!sharedBookmark) {
+        return res.status(404).json({ message: "Shared bookmark not found" });
+      }
+      
+      res.json(sharedBookmark);
+    } catch (error) {
+      console.error("Error fetching shared bookmark:", error);
+      res.status(500).json({ message: "Failed to fetch shared bookmark" });
+    }
+  });
+
   // Category routes
   app.get("/api/categories", async (req, res) => {
     try {

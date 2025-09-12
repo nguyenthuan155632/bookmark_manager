@@ -4,6 +4,7 @@ import { eq, ilike, or, desc, asc, and, isNull, sql } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import ConnectPgSimple from "connect-pg-simple";
 import session from "express-session";
+import crypto from "crypto";
 
 const PgSession = ConnectPgSimple(session);
 
@@ -50,6 +51,18 @@ export interface IStorage {
   // User Preferences methods
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences>;
+  
+  // Bookmark sharing methods
+  generateShareId(): string;
+  setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
+  getSharedBookmark(shareId: string): Promise<{ 
+    name: string; 
+    description: string | null; 
+    url: string; 
+    tags: string[] | null; 
+    createdAt: Date;
+    category?: { name: string } | null;
+  } | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -138,6 +151,8 @@ export class DatabaseStorage implements IStorage {
       createdAt: bookmarks.createdAt,
       updatedAt: bookmarks.updatedAt,
       passcodeHash: bookmarks.passcodeHash,
+      isShared: bookmarks.isShared,
+      shareId: bookmarks.shareId,
       category: categories,
     }).from(bookmarks)
     .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
@@ -180,6 +195,8 @@ export class DatabaseStorage implements IStorage {
       createdAt: bookmarks.createdAt,
       updatedAt: bookmarks.updatedAt,
       passcodeHash: bookmarks.passcodeHash,
+      isShared: bookmarks.isShared,
+      shareId: bookmarks.shareId,
       category: categories,
     }).from(bookmarks)
     .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
@@ -397,6 +414,68 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newPreferences;
     }
+  }
+
+  // Bookmark sharing methods
+  generateShareId(): string {
+    return crypto.randomUUID();
+  }
+
+  async setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark> {
+    // If enabling sharing, generate a shareId; if disabling, set to null
+    const shareId = isShared ? this.generateShareId() : null;
+    
+    const [updatedBookmark] = await db
+      .update(bookmarks)
+      .set({
+        isShared,
+        shareId,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)))
+      .returning();
+    
+    if (!updatedBookmark) {
+      throw new Error('Bookmark not found');
+    }
+    
+    // Remove passcodeHash from response
+    const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
+    return bookmarkResponse as Bookmark;
+  }
+
+  async getSharedBookmark(shareId: string): Promise<{ 
+    name: string; 
+    description: string | null; 
+    url: string; 
+    tags: string[] | null; 
+    createdAt: Date;
+    category?: { name: string } | null;
+  } | undefined> {
+    const [result] = await db.select({
+      name: bookmarks.name,
+      description: bookmarks.description,
+      url: bookmarks.url,
+      tags: bookmarks.tags,
+      createdAt: bookmarks.createdAt,
+      categoryName: categories.name,
+    }).from(bookmarks)
+    .leftJoin(categories, eq(bookmarks.categoryId, categories.id))
+    .where(and(
+      eq(bookmarks.shareId, shareId),
+      eq(bookmarks.isShared, true)
+    ));
+
+    if (!result) return undefined;
+
+    return {
+      name: result.name,
+      description: result.description,
+      url: result.url,
+      tags: result.tags,
+      createdAt: result.createdAt,
+      category: result.categoryName ? { name: result.categoryName } : undefined,
+    };
   }
 }
 
