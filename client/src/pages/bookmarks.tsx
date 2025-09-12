@@ -9,11 +9,13 @@ import {
   Sun,
   Filter,
   X,
+  LogOut,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useTheme } from "@/lib/theme";
+import { useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/sidebar";
 import { BookmarkCard } from "@/components/bookmark-card";
 import { AddBookmarkModal } from "@/components/add-bookmark-modal";
@@ -59,6 +61,7 @@ function BookmarksContent() {
     new Set(),
   );
   const { theme, setTheme } = useTheme();
+  const { logoutMutation } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch preferences from database
@@ -290,6 +293,17 @@ function BookmarksContent() {
               >
                 {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
               </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                data-testid="button-logout"
+                title="Logout"
+              >
+                <LogOut size={16} />
+              </Button>
             </div>
           </div>
 
@@ -306,14 +320,27 @@ function BookmarksContent() {
                 <Menu size={20} />
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                data-testid="button-theme-toggle"
-              >
-                {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                  data-testid="button-theme-toggle"
+                >
+                  {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  data-testid="button-logout"
+                  title="Logout"
+                >
+                  <LogOut size={16} />
+                </Button>
+              </div>
             </div>
 
             {/* Bottom Section: Search Bar */}
