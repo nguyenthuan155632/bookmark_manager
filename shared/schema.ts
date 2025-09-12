@@ -35,12 +35,20 @@ export const bookmarks = pgTable("bookmarks", {
   description: text("description"),
   url: text("url").notNull(),
   tags: text("tags").array().default([]),
+  suggestedTags: text("suggested_tags").array().default([]),
   isFavorite: boolean("is_favorite").default(false),
   categoryId: integer("category_id"),
   userId: varchar("user_id").notNull(),
   passcodeHash: text("passcode_hash"),
   isShared: boolean("is_shared").default(false),
   shareId: varchar("share_id", { length: 36 }).unique(),
+  screenshotUrl: text("screenshot_url"),
+  screenshotStatus: varchar("screenshot_status", { length: 16 }).default("idle"),
+  screenshotUpdatedAt: timestamp("screenshot_updated_at"),
+  linkStatus: varchar("link_status", { length: 16 }).default("unknown"),
+  httpStatus: integer("http_status"),
+  lastLinkCheckAt: timestamp("last_link_check_at"),
+  linkFailCount: integer("link_fail_count").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -100,6 +108,14 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks).omit({
   updatedAt: true,
   userId: true, // userId will be added server-side from authenticated user
   passcodeHash: true, // Exclude internal hash field from client API
+  suggestedTags: true, // Server-managed auto-tagging
+  screenshotUrl: true, // Server-managed screenshot functionality
+  screenshotStatus: true, // Server-managed screenshot status
+  screenshotUpdatedAt: true, // Server-managed timestamp
+  linkStatus: true, // Server-managed link checking
+  httpStatus: true, // Server-managed HTTP status
+  lastLinkCheckAt: true, // Server-managed timestamp
+  linkFailCount: true, // Server-managed failure counter
 }).extend({
   // Add client-facing passcode field with validation
   passcode: z.string()
