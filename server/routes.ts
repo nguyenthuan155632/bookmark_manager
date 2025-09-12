@@ -275,6 +275,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-tagging endpoints
+  app.post("/api/bookmarks/preview-auto-tags", async (req, res) => {
+    try {
+      // Validate request body
+      const previewSchema = z.object({
+        url: z.string().url("Please provide a valid URL"),
+        name: z.string().optional(),
+        description: z.string().optional()
+      });
+      
+      const { url, name, description } = previewSchema.parse(req.body);
+      
+      // Generate suggested tags without saving to database
+      const suggestedTags = await storage.generateAutoTags(
+        url, 
+        name || "", 
+        description || undefined
+      );
+      
+      res.json({ suggestedTags });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error generating preview auto tags:", error);
+      res.status(500).json({ message: "Failed to generate tag suggestions" });
+    }
+  });
+
   app.post("/api/bookmarks/:id/auto-tags", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;

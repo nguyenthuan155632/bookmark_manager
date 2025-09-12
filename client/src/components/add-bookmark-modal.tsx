@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { X, Plus, Lock } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { X, Plus, Lock, Sparkles, Check } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { insertBookmarkSchema } from "@shared/schema";
-import type { InsertBookmark, Category } from "@shared/schema";
+import type { InsertBookmark, Category, Bookmark } from "@shared/schema";
 import { z } from "zod";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -47,6 +47,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const [tags, setTags] = useState<string[]>(editingBookmark?.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [isProtected, setIsProtected] = useState(false);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [autoTagsGenerated, setAutoTagsGenerated] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -93,6 +96,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         passcode: "", // Always start with empty passcode for security
       });
       setTags(editingBookmark.tags || []);
+      setSuggestedTags((editingBookmark as any)?.suggestedTags || []);
+      setAutoTagsGenerated(!!((editingBookmark as any)?.suggestedTags?.length));
     } else {
       setIsProtected(false);
       form.reset({
@@ -106,6 +111,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         passcode: "",
       });
       setTags([]);
+      setSuggestedTags([]);
+      setAutoTagsGenerated(false);
     }
   }, [editingBookmark, form]);
 
@@ -136,11 +143,123 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     }
   });
 
+  // Auto-tagging mutations
+  const generateAutoTagsMutation = useMutation({
+    mutationFn: async ({ bookmarkId, passcode }: { bookmarkId?: number; passcode?: string }) => {
+      if (bookmarkId) {
+        // For existing bookmarks
+        return await apiRequest("POST", `/api/bookmarks/${bookmarkId}/auto-tags`, { passcode });
+      } else {
+        // For new bookmarks, use the URL, name and description directly
+        const currentUrl = form.getValues("url");
+        const currentName = form.getValues("name");
+        const currentDescription = form.getValues("description");
+        
+        if (!currentUrl) {
+          throw new Error("URL is required to generate tag suggestions");
+        }
+        
+        // Call generateAutoTags directly from storage (we'll simulate with the existing endpoint)
+        // For now, we'll create a temporary bookmark to get suggestions
+        const response = await fetch('/api/bookmarks/preview-auto-tags', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: currentUrl,
+            name: currentName || '',
+            description: currentDescription || ''
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to generate tag suggestions');
+        }
+        
+        return await response.json();
+      }
+    },
+    onSuccess: (data: any) => {
+      const suggestions = data.suggestedTags || [];
+      setSuggestedTags(suggestions);
+      setAutoTagsGenerated(true);
+      toast({
+        description: `Generated ${suggestions.length} tag suggestions${suggestions.length === 0 ? ' (none found)' : ''}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        description: error.message || "Failed to generate tag suggestions",
+      });
+    },
+  });
+
+  const acceptSuggestedTagsMutation = useMutation({
+    mutationFn: async ({ bookmarkId, tags, passcode }: { bookmarkId: number; tags: string[]; passcode?: string }) => {
+      return await apiRequest("PATCH", `/api/bookmarks/${bookmarkId}/tags/accept`, { tags, passcode });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({
+        description: "Tags accepted successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        description: error.message || "Failed to accept suggested tags",
+      });
+    },
+  });
+
+  // Debounced URL detection for auto-tagging
+  const debouncedGenerateAutoTags = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          const currentUrl = form.getValues("url");
+          if (currentUrl && !editingBookmark && !autoTagsGenerated) {
+            try {
+              new URL(currentUrl); // Validate URL
+              setIsGeneratingSuggestions(true);
+              generateAutoTagsMutation.mutate({ passcode: isProtected ? (form.getValues("passcode") || undefined) : undefined });
+            } catch {
+              // Invalid URL, don't generate suggestions
+            }
+          }
+        }, 1500); // 1.5 second debounce
+      };
+    })(),
+    [form, editingBookmark, autoTagsGenerated, generateAutoTagsMutation, isProtected]
+  );
+
+  // Watch URL changes for auto-tagging
+  useEffect(() => {
+    if (!editingBookmark) {
+      debouncedGenerateAutoTags();
+    }
+  }, [form.watch("url"), debouncedGenerateAutoTags, editingBookmark]);
+
+  // Reset loading state when mutation completes
+  useEffect(() => {
+    if (!generateAutoTagsMutation.isPending) {
+      setIsGeneratingSuggestions(false);
+    }
+  }, [generateAutoTagsMutation.isPending]);
+
   const handleClose = () => {
     form.reset();
     setTags([]);
     setTagInput("");
     setIsProtected(false);
+    setSuggestedTags([]);
+    setAutoTagsGenerated(false);
+    setIsGeneratingSuggestions(false);
     onClose();
   };
 
@@ -157,6 +276,76 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  // Handle manual tag suggestions
+  const handleGenerateSuggestions = () => {
+    const currentUrl = form.getValues("url");
+    if (!currentUrl) {
+      toast({
+        variant: "destructive",
+        description: "Please enter a URL first to generate tag suggestions",
+      });
+      return;
+    }
+
+    try {
+      new URL(currentUrl); // Validate URL
+      setIsGeneratingSuggestions(true);
+      const passcode = isProtected ? (form.getValues("passcode") || undefined) : undefined;
+      generateAutoTagsMutation.mutate({ 
+        bookmarkId: editingBookmark?.id, 
+        passcode 
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        description: "Please enter a valid URL to generate tag suggestions",
+      });
+    }
+  };
+
+  // Handle accepting individual suggested tags
+  const handleAcceptSuggestedTag = (tagToAccept: string) => {
+    if (editingBookmark) {
+      // For existing bookmarks, use the API
+      const passcode = isProtected ? (form.getValues("passcode") || undefined) : undefined;
+      acceptSuggestedTagsMutation.mutate({ 
+        bookmarkId: editingBookmark.id, 
+        tags: [tagToAccept], 
+        passcode 
+      });
+    } else {
+      // For new bookmarks, add to local state
+      if (!tags.includes(tagToAccept)) {
+        setTags(prev => [...prev, tagToAccept]);
+      }
+    }
+    
+    // Remove from suggested tags
+    setSuggestedTags(prev => prev.filter(tag => tag !== tagToAccept));
+  };
+
+  // Handle accepting all suggested tags
+  const handleAcceptAllSuggestedTags = () => {
+    if (suggestedTags.length === 0) return;
+    
+    if (editingBookmark) {
+      // For existing bookmarks, use the API
+      const passcode = isProtected ? (form.getValues("passcode") || undefined) : undefined;
+      acceptSuggestedTagsMutation.mutate({ 
+        bookmarkId: editingBookmark.id, 
+        tags: suggestedTags, 
+        passcode 
+      });
+    } else {
+      // For new bookmarks, add to local state
+      const newTags = suggestedTags.filter(tag => !tags.includes(tag));
+      setTags(prev => [...prev, ...newTags]);
+    }
+    
+    // Clear all suggested tags
+    setSuggestedTags([]);
   };
 
   const onSubmit = (data: FormData) => {
@@ -311,7 +500,27 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Tags</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Tags</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateSuggestions}
+                disabled={isGeneratingSuggestions || generateAutoTagsMutation.isPending}
+                data-testid="button-suggest-tags"
+                className="flex items-center space-x-1"
+              >
+                <Sparkles size={14} className={isGeneratingSuggestions ? "animate-spin" : ""} />
+                <span>
+                  {isGeneratingSuggestions 
+                    ? "Generating..." 
+                    : autoTagsGenerated 
+                      ? "Regenerate Tags" 
+                      : "Suggest Tags"}
+                </span>
+              </Button>
+            </div>
             <Input
               placeholder="Add tags (press Enter to add)"
               value={tagInput}
@@ -320,6 +529,64 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
               data-testid="input-tags"
             />
             
+            {/* Suggested Tags Section */}
+            {(suggestedTags.length > 0 || isGeneratingSuggestions) && (
+              <div className="border border-border rounded-md p-3 bg-muted/20">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles size={14} className="text-muted-foreground" />
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      {isGeneratingSuggestions 
+                        ? "Generating tag suggestions..." 
+                        : `Suggested Tags (${suggestedTags.length})`}
+                    </Label>
+                  </div>
+                  {suggestedTags.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleAcceptAllSuggestedTags}
+                      disabled={acceptSuggestedTagsMutation.isPending}
+                      data-testid="button-accept-all-suggested"
+                      className="text-xs"
+                    >
+                      Accept All
+                    </Button>
+                  )}
+                </div>
+                
+                {isGeneratingSuggestions ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Sparkles size={16} className="animate-spin" />
+                      <span>Analyzing URL and content...</span>
+                    </div>
+                  </div>
+                ) : suggestedTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {suggestedTags.map((tag, index) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 flex items-center space-x-1 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                        onClick={() => handleAcceptSuggestedTag(tag)}
+                        data-testid={`suggested-tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                      >
+                        <span>{tag}</span>
+                        <Plus size={12} className="text-blue-500" />
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    No tag suggestions found for this URL
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Current Tags */}
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {tags.map((tag, index) => (
