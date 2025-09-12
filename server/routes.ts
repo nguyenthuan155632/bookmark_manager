@@ -5,7 +5,7 @@ import { insertBookmarkSchema, insertCategorySchema, insertUserPreferencesSchema
 import { requireAuth, setupAuth } from "./auth";
 import { linkCheckerService } from "./link-checker-service";
 import { z } from "zod";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 // Bulk operation schemas
 const bulkDeleteSchema = z.object({
@@ -31,7 +31,7 @@ const linkCheckRateLimit = rateLimit({
   legacyHeaders: false,
   // Use user ID for authenticated requests, IP for others
   keyGenerator: (req: any) => {
-    return req.isAuthenticated() ? req.user.id : req.ip;
+    return req.isAuthenticated() ? req.user.id : ipKeyGenerator(req);
   },
 });
 
@@ -44,7 +44,7 @@ const adminTriggerRateLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req: any) => {
     // Use user ID for admin requests
-    return req.isAuthenticated() ? `admin_trigger_${req.user.id}` : req.ip;
+    return req.isAuthenticated() ? `admin_trigger_${req.user.id}` : ipKeyGenerator(req);
   },
 });
 
@@ -72,38 +72,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // If bookmark is protected, require passcode
     if (!providedPasscode || typeof providedPasscode !== 'string') {
-      return { 
-        success: false, 
-        error: { 
-          status: 401, 
-          message: "Passcode required for protected bookmark" 
-        } 
+      return {
+        success: false,
+        error: {
+          status: 401,
+          message: "Passcode required for protected bookmark"
+        }
       };
     }
 
     // Validate passcode format
     if (providedPasscode.length < 4 || providedPasscode.length > 64) {
-      return { 
-        success: false, 
-        error: { 
-          status: 400, 
-          message: "Invalid passcode format" 
-        } 
+      return {
+        success: false,
+        error: {
+          status: 400,
+          message: "Invalid passcode format"
+        }
       };
     }
 
     // Verify the passcode
     const isValid = await storage.verifyBookmarkPasscode(userId, bookmarkId, providedPasscode);
-    
+
     // Log failed attempts for monitoring
     if (!isValid) {
       console.warn(`Failed passcode attempt for protected bookmark ${bookmarkId} from IP ${req.ip}`);
-      return { 
-        success: false, 
-        error: { 
-          status: 401, 
-          message: "Invalid passcode" 
-        } 
+      return {
+        success: false,
+        error: {
+          status: 401,
+          message: "Invalid passcode"
+        }
       };
     }
 
@@ -145,11 +145,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const bookmark = await storage.getBookmark(userId, id);
-      
+
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
       }
-      
+
       res.json(bookmark);
     } catch (error) {
       console.error("Error fetching bookmark:", error);
@@ -176,24 +176,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Parse and validate the data first
       const data = insertBookmarkSchema.partial().parse(req.body);
-      
+
       // Extract passcode from request body for security verification
       const { passcode } = req.body;
-      
+
       // Verify access for protected bookmarks
       const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
-      
+
       // Proceed with update if access is granted
       const bookmark = await storage.updateBookmark(userId, id, data);
       res.json(bookmark);
@@ -210,21 +210,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Extract passcode from request body for security verification
       const { passcode } = req.body;
-      
+
       // Verify access for protected bookmarks
       const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
-      
+
       // Proceed with deletion if access is granted
       await storage.deleteBookmark(userId, id);
       res.status(204).send();
@@ -239,36 +239,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = getUserId(req);
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       const { passcode } = req.body;
-      
+
       // Validate passcode input
       if (!passcode || typeof passcode !== 'string') {
         return res.status(400).json({ message: "Passcode is required and must be a string" });
       }
-      
+
       if (passcode.length < 4 || passcode.length > 64) {
         return res.status(400).json({ message: "Invalid passcode format" });
       }
-      
+
       // Check if bookmark exists first (avoid revealing existence through timing)
       const bookmark = await storage.getBookmark(userId, id);
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
       }
-      
+
       const isValid = await storage.verifyBookmarkPasscode(userId, id, passcode);
-      
+
       // Log failed attempts for monitoring
       if (!isValid) {
         console.warn(`Failed passcode attempt for bookmark ${id} from IP ${req.ip}`);
       }
-      
+
       res.json({ valid: isValid });
     } catch (error) {
       console.error("Error verifying passcode:", error);
@@ -285,22 +285,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: z.string().optional(),
         description: z.string().optional()
       });
-      
+
       const { url, name, description } = previewSchema.parse(req.body);
-      
+
       // Generate suggested tags without saving to database
       const suggestedTags = await storage.generateAutoTags(
-        url, 
-        name || "", 
+        url,
+        name || "",
         description || undefined
       );
-      
+
       res.json({ suggestedTags });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: error.errors
         });
       }
       console.error("Error generating preview auto tags:", error);
@@ -312,37 +312,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Extract passcode from request body for security verification
       const { passcode } = req.body;
-      
+
       // Verify access for protected bookmarks
       const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
-      
+
       // Get the bookmark to analyze
       const bookmark = await storage.getBookmark(userId, id);
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
       }
-      
+
       // Generate suggested tags based on URL, name, and description
       const suggestedTags = await storage.generateAutoTags(
-        bookmark.url, 
-        bookmark.name, 
+        bookmark.url,
+        bookmark.name,
         bookmark.description || undefined
       );
-      
+
       // Update the bookmark with suggested tags
       await storage.updateBookmarkSuggestedTags(userId, id, suggestedTags);
-      
+
       res.json({ suggestedTags });
     } catch (error) {
       console.error("Error generating auto tags:", error);
@@ -353,18 +353,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/bookmarks/bulk/auto-tags", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Validate request body
       const bulkAutoTagSchema = z.object({
         ids: z.array(z.number().int().positive()).min(1, "At least one bookmark ID is required").max(50, "Maximum 50 bookmarks allowed per batch"),
         passcodes: z.record(z.string(), z.string().min(4).max(64)).optional()
       });
-      
+
       const { ids, passcodes } = bulkAutoTagSchema.parse(req.body);
-      
+
       const results: { id: number; suggestedTags: string[] }[] = [];
       const failed: { id: number; reason: string }[] = [];
-      
+
       // Process each bookmark
       for (const id of ids) {
         try {
@@ -375,37 +375,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             failed.push({ id, reason: accessResult.error!.message });
             continue;
           }
-          
+
           // Get the bookmark to analyze
           const bookmark = await storage.getBookmark(userId, id);
           if (!bookmark) {
             failed.push({ id, reason: "Bookmark not found" });
             continue;
           }
-          
+
           // Generate suggested tags based on URL, name, and description
           const suggestedTags = await storage.generateAutoTags(
-            bookmark.url, 
-            bookmark.name, 
+            bookmark.url,
+            bookmark.name,
             bookmark.description || undefined
           );
-          
+
           // Update the bookmark with suggested tags
           await storage.updateBookmarkSuggestedTags(userId, id, suggestedTags);
-          
+
           results.push({ id, suggestedTags });
         } catch (error) {
           console.error(`Error processing bookmark ${id}:`, error);
           failed.push({ id, reason: "Processing failed" });
         }
       }
-      
+
       res.json({ results, failed });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: error.errors
         });
       }
       console.error("Error in bulk auto-tagging:", error);
@@ -417,41 +417,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Validate request body
       const acceptTagsSchema = z.object({
         tags: z.array(z.string().trim().min(1)).min(1, "At least one tag is required"),
         passcode: z.string().min(4).max(64).optional()
       });
-      
+
       const { tags, passcode } = acceptTagsSchema.parse(req.body);
-      
+
       // Verify access for protected bookmarks
       const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
-      
+
       // Check if bookmark exists
       const bookmark = await storage.getBookmark(userId, id);
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
       }
-      
+
       // Accept the suggested tags
       const updatedBookmark = await storage.acceptSuggestedTags(userId, id, tags);
-      
+
       res.json(updatedBookmark);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: error.errors
         });
       }
       console.error("Error accepting suggested tags:", error);
@@ -464,30 +464,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Validate request body using Zod
       const shareSchema = z.object({
         isShared: z.boolean()
       });
-      
+
       const { isShared } = shareSchema.parse(req.body);
-      
+
       // Get the bookmark first to check if it's protected
       const bookmark = await storage.getBookmark(userId, id);
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
       }
-      
+
       // Prevent sharing of protected bookmarks
       if (bookmark.hasPasscode && isShared) {
         return res.status(403).json({ message: "Protected bookmarks cannot be shared" });
       }
-      
+
       // Update bookmark sharing status
       const updatedBookmark = await storage.setBookmarkSharing(userId, id, isShared);
       res.json(updatedBookmark);
@@ -504,17 +504,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/shared/:shareId", async (req, res) => {
     try {
       const shareId = req.params.shareId;
-      
+
       if (!shareId) {
         return res.status(400).json({ message: "Share ID is required" });
       }
-      
+
       const sharedBookmark = await storage.getSharedBookmark(shareId);
-      
+
       if (!sharedBookmark) {
         return res.status(404).json({ message: "Shared bookmark not found" });
       }
-      
+
       res.json(sharedBookmark);
     } catch (error) {
       console.error("Error fetching shared bookmark:", error);
@@ -526,20 +526,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/bookmarks/bulk/delete", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Validate request body
       const { ids, passcodes } = bulkDeleteSchema.parse(req.body);
-      
+
       // Perform bulk deletion
       const result = await storage.bulkDeleteBookmarks(userId, ids, passcodes);
-      
+
       // Return results
       res.json(result);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: error.errors
         });
       }
       console.error("Error in bulk delete bookmarks:", error);
@@ -550,20 +550,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/bookmarks/bulk/move", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Validate request body
       const { ids, categoryId, passcodes } = bulkMoveSchema.parse(req.body);
-      
+
       // Perform bulk move
       const result = await storage.bulkMoveBookmarks(userId, ids, categoryId, passcodes);
-      
+
       // Return results
       res.json(result);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: error.errors
         });
       }
       console.error("Error in bulk move bookmarks:", error);
@@ -576,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = getUserId(req);
       const withCounts = req.query.withCounts === "true";
-      const categories = withCounts 
+      const categories = withCounts
         ? await storage.getCategoriesWithCounts(userId)
         : await storage.getCategories(userId);
       res.json(categories);
@@ -591,11 +591,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = getUserId(req);
       const id = parseInt(req.params.id);
       const category = await storage.getCategory(userId, id);
-      
+
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
       }
-      
+
       res.json(category);
     } catch (error) {
       console.error("Error fetching category:", error);
@@ -697,28 +697,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Extract passcode from request body for security verification
       const { passcode } = req.body;
-      
+
       // Verify access for protected bookmarks
       const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
-      
+
       // Trigger screenshot generation
       const result = await storage.triggerScreenshot(userId, id);
-      
+
       if (result.status === 'error') {
         return res.status(400).json(result);
       }
-      
+
       // Return 202 Accepted for async operation
       res.status(202).json(result);
     } catch (error) {
@@ -731,19 +731,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Get screenshot status
       const status = await storage.getScreenshotStatus(userId, id);
-      
+
       if (!status) {
         return res.status(404).json({ message: "Bookmark not found" });
       }
-      
+
       res.json(status);
     } catch (error) {
       console.error("Error getting screenshot status:", error);
@@ -756,21 +756,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      
+
       // Validate bookmark ID
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid bookmark ID" });
       }
-      
+
       // Extract passcode from request body for security verification
       const { passcode } = req.body;
-      
+
       // Verify access for protected bookmarks
       const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
       if (!accessResult.success) {
         return res.status(accessResult.error!.status).json({ message: accessResult.error!.message });
       }
-      
+
       // Perform the link check
       const result = await storage.checkBookmarkLink(userId, id);
       res.json(result);
@@ -783,26 +783,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/bookmarks/bulk/check-links", linkCheckRateLimit, requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Validate request body
       const bulkCheckLinkSchema = z.object({
         ids: z.array(z.number().int().positive()).optional().default([]),
         passcodes: z.record(z.string(), z.string().min(4).max(64)).optional()
       });
-      
+
       const { ids, passcodes } = bulkCheckLinkSchema.parse(req.body);
-      
+
       // Limit to prevent abuse (max 50 bookmarks per request)
       if (ids.length > 50) {
-        return res.status(400).json({ 
-          message: "Maximum 50 bookmarks allowed per bulk check request" 
+        return res.status(400).json({
+          message: "Maximum 50 bookmarks allowed per bulk check request"
         });
       }
-      
+
       // If specific IDs provided, verify passcode access for protected bookmarks
       if (ids.length > 0) {
         const accessErrors: { id: number; reason: string }[] = [];
-        
+
         for (const id of ids) {
           const providedPasscode = passcodes ? passcodes[id.toString()] : undefined;
           const accessResult = await verifyProtectedBookmarkAccess(userId, id, providedPasscode, req);
@@ -810,24 +810,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             accessErrors.push({ id, reason: accessResult.error!.message });
           }
         }
-        
+
         // If any access errors, return them
         if (accessErrors.length > 0) {
-          return res.status(403).json({ 
+          return res.status(403).json({
             message: "Access denied for some bookmarks",
-            accessErrors 
+            accessErrors
           });
         }
       }
-      
+
       // Perform bulk link checking
       const result = await storage.bulkCheckBookmarkLinks(userId, ids.length > 0 ? ids : undefined);
       res.json(result);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid request data", 
-          errors: error.errors 
+        return res.status(400).json({
+          message: "Invalid request data",
+          errors: error.errors
         });
       }
       console.error("Error in bulk link checking:", error);
@@ -860,13 +860,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/link-checker/trigger", adminTriggerRateLimit, requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      
+
       // Enhanced admin authorization check
       if (!isAdminUser(userId)) {
         // Log unauthorized attempts for monitoring
         console.warn(`Unauthorized manual trigger attempt from user ${userId} at IP ${req.ip}`);
-        return res.status(403).json({ 
-          message: "Unauthorized: Admin privileges required to trigger manual link checks" 
+        return res.status(403).json({
+          message: "Unauthorized: Admin privileges required to trigger manual link checks"
         });
       }
 
