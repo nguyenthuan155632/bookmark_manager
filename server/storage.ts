@@ -23,6 +23,7 @@ export interface IStorage {
     categoryId?: number;
     isFavorite?: boolean;
     tags?: string[];
+    linkStatus?: string;
     sortBy?: 'name' | 'createdAt' | 'isFavorite';
     sortOrder?: 'asc' | 'desc';
   }): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>;
@@ -56,6 +57,13 @@ export interface IStorage {
     favorites: number;
     categories: number;
     tags: string[];
+    linkStats?: {
+      total: number;
+      working: number;
+      broken: number;
+      timeout: number;
+      unknown: number;
+    };
   }>;
   
   // User Preferences methods
@@ -130,6 +138,7 @@ export class DatabaseStorage implements IStorage {
     categoryId?: number;
     isFavorite?: boolean;
     tags?: string[];
+    linkStatus?: string;
     sortBy?: 'name' | 'createdAt' | 'isFavorite';
     sortOrder?: 'asc' | 'desc';
   }): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]> {
@@ -164,6 +173,19 @@ export class DatabaseStorage implements IStorage {
       ));
       if (tagCondition) {
         conditions.push(tagCondition);
+      }
+    }
+
+    if (params?.linkStatus) {
+      // Filter by link status
+      if (params.linkStatus === 'unknown') {
+        // For 'unknown' status, include both NULL values and 'unknown' values
+        conditions.push(or(
+          isNull(bookmarks.linkStatus),
+          eq(bookmarks.linkStatus, 'unknown')
+        ));
+      } else {
+        conditions.push(eq(bookmarks.linkStatus, params.linkStatus));
       }
     }
 
@@ -534,6 +556,13 @@ export class DatabaseStorage implements IStorage {
     favorites: number;
     categories: number;
     tags: string[];
+    linkStats?: {
+      total: number;
+      working: number;
+      broken: number;
+      timeout: number;
+      unknown: number;
+    };
   }> {
     const [totalResult] = await db.select({
       count: sql<number>`count(*)::int`,
@@ -562,11 +591,47 @@ export class DatabaseStorage implements IStorage {
       }
     });
 
+    // Get link status counts
+    const linkStatusResults = await db.select({
+      status: sql<string>`COALESCE(${bookmarks.linkStatus}, 'unknown')`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(bookmarks)
+    .where(eq(bookmarks.userId, userId))
+    .groupBy(sql`COALESCE(${bookmarks.linkStatus}, 'unknown')`);
+
+    const linkStats = {
+      total: totalResult.count,
+      working: 0,
+      broken: 0,
+      timeout: 0,
+      unknown: 0,
+    };
+
+    linkStatusResults.forEach(result => {
+      switch (result.status) {
+        case 'ok':
+          linkStats.working = result.count;
+          break;
+        case 'broken':
+          linkStats.broken = result.count;
+          break;
+        case 'timeout':
+          linkStats.timeout = result.count;
+          break;
+        case 'unknown':
+        default:
+          linkStats.unknown = result.count;
+          break;
+      }
+    });
+
     return {
       total: totalResult.count,
       favorites: favoritesResult.count,
       categories: categoriesResult.count,
       tags: Array.from(allTags),
+      linkStats,
     };
   }
 

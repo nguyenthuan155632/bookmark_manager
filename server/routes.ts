@@ -119,6 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
       const isFavorite = req.query.isFavorite === "true" ? true : undefined;
       const tags = req.query.tags ? (req.query.tags as string).split(",") : undefined;
+      const linkStatus = req.query.linkStatus as string;
       const sortBy = (req.query.sortBy as "name" | "createdAt" | "isFavorite") || "createdAt";
       const sortOrder = (req.query.sortOrder as "asc" | "desc") || "desc";
 
@@ -127,6 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryId,
         isFavorite,
         tags,
+        linkStatus,
         sortBy,
         sortOrder,
       });

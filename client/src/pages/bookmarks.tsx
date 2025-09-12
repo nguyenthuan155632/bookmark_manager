@@ -14,6 +14,11 @@ import {
   Square,
   Trash2,
   FolderOpen,
+  CheckCircle,
+  XCircle,
+  HelpCircle,
+  Link,
+  RefreshCw,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
@@ -64,6 +69,7 @@ function BookmarksContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedLinkStatus, setSelectedLinkStatus] = useState<string>("");
   const [sortBy, setSortBy] = useState<"createdAt" | "name" | "isFavorite">(
     "createdAt",
   );
@@ -145,6 +151,13 @@ function BookmarksContent() {
     favorites: number;
     categories: number;
     tags: string[];
+    linkStats?: {
+      total: number;
+      working: number;
+      broken: number;
+      timeout: number;
+      unknown: number;
+    };
   }>({
     queryKey: ["/api/stats"],
   });
@@ -155,6 +168,7 @@ function BookmarksContent() {
   if (selectedCategory) bookmarkQueryParams.set("categoryId", selectedCategory);
   if (selectedTags.length > 0)
     bookmarkQueryParams.set("tags", selectedTags.join(","));
+  if (selectedLinkStatus) bookmarkQueryParams.set("linkStatus", selectedLinkStatus);
   if (location === "/favorites") bookmarkQueryParams.set("isFavorite", "true");
   bookmarkQueryParams.set("sortBy", sortBy);
   bookmarkQueryParams.set("sortOrder", sortOrder);
@@ -166,6 +180,7 @@ function BookmarksContent() {
       search: searchQuery || undefined,
       categoryId: selectedCategory || undefined,
       tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+      linkStatus: selectedLinkStatus || undefined,
       isFavorite: location === "/favorites" ? "true" : undefined,
       sortBy,
       sortOrder
@@ -267,6 +282,30 @@ function BookmarksContent() {
       isShared: newSharingStatus
     });
   };
+
+  // Bulk link checking mutation
+  const bulkCheckLinksMutation = useMutation({
+    mutationFn: async ({ ids, passcodes }: { ids?: number[]; passcodes?: Record<string, string> }) => {
+      return await apiRequest("POST", "/api/bookmarks/bulk/check-links", {
+        ids: ids || [],
+        passcodes
+      });
+    },
+    onSuccess: (result: { checked: number; results: any[] }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({
+        description: `Checked ${result.checked} bookmark(s)`,
+      });
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || "Failed to check links";
+      toast({
+        variant: "destructive",
+        description: errorMessage,
+      });
+    }
+  });
 
   // Bulk operations mutations
   const bulkDeleteMutation = useMutation({
@@ -449,14 +488,65 @@ function BookmarksContent() {
     setSelectedTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
+  const handleBulkCheckLinks = () => {
+    if (selectedIds.length > 0) {
+      // Check only selected bookmarks
+      bulkCheckLinksMutation.mutate({ ids: selectedIds, passcodes: bulkPasscodes });
+    } else {
+      // Check all bookmarks
+      bulkCheckLinksMutation.mutate({ ids: [] }); // Empty array means check all
+    }
+  };
+
+  // Helper function to get link status info for filtering
+  const getLinkStatusDisplayInfo = (status: string) => {
+    switch (status) {
+      case 'ok':
+        return {
+          label: 'Working Links',
+          icon: CheckCircle,
+          color: 'text-green-600 dark:text-green-400',
+          bgColor: 'bg-green-50 dark:bg-green-950',
+          borderColor: 'border-green-200 dark:border-green-800'
+        };
+      case 'broken':
+        return {
+          label: 'Broken Links',
+          icon: XCircle,
+          color: 'text-red-600 dark:text-red-400',
+          bgColor: 'bg-red-50 dark:bg-red-950',
+          borderColor: 'border-red-200 dark:border-red-800'
+        };
+      case 'timeout':
+        return {
+          label: 'Timeout Links',
+          icon: AlertCircle,
+          color: 'text-orange-600 dark:text-orange-400',
+          bgColor: 'bg-orange-50 dark:bg-orange-950',
+          borderColor: 'border-orange-200 dark:border-orange-800'
+        };
+      case 'unknown':
+        return {
+          label: 'Unchecked Links',
+          icon: HelpCircle,
+          color: 'text-gray-600 dark:text-gray-400',
+          bgColor: 'bg-gray-50 dark:bg-gray-950',
+          borderColor: 'border-gray-200 dark:border-gray-800'
+        };
+      default:
+        return null;
+    }
+  };
+
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("");
     setSelectedTags([]);
+    setSelectedLinkStatus("");
   };
 
   const hasActiveFilters =
-    searchQuery || selectedCategory || selectedTags.length > 0;
+    searchQuery || selectedCategory || selectedTags.length > 0 || selectedLinkStatus;
 
   if (!stats) {
     return (
@@ -621,6 +711,70 @@ function BookmarksContent() {
           <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
+                {/* Link Status Filter Dropdown */}
+                <Select
+                  value={selectedLinkStatus}
+                  onValueChange={setSelectedLinkStatus}
+                >
+                  <SelectTrigger className="w-40" data-testid="select-link-status">
+                    <SelectValue placeholder="Link Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">
+                      <div className="flex items-center space-x-2">
+                        <Filter size={14} className="text-muted-foreground" />
+                        <span>All Links</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ok">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle size={14} className="text-green-600" />
+                        <span>Working</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="broken">
+                      <div className="flex items-center space-x-2">
+                        <XCircle size={14} className="text-red-600" />
+                        <span>Broken</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="timeout">
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle size={14} className="text-orange-600" />
+                        <span>Timeout</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="unknown">
+                      <div className="flex items-center space-x-2">
+                        <HelpCircle size={14} className="text-gray-600" />
+                        <span>Unchecked</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Active Link Status Filter Badge */}
+                {selectedLinkStatus && (() => {
+                  const statusInfo = getLinkStatusDisplayInfo(selectedLinkStatus);
+                  if (!statusInfo) return null;
+                  const StatusIcon = statusInfo.icon;
+                  return (
+                    <Badge
+                      className={`${statusInfo.color} ${statusInfo.bgColor} ${statusInfo.borderColor} flex items-center space-x-1 border`}
+                      data-testid={`active-filter-link-status-${selectedLinkStatus}`}
+                    >
+                      <StatusIcon size={12} />
+                      <span>{statusInfo.label}</span>
+                      <button
+                        onClick={() => setSelectedLinkStatus("")}
+                        className="text-current/80 hover:text-current"
+                      >
+                        <X size={12} />
+                      </button>
+                    </Badge>
+                  );
+                })()}
+
                 {/* Active Tags */}
                 {selectedTags.map((tag) => (
                   <Badge
@@ -652,6 +806,24 @@ function BookmarksContent() {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* Bulk Check Links Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkCheckLinks}
+                disabled={bulkCheckLinksMutation.isPending}
+                className="flex items-center space-x-2"
+                data-testid="button-bulk-check-links"
+                title={selectedIds.length > 0 ? `Check ${selectedIds.length} selected links` : "Check all links"}
+              >
+                {bulkCheckLinksMutation.isPending ? (
+                  <RefreshCw size={14} className="animate-spin" />
+                ) : (
+                  <Link size={14} />
+                )}
+                <span>{selectedIds.length > 0 ? `Check ${selectedIds.length}` : "Check All"}</span>
+              </Button>
+
               <Select
                 value={`${sortBy}-${sortOrder}`}
                 onValueChange={(value) => {
@@ -677,11 +849,21 @@ function BookmarksContent() {
                 </SelectContent>
               </Select>
 
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <span data-testid="bookmark-count">
-                  {filteredBookmarks.length}
-                </span>
-                <span>bookmarks</span>
+              {/* Enhanced Bookmark Count with Link Stats */}
+              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                <div className="flex items-center space-x-2">
+                  <span data-testid="bookmark-count">
+                    {filteredBookmarks.length}
+                  </span>
+                  <span>bookmarks</span>
+                </div>
+                {stats?.linkStats && stats.linkStats.broken > 0 && (
+                  <div className="flex items-center space-x-1 text-red-600 dark:text-red-400">
+                    <XCircle size={12} />
+                    <span data-testid="broken-links-count">{stats.linkStats.broken}</span>
+                    <span>broken</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

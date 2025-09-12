@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon } from "lucide-react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon, CheckCircle, XCircle, HelpCircle, Link } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Bookmark, Category } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BookmarkCardProps {
   bookmark: Bookmark & { category?: Category; hasPasscode?: boolean };
@@ -151,6 +152,27 @@ export function BookmarkCard({
     }
   });
 
+  // Link checking mutation
+  const checkLinkMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", `/api/bookmarks/${bookmark.id}/check-link`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({
+        description: "Link status updated",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Link check failed:", error);
+      toast({
+        variant: "destructive",
+        description: "Failed to check link status",
+      });
+    }
+  });
+
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this bookmark?")) {
       deleteBookmarkMutation.mutate();
@@ -171,6 +193,13 @@ export function BookmarkCard({
     e.stopPropagation();
     if (!isProtected && currentScreenshotStatus !== 'pending') {
       generateScreenshotMutation.mutate();
+    }
+  };
+
+  const handleCheckLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isProtected && !checkLinkMutation.isPending) {
+      checkLinkMutation.mutate();
     }
   };
 
@@ -207,6 +236,97 @@ export function BookmarkCard({
   };
 
   const timeAgo = isProtected ? "—" : formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
+
+  // Helper function to get link status info
+  const getLinkStatusInfo = () => {
+    if (isProtected) {
+      return {
+        status: 'unknown',
+        icon: HelpCircle,
+        color: 'text-muted-foreground',
+        bgColor: 'bg-muted/20',
+        borderColor: 'border-muted-foreground/20',
+        label: 'Unknown',
+        tooltip: 'Status hidden for protected bookmark'
+      };
+    }
+
+    const status = bookmark.linkStatus || 'unknown';
+    const lastChecked = bookmark.lastLinkCheckAt;
+    const lastCheckedText = lastChecked 
+      ? `Last checked ${formatDistanceToNow(new Date(lastChecked), { addSuffix: true })}`
+      : 'Never checked';
+
+    switch (status) {
+      case 'ok':
+        return {
+          status: 'ok',
+          icon: CheckCircle,
+          color: 'text-green-700 dark:text-green-400',
+          bgColor: 'bg-green-50 dark:bg-green-950',
+          borderColor: 'border-green-200 dark:border-green-800',
+          label: 'Working',
+          tooltip: `Link is working • ${lastCheckedText}${bookmark.httpStatus ? ` • HTTP ${bookmark.httpStatus}` : ''}`
+        };
+      case 'broken':
+        return {
+          status: 'broken',
+          icon: XCircle,
+          color: 'text-red-700 dark:text-red-400',
+          bgColor: 'bg-red-50 dark:bg-red-950',
+          borderColor: 'border-red-200 dark:border-red-800',
+          label: 'Broken',
+          tooltip: `Link is broken • ${lastCheckedText}${bookmark.httpStatus ? ` • HTTP ${bookmark.httpStatus}` : ''}`
+        };
+      case 'timeout':
+        return {
+          status: 'timeout',
+          icon: AlertCircle,
+          color: 'text-orange-700 dark:text-orange-400',
+          bgColor: 'bg-orange-50 dark:bg-orange-950',
+          borderColor: 'border-orange-200 dark:border-orange-800',
+          label: 'Timeout',
+          tooltip: `Link timed out • ${lastCheckedText}`
+        };
+      case 'unknown':
+      default:
+        return {
+          status: 'unknown',
+          icon: HelpCircle,
+          color: 'text-muted-foreground',
+          bgColor: 'bg-muted/20',
+          borderColor: 'border-muted-foreground/20',
+          label: 'Unchecked',
+          tooltip: lastCheckedText
+        };
+    }
+  };
+
+  const linkStatusInfo = getLinkStatusInfo();
+  const StatusIcon = linkStatusInfo.icon;
+
+  // Link Status Badge Component
+  const LinkStatusBadge = () => {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge
+              variant="outline"
+              className={`text-xs ${linkStatusInfo.color} ${linkStatusInfo.bgColor} ${linkStatusInfo.borderColor}`}
+              data-testid={`link-status-badge-${bookmark.id}`}
+            >
+              <StatusIcon size={10} className="mr-1" />
+              {linkStatusInfo.label}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-sm">{linkStatusInfo.tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   // Thumbnail component for different states
   const ThumbnailDisplay = () => {
@@ -435,6 +555,23 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
+                checkLinkMutation.isPending ? 'animate-pulse' : ''
+              }`}
+              onClick={handleCheckLink}
+              disabled={checkLinkMutation.isPending || isProtected}
+              title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}
+              data-testid={`button-check-link-${bookmark.id}`}
+            >
+              {checkLinkMutation.isPending ? (
+                <RefreshCw size={16} className="animate-spin" />
+              ) : (
+                <Link size={16} />
+              )}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
               className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
               onClick={(e) => {
                 e.stopPropagation();
@@ -513,9 +650,10 @@ export function BookmarkCard({
           <span data-testid={`bookmark-date-${bookmark.id}`}>{timeAgo}</span>
         </div>
 
-        {!isProtected && bookmark.tags && bookmark.tags.length > 0 && (
+        {!isProtected && (bookmark.tags?.length > 0 || bookmark.isShared || bookmark.linkStatus) && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {bookmark.tags.map((tag, index) => (
+            <LinkStatusBadge />
+            {bookmark.tags && bookmark.tags.map((tag, index) => (
               <Badge
                 key={index}
                 variant="secondary"
@@ -540,6 +678,7 @@ export function BookmarkCard({
         
         {isProtected && (
           <div className="flex flex-wrap gap-1 mb-3">
+            <LinkStatusBadge />
             <Badge
               variant="outline"
               className="text-xs text-muted-foreground border-muted-foreground/30"
@@ -551,16 +690,19 @@ export function BookmarkCard({
           </div>
         )}
         
-        {!isProtected && !bookmark.tags?.length && bookmark.isShared && (
+        {!isProtected && !bookmark.tags?.length && (bookmark.isShared || bookmark.linkStatus) && (
           <div className="flex flex-wrap gap-1 mb-3">
-            <Badge
-              variant="outline"
-              className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
-              data-testid={`shared-badge-${bookmark.id}`}
-            >
-              <Share2 size={10} className="mr-1" />
-              Shared
-            </Badge>
+            <LinkStatusBadge />
+            {bookmark.isShared && (
+              <Badge
+                variant="outline"
+                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
+                data-testid={`shared-badge-${bookmark.id}`}
+              >
+                <Share2 size={10} className="mr-1" />
+                Shared
+              </Badge>
+            )}
           </div>
         )}
 
