@@ -78,6 +78,11 @@ export interface IStorage {
   updateBookmarkSuggestedTags(userId: string, bookmarkId: number, suggestedTags: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
   acceptSuggestedTags(userId: string, bookmarkId: number, tagsToAccept: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
   generateAutoTags(url: string, name?: string, description?: string): Promise<string[]>;
+  
+  // Screenshot methods
+  triggerScreenshot(userId: string, bookmarkId: number): Promise<{ status: string; message: string }>;
+  updateScreenshotStatus(bookmarkId: number, status: string, url?: string): Promise<void>;
+  getScreenshotStatus(userId: string, bookmarkId: number): Promise<{ status: string; screenshotUrl?: string; updatedAt?: Date } | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -919,6 +924,130 @@ export class DatabaseStorage implements IStorage {
       console.error('Error generating auto tags:', error);
       // Return empty array if URL parsing or other errors occur
       return [];
+    }
+  }
+
+  // Screenshot methods implementation
+  async triggerScreenshot(userId: string, bookmarkId: number): Promise<{ status: string; message: string }> {
+    try {
+      // Check if bookmark exists and belongs to user
+      const bookmark = await this.getBookmark(userId, bookmarkId);
+      if (!bookmark) {
+        return { status: 'error', message: 'Bookmark not found' };
+      }
+
+      // Check if screenshot is already being generated
+      if (bookmark.screenshotStatus === 'pending') {
+        return { status: 'pending', message: 'Screenshot generation already in progress' };
+      }
+
+      // Update status to pending
+      await db
+        .update(bookmarks)
+        .set({
+          screenshotStatus: 'pending',
+          screenshotUpdatedAt: new Date(),
+        })
+        .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)));
+
+      // Start screenshot generation asynchronously
+      this.generateScreenshotAsync(bookmarkId, bookmark.url);
+
+      return { status: 'pending', message: 'Screenshot generation started' };
+    } catch (error) {
+      console.error('Error triggering screenshot:', error);
+      return { status: 'error', message: 'Failed to trigger screenshot generation' };
+    }
+  }
+
+  async updateScreenshotStatus(bookmarkId: number, status: string, url?: string): Promise<void> {
+    try {
+      const updateData: any = {
+        screenshotStatus: status,
+        screenshotUpdatedAt: new Date(),
+      };
+
+      if (url) {
+        updateData.screenshotUrl = url;
+      }
+
+      await db
+        .update(bookmarks)
+        .set(updateData)
+        .where(eq(bookmarks.id, bookmarkId));
+    } catch (error) {
+      console.error('Error updating screenshot status:', error);
+      throw error;
+    }
+  }
+
+  async getScreenshotStatus(userId: string, bookmarkId: number): Promise<{ status: string; screenshotUrl?: string; updatedAt?: Date } | undefined> {
+    try {
+      const [result] = await db
+        .select({
+          screenshotStatus: bookmarks.screenshotStatus,
+          screenshotUrl: bookmarks.screenshotUrl,
+          screenshotUpdatedAt: bookmarks.screenshotUpdatedAt,
+        })
+        .from(bookmarks)
+        .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)));
+
+      if (!result) {
+        return undefined;
+      }
+
+      return {
+        status: result.screenshotStatus || 'idle',
+        screenshotUrl: result.screenshotUrl || undefined,
+        updatedAt: result.screenshotUpdatedAt || undefined,
+      };
+    } catch (error) {
+      console.error('Error getting screenshot status:', error);
+      return undefined;
+    }
+  }
+
+  // Private method to generate screenshot asynchronously
+  private async generateScreenshotAsync(bookmarkId: number, url: string): Promise<void> {
+    try {
+      // Validate URL to prevent SSRF attacks
+      const parsedUrl = new URL(url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        await this.updateScreenshotStatus(bookmarkId, 'failed');
+        return;
+      }
+
+      // Use Screenshot Machine API (free tier)
+      const screenshotUrl = `https://api.screenshotmachine.com?key=demo&url=${encodeURIComponent(url)}&dimension=1024x768&format=png`;
+      
+      // Test if the screenshot service is accessible with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const response = await fetch(screenshotUrl, {
+        method: 'HEAD', // Just check if the service responds
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        // Screenshot service is available, use the full URL
+        await this.updateScreenshotStatus(bookmarkId, 'ready', screenshotUrl);
+      } else {
+        throw new Error('Screenshot service unavailable');
+      }
+    } catch (error) {
+      console.warn(`Screenshot generation failed for bookmark ${bookmarkId}:`, error instanceof Error ? error.message : 'Unknown error');
+      
+      // Fallback to a simple placeholder image service
+      try {
+        const fallbackUrl = `https://via.placeholder.com/300x200/4f46e5/ffffff?text=Screenshot+Unavailable`;
+        await this.updateScreenshotStatus(bookmarkId, 'ready', fallbackUrl);
+      } catch (fallbackError) {
+        console.error(`Fallback screenshot failed for bookmark ${bookmarkId}:`, fallbackError);
+        await this.updateScreenshotStatus(bookmarkId, 'failed');
+      }
     }
   }
 }
