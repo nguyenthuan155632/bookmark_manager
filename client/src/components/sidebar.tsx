@@ -18,29 +18,36 @@ interface SidebarProps {
   };
 }
 
-export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps) {
+export function Sidebar({
+  isOpen,
+  onClose,
+  onCreateFolder,
+  stats,
+}: SidebarProps) {
   const [location] = useLocation();
-  
-  const { data: categories = [] } = useQuery<(Category & { bookmarkCount: number })[]>({
+
+  const { data: categories = [] } = useQuery<
+    (Category & { bookmarkCount: number })[]
+  >({
     queryKey: ["/api/categories?withCounts=true"],
   });
 
   const isActive = (path: string) => location === path;
 
   const navItems = [
-    { 
-      path: "/", 
-      icon: Home, 
-      label: "All Bookmarks", 
+    {
+      path: "/",
+      icon: Home,
+      label: "All Bookmarks",
       count: stats.total,
-      active: isActive("/")
+      active: isActive("/"),
     },
-    { 
-      path: "/favorites", 
-      icon: Star, 
-      label: "Favorites", 
+    {
+      path: "/favorites",
+      icon: Star,
+      label: "Favorites",
       count: stats.favorites,
-      active: isActive("/favorites")
+      active: isActive("/favorites"),
     },
   ];
 
@@ -48,18 +55,20 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
           onClick={onClose}
         />
       )}
-      
+
       {/* Sidebar */}
-      <aside className={`
+      <aside
+        className={`
         w-64 bg-card border-r border-border flex flex-col transition-transform duration-300 
-        -translate-x-full ${isOpen ? 'translate-x-0' : ''} 
+        -translate-x-full ${isOpen ? "translate-x-0" : ""} 
         lg:translate-x-0 fixed lg:relative z-30 h-full
-      `}>
+      `}
+      >
         {/* Sidebar Header */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center space-x-3">
@@ -77,21 +86,23 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               <Button
                 variant={item.active ? "default" : "ghost"}
                 className={`w-full justify-start space-x-3 ${
-                  item.active 
-                    ? "bg-primary text-primary-foreground" 
+                  item.active
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
                 onClick={onClose}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 <item.icon size={20} />
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.count !== undefined && (
-                  <span className={`text-xs min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center ${
-                    item.active 
-                      ? "bg-primary-foreground text-primary" 
-                      : "bg-secondary text-secondary-foreground"
-                  }`}>
+                  <span
+                    className={`text-xs min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center ${
+                      item.active
+                        ? "bg-primary-foreground text-primary"
+                        : "bg-secondary text-secondary-foreground"
+                    }`}
+                  >
                     {item.count}
                   </span>
                 )}
@@ -109,7 +120,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               </h3>
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                 onClick={onCreateFolder}
                 data-testid="button-create-folder"
@@ -125,7 +136,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                     variant="ghost"
                     className="w-full justify-start space-x-3 text-muted-foreground hover:bg-muted hover:text-foreground"
                     onClick={onClose}
-                    data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
                   >
                     <Folder size={16} />
                     <span className="flex-1 text-left">{category.name}</span>
