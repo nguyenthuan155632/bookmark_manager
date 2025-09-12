@@ -19,6 +19,7 @@ interface BookmarkCardProps {
   onEdit?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
   onView?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
   onShare?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
+  onCopyShareLink?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
   isProtected?: boolean;
   onUnlock?: () => void;
   onLock?: () => void;
@@ -26,6 +27,10 @@ interface BookmarkCardProps {
   bulkMode?: boolean;
   isSelected?: boolean;
   onSelect?: (bookmarkId: number, isSelected: boolean) => void;
+  // Passcode for protected bookmark operations
+  passcode?: string;
+  // Loading states
+  isShareLoading?: boolean;
 }
 
 export function BookmarkCard({ 
@@ -33,12 +38,15 @@ export function BookmarkCard({
   onEdit, 
   onView, 
   onShare, 
+  onCopyShareLink,
   isProtected = false, 
   onUnlock, 
   onLock,
   bulkMode = false,
   isSelected = false,
-  onSelect
+  onSelect,
+  passcode,
+  isShareLoading = false
 }: BookmarkCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -95,7 +103,11 @@ export function BookmarkCard({
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      // Invalidate all bookmark queries regardless of parameters
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/bookmarks"],
+        exact: false 
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
         description: bookmark.isFavorite 
@@ -113,10 +125,16 @@ export function BookmarkCard({
 
   const deleteBookmarkMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("DELETE", `/api/bookmarks/${bookmark.id}`);
+      // Include passcode in request body for protected bookmarks
+      const body = bookmark.hasPasscode && passcode ? { passcode } : undefined;
+      return await apiRequest("DELETE", `/api/bookmarks/${bookmark.id}`, body);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      // Invalidate all bookmark queries regardless of parameters
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/bookmarks"],
+        exact: false 
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
         description: "Bookmark deleted",
@@ -136,7 +154,11 @@ export function BookmarkCard({
       return await apiRequest("POST", `/api/bookmarks/${bookmark.id}/screenshot`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      // Invalidate all bookmark queries regardless of parameters
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/bookmarks"],
+        exact: false 
+      });
       queryClient.invalidateQueries({ queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`] });
       setThumbnailRetryCount(prev => prev + 1);
       setTimeout(() => {
@@ -158,7 +180,11 @@ export function BookmarkCard({
       return await apiRequest("POST", `/api/bookmarks/${bookmark.id}/check-link`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      // Invalidate all bookmark queries regardless of parameters
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/bookmarks"],
+        exact: false 
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       toast({
         description: "Link status updated",
@@ -605,12 +631,31 @@ export function BookmarkCard({
                 e.stopPropagation();
                 onShare?.(bookmark);
               }}
-              disabled={isProtected || bookmark.hasPasscode}
+              disabled={isProtected || bookmark.hasPasscode || isShareLoading}
               title={bookmark.hasPasscode ? "Protected bookmarks cannot be shared" : (bookmark.isShared ? "Stop sharing" : "Share bookmark")}
               data-testid={`button-share-${bookmark.id}`}
             >
-              <Share2 size={16} className={bookmark.isShared ? 'fill-current' : ''} />
+              {isShareLoading ? (
+                <RefreshCw size={16} className="animate-spin" />
+              ) : (
+                <Share2 size={16} className={bookmark.isShared ? 'fill-current' : ''} />
+              )}
             </Button>
+            {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopyShareLink?.(bookmark);
+                }}
+                title="Copy share link"
+                data-testid={`button-copy-share-link-${bookmark.id}`}
+              >
+                <Link size={16} />
+              </Button>
+            )}
             {bookmark.hasPasscode && !isProtected && (
               <Button
                 size="sm"

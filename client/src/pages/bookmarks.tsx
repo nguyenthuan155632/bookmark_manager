@@ -87,6 +87,9 @@ function BookmarksContent() {
     new Set(),
   );
 
+  // Store passcodes for unlocked protected bookmarks
+  const [unlockedPasscodes, setUnlockedPasscodes] = useState<Record<number, string>>({});
+
   // Bulk selection state
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -231,6 +234,11 @@ function BookmarksContent() {
       newSet.delete(bookmark.id);
       return newSet;
     });
+    // Remove stored passcode
+    setUnlockedPasscodes((prev) => {
+      const { [bookmark.id]: removed, ...rest } = prev;
+      return rest;
+    });
   };
 
   // Share bookmark mutation
@@ -241,8 +249,84 @@ function BookmarksContent() {
       });
       return response.json();
     },
+    onMutate: async ({ bookmarkId, isShared }) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ["/api/bookmarks"] });
+
+      // Snapshot the previous value for rollback on error
+      const previousBookmarks = queryClient.getQueryData(["/api/bookmarks", {
+        search: searchQuery || undefined,
+        categoryId: selectedCategory || undefined,
+        tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+        linkStatus: selectedLinkStatus || undefined,
+        isFavorite: location === "/favorites" ? "true" : undefined,
+        sortBy,
+        sortOrder
+      }]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(["/api/bookmarks", {
+        search: searchQuery || undefined,
+        categoryId: selectedCategory || undefined,
+        tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+        linkStatus: selectedLinkStatus || undefined,
+        isFavorite: location === "/favorites" ? "true" : undefined,
+        sortBy,
+        sortOrder
+      }], (old: any) => {
+        if (!old) return old;
+        return old.map((bookmark: any) => 
+          bookmark.id === bookmarkId 
+            ? { ...bookmark, isShared, shareId: isShared ? (bookmark.shareId || 'pending') : null }
+            : bookmark
+        );
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousBookmarks };
+    },
+    onError: (error: any, { bookmarkId }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousBookmarks) {
+        queryClient.setQueryData(["/api/bookmarks", {
+          search: searchQuery || undefined,
+          categoryId: selectedCategory || undefined,
+          tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+          linkStatus: selectedLinkStatus || undefined,
+          isFavorite: location === "/favorites" ? "true" : undefined,
+          sortBy,
+          sortOrder
+        }], context.previousBookmarks);
+      }
+
+      const errorMessage = error?.response?.data?.message || "Failed to update bookmark sharing";
+      toast({
+        variant: "destructive",
+        description: errorMessage,
+      });
+    },
     onSuccess: (updatedBookmark: Bookmark) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      // Update the cache with the actual server response
+      queryClient.setQueryData(["/api/bookmarks", {
+        search: searchQuery || undefined,
+        categoryId: selectedCategory || undefined,
+        tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+        linkStatus: selectedLinkStatus || undefined,
+        isFavorite: location === "/favorites" ? "true" : undefined,
+        sortBy,
+        sortOrder
+      }], (old: any) => {
+        if (!old) return old;
+        return old.map((bookmark: any) => 
+          bookmark.id === updatedBookmark.id ? { ...bookmark, ...updatedBookmark } : bookmark
+        );
+      });
+
+      // Also invalidate all bookmark queries to ensure consistency across different views
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/bookmarks"],
+        exact: false 
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       
       if (updatedBookmark.isShared && updatedBookmark.shareId) {
@@ -262,13 +346,6 @@ function BookmarksContent() {
           description: "Bookmark sharing disabled",
         });
       }
-    },
-    onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || "Failed to update bookmark sharing";
-      toast({
-        variant: "destructive",
-        description: errorMessage,
-      });
     }
   });
 
@@ -281,6 +358,33 @@ function BookmarksContent() {
       bookmarkId: bookmark.id,
       isShared: newSharingStatus
     });
+  };
+
+  // Copy share link for already shared bookmarks
+  const handleCopyShareLink = async (
+    bookmark: Bookmark & { category?: Category; hasPasscode?: boolean },
+  ) => {
+    if (!bookmark.isShared || !bookmark.shareId) {
+      toast({
+        variant: "destructive",
+        description: "This bookmark is not shared or has no share ID",
+      });
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/shared/${bookmark.shareId}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        description: "Share link copied to clipboard!",
+      });
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      toast({
+        description: `Share URL: ${shareUrl}`,
+      });
+    }
   };
 
   // Bulk link checking mutation
@@ -455,13 +559,19 @@ function BookmarksContent() {
   };
 
   // Handle successful passcode verification
-  const handlePasscodeSuccess = () => {
+  const handlePasscodeSuccess = (passcode: string) => {
     if (selectedProtectedBookmark) {
       // Add bookmark ID to unlocked set
       setUnlockedBookmarks(
         (prev) =>
           new Set(Array.from(prev).concat(selectedProtectedBookmark.id)),
       );
+
+      // Store the verified passcode for future operations
+      setUnlockedPasscodes((prev) => ({
+        ...prev,
+        [selectedProtectedBookmark.id]: passcode,
+      }));
 
       // Close modal and clear selected bookmark
       setIsPasscodeModalOpen(false);
@@ -1003,6 +1113,7 @@ function BookmarksContent() {
               {filteredBookmarks.map((bookmark) => {
                 const isUnlocked = unlockedBookmarks.has(bookmark.id);
                 const isProtected = bookmark.hasPasscode && !isUnlocked;
+                const passcode = unlockedPasscodes[bookmark.id];
 
                 return (
                   <BookmarkCard
@@ -1011,12 +1122,15 @@ function BookmarksContent() {
                     onEdit={handleEdit}
                     onView={handleView}
                     onShare={handleShare}
+                    onCopyShareLink={handleCopyShareLink}
                     isProtected={isProtected}
                     onUnlock={() => handleUnlockBookmark(bookmark)}
                     onLock={() => handleLockBookmark(bookmark)}
                     bulkMode={bulkMode}
                     isSelected={selectedIds.includes(bookmark.id)}
                     onSelect={handleSelectBookmark}
+                    passcode={passcode}
+                    isShareLoading={shareBookmarkMutation.isPending}
                   />
                 );
               })}

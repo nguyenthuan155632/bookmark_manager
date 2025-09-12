@@ -26,7 +26,7 @@ interface PasscodeModalProps {
   isOpen: boolean;
   onClose: () => void;
   bookmark?: Bookmark;
-  onSuccess: () => void;
+  onSuccess: (passcode: string) => void;
 }
 
 export function PasscodeModal({ isOpen, onClose, bookmark, onSuccess }: PasscodeModalProps) {
@@ -82,10 +82,11 @@ export function PasscodeModal({ isOpen, onClose, bookmark, onSuccess }: Passcode
     },
     onSuccess: (data) => {
       if (data.valid) {
+        const passcode = form.getValues("passcode");
         toast({
           description: "Access granted! Opening bookmark...",
         });
-        onSuccess();
+        onSuccess(passcode);
         handleClose();
       } else {
         setSubmitError("Incorrect passcode. Please try again.");
