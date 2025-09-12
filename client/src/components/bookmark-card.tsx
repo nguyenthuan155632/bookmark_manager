@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon, CheckCircle, XCircle, HelpCircle, Link } from "lucide-react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon, CheckCircle, XCircle, HelpCircle, Link, MoreHorizontal } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Bookmark, Category } from "@shared/schema";
@@ -532,6 +533,7 @@ export function BookmarkCard({
           <div className={`flex items-center space-x-1 transition-opacity ${
             isHovered ? "opacity-100" : "opacity-0"
           }`}>
+            {/* Priority Actions - Always Visible */}
             <Button
               size="sm"
               variant="ghost"
@@ -548,66 +550,7 @@ export function BookmarkCard({
                 className={isProtected ? "" : (bookmark.isFavorite ? "fill-current text-accent" : "")}
               />
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-green-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopy();
-              }}
-              data-testid={`button-copy-${bookmark.id}`}
-              title="Copy URL to clipboard"
-            >
-              <Copy size={16} />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
-                generateScreenshotMutation.isPending ? 'animate-pulse' : ''
-              }`}
-              onClick={handleGenerateScreenshot}
-              disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
-              title={currentScreenshotStatus === 'pending' ? 'Generating screenshot...' : 'Generate screenshot'}
-              data-testid={`button-screenshot-${bookmark.id}`}
-            >
-              {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
-                <RefreshCw size={16} className="animate-spin" />
-              ) : (
-                <Camera size={16} />
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
-                checkLinkMutation.isPending ? 'animate-pulse' : ''
-              }`}
-              onClick={handleCheckLink}
-              disabled={checkLinkMutation.isPending || isProtected}
-              title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}
-              data-testid={`button-check-link-${bookmark.id}`}
-            >
-              {checkLinkMutation.isPending ? (
-                <RefreshCw size={16} className="animate-spin" />
-              ) : (
-                <Link size={16} />
-              )}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                onView?.(bookmark);
-              }}
-              disabled={isProtected}
-              data-testid={`button-view-${bookmark.id}`}
-            >
-              <Eye size={16} />
-            </Button>
+
             <Button
               size="sm"
               variant="ghost"
@@ -621,6 +564,7 @@ export function BookmarkCard({
             >
               <Edit size={16} />
             </Button>
+
             <Button
               size="sm"
               variant="ghost"
@@ -641,35 +585,7 @@ export function BookmarkCard({
                 <Share2 size={16} className={bookmark.isShared ? 'fill-current' : ''} />
               )}
             </Button>
-            {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCopyShareLink?.(bookmark);
-                }}
-                title="Copy share link"
-                data-testid={`button-copy-share-link-${bookmark.id}`}
-              >
-                <Link size={16} />
-              </Button>
-            )}
-            {bookmark.hasPasscode && !isProtected && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-500"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onLock?.();
-                }}
-                data-testid={`button-lock-${bookmark.id}`}
-              >
-                <Lock size={16} />
-              </Button>
-            )}
+
             <Button
               size="sm"
               variant="ghost"
@@ -683,6 +599,202 @@ export function BookmarkCard({
             >
               <Trash2 size={16} />
             </Button>
+
+            {/* Desktop Only Actions - Hidden on Mobile */}
+            <div className="hidden md:flex items-center space-x-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-green-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy();
+                }}
+                data-testid={`button-copy-${bookmark.id}`}
+                title="Copy URL to clipboard"
+              >
+                <Copy size={16} />
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
+                  generateScreenshotMutation.isPending ? 'animate-pulse' : ''
+                }`}
+                onClick={handleGenerateScreenshot}
+                disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
+                title={currentScreenshotStatus === 'pending' ? 'Generating screenshot...' : 'Generate screenshot'}
+                data-testid={`button-screenshot-${bookmark.id}`}
+              >
+                {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Camera size={16} />
+                )}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
+                  checkLinkMutation.isPending ? 'animate-pulse' : ''
+                }`}
+                onClick={handleCheckLink}
+                disabled={checkLinkMutation.isPending || isProtected}
+                title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}
+                data-testid={`button-check-link-${bookmark.id}`}
+              >
+                {checkLinkMutation.isPending ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Link size={16} />
+                )}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onView?.(bookmark);
+                }}
+                disabled={isProtected}
+                data-testid={`button-view-${bookmark.id}`}
+              >
+                <Eye size={16} />
+              </Button>
+
+              {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-emerald-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCopyShareLink?.(bookmark);
+                  }}
+                  title="Copy share link"
+                  data-testid={`button-copy-share-link-${bookmark.id}`}
+                >
+                  <Link size={16} />
+                </Button>
+              )}
+
+              {bookmark.hasPasscode && !isProtected && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLock?.();
+                  }}
+                  data-testid={`button-lock-${bookmark.id}`}
+                >
+                  <Lock size={16} />
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile Overflow Menu - Visible on Mobile Only */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    data-testid={`button-more-actions-${bookmark.id}`}
+                  >
+                    <MoreHorizontal size={16} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy();
+                    }}
+                    data-testid={`menu-copy-url-${bookmark.id}`}
+                  >
+                    <Copy size={16} className="mr-2" />
+                    Copy URL
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onView?.(bookmark);
+                    }}
+                    disabled={isProtected}
+                    data-testid={`menu-view-details-${bookmark.id}`}
+                  >
+                    <Eye size={16} className="mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGenerateScreenshot(e as any);
+                    }}
+                    disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
+                    data-testid={`menu-screenshot-${bookmark.id}`}
+                  >
+                    {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
+                      <RefreshCw size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Camera size={16} className="mr-2" />
+                    )}
+                    {currentScreenshotStatus === 'pending' ? 'Generating...' : 'Generate Screenshot'}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCheckLink(e as any);
+                    }}
+                    disabled={checkLinkMutation.isPending || isProtected}
+                    data-testid={`menu-check-link-${bookmark.id}`}
+                  >
+                    {checkLinkMutation.isPending ? (
+                      <RefreshCw size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <Link size={16} className="mr-2" />
+                    )}
+                    {checkLinkMutation.isPending ? 'Checking...' : 'Check Link'}
+                  </DropdownMenuItem>
+
+                  {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCopyShareLink?.(bookmark);
+                      }}
+                      data-testid={`menu-copy-share-link-${bookmark.id}`}
+                    >
+                      <Link size={16} className="mr-2" />
+                      Copy Share Link
+                    </DropdownMenuItem>
+                  )}
+
+                  {bookmark.hasPasscode && !isProtected && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLock?.();
+                      }}
+                      data-testid={`menu-lock-${bookmark.id}`}
+                    >
+                      <Lock size={16} className="mr-2" />
+                      Lock Bookmark
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
         
