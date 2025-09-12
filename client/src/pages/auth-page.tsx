@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useLocation } from "wouter";
 import { Bookmark, Shield, Users, Search } from "lucide-react";
 
-// Custom 4-digit password input component
+// Custom 4-digit password input component using shadcn InputOTP
 function FourDigitPasswordInput({ 
   value, 
   onChange, 
@@ -18,68 +19,25 @@ function FourDigitPasswordInput({
   onChange: (value: string) => void;
   placeholder?: string;
 }) {
-  const [inputs, setInputs] = useState<string[]>(["", "", "", ""]);
-
-  useEffect(() => {
-    // Update inputs when value changes externally
-    const digits = value.padEnd(4, "").slice(0, 4).split("");
-    setInputs(digits);
-  }, [value]);
-
-  const handleInputChange = (index: number, digit: string) => {
-    if (!/^\d*$/.test(digit)) return; // Only allow digits
-    
-    const newInputs = [...inputs];
-    newInputs[index] = digit.slice(-1); // Only keep last digit
-    setInputs(newInputs);
-    
-    const newValue = newInputs.join("");
-    onChange(newValue);
-
-    // Auto-focus next input
-    if (digit && index < 3) {
-      const nextInput = document.getElementById(`digit-${index + 1}`);
-      nextInput?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    // Handle backspace to move to previous input
-    if (e.key === "Backspace" && !inputs[index] && index > 0) {
-      const prevInput = document.getElementById(`digit-${index - 1}`);
-      prevInput?.focus();
-    }
-  };
-
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium">{placeholder}</Label>
-      <div className="flex gap-3 justify-center">
-        {inputs.map((digit, index) => (
-          <div
-            key={index}
-            className="relative w-14 h-14 rounded-full border-2 border-input bg-background flex items-center justify-center focus-within:border-ring transition-colors"
-          >
-            <input
-              id={`digit-${index}`}
-              type="password"
-              inputMode="numeric"
-              value={digit}
-              onChange={(e) => handleInputChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-full h-full bg-transparent text-center text-xl font-bold outline-none"
-              maxLength={1}
-              aria-label={`Password digit ${index + 1}`}
-              data-testid={`input-password-digit-${index}`}
-            />
-            {/* Show dot if digit is entered */}
-            {digit && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 bg-foreground rounded-full" />
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="flex justify-center">
+        <InputOTP 
+          maxLength={4} 
+          value={value} 
+          onChange={(v) => onChange(v.replace(/\D/g, "").slice(0, 4))}
+        >
+          <InputOTPGroup>
+            {[0, 1, 2, 3].map(i => (
+              <InputOTPSlot 
+                key={i} 
+                index={i} 
+                data-testid={`input-password-digit-${i}`}
+              />
+            ))}
+          </InputOTPGroup>
+        </InputOTP>
       </div>
     </div>
   );
