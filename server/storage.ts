@@ -73,6 +73,11 @@ export interface IStorage {
     createdAt: Date;
     category?: { name: string } | null;
   } | undefined>;
+  
+  // Auto-tagging methods
+  updateBookmarkSuggestedTags(userId: string, bookmarkId: number, suggestedTags: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
+  acceptSuggestedTags(userId: string, bookmarkId: number, tagsToAccept: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
+  generateAutoTags(url: string, name?: string, description?: string): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -646,6 +651,275 @@ export class DatabaseStorage implements IStorage {
       createdAt: result.createdAt,
       category: result.categoryName ? { name: result.categoryName } : undefined,
     };
+  }
+
+  // Auto-tagging methods
+  async updateBookmarkSuggestedTags(userId: string, bookmarkId: number, suggestedTags: string[]): Promise<Bookmark & { hasPasscode?: boolean }> {
+    const [updatedBookmark] = await db
+      .update(bookmarks)
+      .set({ 
+        suggestedTags: suggestedTags,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)))
+      .returning();
+
+    if (!updatedBookmark) {
+      throw new Error('Bookmark not found or access denied');
+    }
+
+    // Remove passcodeHash from response and add hasPasscode field
+    const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
+    return {
+      ...bookmarkResponse,
+      hasPasscode: !!passcodeHash,
+    } as Bookmark & { hasPasscode?: boolean };
+  }
+
+  async acceptSuggestedTags(userId: string, bookmarkId: number, tagsToAccept: string[]): Promise<Bookmark & { hasPasscode?: boolean }> {
+    // First get the current bookmark to merge tags
+    const bookmark = await this.getBookmark(userId, bookmarkId);
+    if (!bookmark) {
+      throw new Error('Bookmark not found');
+    }
+
+    // Merge current tags with accepted suggested tags, removing duplicates
+    const currentTags = bookmark.tags || [];
+    const newTags = Array.from(new Set([...currentTags, ...tagsToAccept]));
+    
+    // Remove accepted tags from suggested tags
+    const remainingSuggestedTags = (bookmark.suggestedTags || []).filter(tag => !tagsToAccept.includes(tag));
+
+    const [updatedBookmark] = await db
+      .update(bookmarks)
+      .set({ 
+        tags: newTags,
+        suggestedTags: remainingSuggestedTags,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)))
+      .returning();
+
+    if (!updatedBookmark) {
+      throw new Error('Failed to update bookmark');
+    }
+
+    // Remove passcodeHash from response and add hasPasscode field
+    const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
+    return {
+      ...bookmarkResponse,
+      hasPasscode: !!passcodeHash,
+    } as Bookmark & { hasPasscode?: boolean };
+  }
+
+  async generateAutoTags(url: string, name?: string, description?: string): Promise<string[]> {
+    const tags: Set<string> = new Set();
+
+    try {
+      // Parse URL for domain-based tags
+      const urlObj = new URL(url);
+      const domain = urlObj.hostname.toLowerCase();
+      const path = urlObj.pathname.toLowerCase();
+
+      // Domain-based tag mapping
+      const domainTagMap: Record<string, string[]> = {
+        'github.com': ['development', 'code', 'git', 'repository'],
+        'stackoverflow.com': ['programming', 'help', 'q&a', 'development'],
+        'youtube.com': ['video', 'entertainment', 'media'],
+        'youtu.be': ['video', 'entertainment', 'media'],
+        'medium.com': ['article', 'blog', 'writing'],
+        'dev.to': ['development', 'blog', 'programming'],
+        'reddit.com': ['social', 'community', 'discussion'],
+        'twitter.com': ['social', 'microblog'],
+        'x.com': ['social', 'microblog'],
+        'linkedin.com': ['professional', 'networking', 'career'],
+        'dribbble.com': ['design', 'ui', 'portfolio'],
+        'behance.net': ['design', 'portfolio', 'creative'],
+        'figma.com': ['design', 'ui', 'tool', 'collaboration'],
+        'notion.so': ['productivity', 'notes', 'tool'],
+        'google.com': ['search', 'tool'],
+        'docs.google.com': ['document', 'collaboration', 'productivity'],
+        'sheets.google.com': ['spreadsheet', 'data', 'productivity'],
+        'slides.google.com': ['presentation', 'slides', 'productivity'],
+        'wikipedia.org': ['reference', 'encyclopedia', 'knowledge'],
+        'mdn.mozilla.org': ['documentation', 'web', 'development'],
+        'w3schools.com': ['tutorial', 'web', 'development'],
+        'codepen.io': ['development', 'demo', 'frontend'],
+        'jsfiddle.net': ['development', 'demo', 'javascript'],
+        'npmjs.com': ['javascript', 'package', 'development'],
+        'pypi.org': ['python', 'package', 'development'],
+        'aws.amazon.com': ['cloud', 'infrastructure', 'aws'],
+        'azure.microsoft.com': ['cloud', 'infrastructure', 'azure'],
+        'cloud.google.com': ['cloud', 'infrastructure', 'gcp'],
+        'stripe.com': ['payment', 'api', 'fintech'],
+        'twilio.com': ['communication', 'api', 'sms'],
+        'shopify.com': ['ecommerce', 'store', 'business'],
+        'wordpress.com': ['blog', 'cms', 'website'],
+        'wix.com': ['website', 'builder', 'tool'],
+        'squarespace.com': ['website', 'builder', 'design'],
+        'canva.com': ['design', 'graphics', 'tool'],
+        'unsplash.com': ['photos', 'stock', 'images'],
+        'pexels.com': ['photos', 'stock', 'images'],
+        'fonts.google.com': ['fonts', 'typography', 'design'],
+        'hackernews.com': ['tech', 'news', 'startup'],
+        'news.ycombinator.com': ['tech', 'news', 'startup'],
+        'techcrunch.com': ['tech', 'news', 'startup'],
+        'arstechnica.com': ['tech', 'news'],
+        'theverge.com': ['tech', 'news', 'culture'],
+        'wired.com': ['tech', 'news', 'culture'],
+        'coursera.org': ['education', 'course', 'learning'],
+        'udemy.com': ['education', 'course', 'learning'],
+        'edx.org': ['education', 'course', 'learning'],
+        'khanacademy.org': ['education', 'learning', 'free'],
+        'freecodecamp.org': ['education', 'programming', 'free'],
+        'codecademy.com': ['education', 'programming', 'interactive'],
+      };
+
+      // Add domain-specific tags
+      for (const [domainPattern, domainTags] of Object.entries(domainTagMap)) {
+        if (domain.includes(domainPattern.replace('www.', '')) || domain === domainPattern) {
+          domainTags.forEach(tag => tags.add(tag));
+          break; // Only match the first domain pattern
+        }
+      }
+
+      // Path-based analysis for additional context
+      if (path.includes('/docs') || path.includes('/documentation')) {
+        tags.add('documentation');
+      }
+      if (path.includes('/api')) {
+        tags.add('api');
+      }
+      if (path.includes('/tutorial') || path.includes('/guide')) {
+        tags.add('tutorial');
+      }
+      if (path.includes('/blog')) {
+        tags.add('blog');
+      }
+      if (path.includes('/news')) {
+        tags.add('news');
+      }
+
+      // Technology-specific detection from URL and content
+      const techKeywords = {
+        'react': 'react',
+        'vue': 'vue',
+        'angular': 'angular',
+        'javascript': 'javascript',
+        'typescript': 'typescript',
+        'python': 'python',
+        'java': 'java',
+        'php': 'php',
+        'ruby': 'ruby',
+        'go': 'golang',
+        'rust': 'rust',
+        'swift': 'swift',
+        'kotlin': 'kotlin',
+        'docker': 'docker',
+        'kubernetes': 'kubernetes',
+        'aws': 'aws',
+        'azure': 'azure',
+        'gcp': 'gcp',
+        'mongodb': 'database',
+        'postgresql': 'database',
+        'mysql': 'database',
+        'redis': 'database',
+        'graphql': 'graphql',
+        'rest': 'api',
+        'node': 'nodejs',
+        'express': 'nodejs',
+        'next': 'nextjs',
+        'nuxt': 'nuxtjs',
+        'svelte': 'svelte',
+        'flutter': 'flutter',
+        'laravel': 'laravel',
+        'django': 'django',
+        'rails': 'rails',
+      };
+
+      const contentToAnalyze = `${url} ${name || ''} ${description || ''}`.toLowerCase();
+      for (const [keyword, tag] of Object.entries(techKeywords)) {
+        if (contentToAnalyze.includes(keyword)) {
+          tags.add(tag);
+        }
+      }
+
+      // Try to fetch metadata for additional context (with timeout)
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; BookmarkBot/1.0)',
+          },
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const html = await response.text();
+          
+          // Extract title
+          const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+          const pageTitle = titleMatch?.[1]?.trim();
+
+          // Extract meta description
+          const descMatch = html.match(/<meta[^>]*name=['"]description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+          const metaDescription = descMatch?.[1]?.trim();
+
+          // Extract meta keywords
+          const keywordsMatch = html.match(/<meta[^>]*name=['"]keywords['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+          const metaKeywords = keywordsMatch?.[1]?.trim();
+
+          // Analyze extracted content for additional tags
+          const metaContent = `${pageTitle || ''} ${metaDescription || ''} ${metaKeywords || ''}`.toLowerCase();
+          
+          // Content type detection
+          if (metaContent.includes('tutorial') || metaContent.includes('how to') || metaContent.includes('guide')) {
+            tags.add('tutorial');
+          }
+          if (metaContent.includes('video') || metaContent.includes('watch')) {
+            tags.add('video');
+          }
+          if (metaContent.includes('article') || metaContent.includes('blog')) {
+            tags.add('article');
+          }
+          if (metaContent.includes('tool') || metaContent.includes('app') || metaContent.includes('software')) {
+            tags.add('tool');
+          }
+          if (metaContent.includes('news') || metaContent.includes('breaking')) {
+            tags.add('news');
+          }
+          if (metaContent.includes('free') || metaContent.includes('open source')) {
+            tags.add('free');
+          }
+
+          // Check for more tech keywords in metadata
+          for (const [keyword, tag] of Object.entries(techKeywords)) {
+            if (metaContent.includes(keyword)) {
+              tags.add(tag);
+            }
+          }
+        }
+      } catch (fetchError) {
+        // Silently fail metadata fetching - we'll use URL-based tags
+        console.warn(`Failed to fetch metadata for ${url}:`, fetchError instanceof Error ? fetchError.message : 'Unknown error');
+      }
+
+      // Convert set to array and limit to reasonable number
+      const tagArray = Array.from(tags);
+      
+      // Return up to 8 tags, prioritizing more specific ones
+      return tagArray.slice(0, 8);
+
+    } catch (error) {
+      console.error('Error generating auto tags:', error);
+      // Return empty array if URL parsing or other errors occur
+      return [];
+    }
   }
 }
 
