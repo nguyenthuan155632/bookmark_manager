@@ -1,43 +1,94 @@
 // Authentication page with custom 4-digit password UI
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth, getStoredUsername } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useLocation } from "wouter";
 import { Bookmark, Shield, Users, Search } from "lucide-react";
 
-// Custom 4-digit password input component using shadcn InputOTP
-function FourDigitPasswordInput({ 
+// iPhone-style passcode input component
+function PasscodeInput({ 
   value, 
   onChange, 
-  placeholder = "Enter 4-digit password"
+  placeholder = "Enter 4-digit password",
+  disabled = false
 }: { 
   value: string; 
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value.replace(/\D/g, "").slice(0, 4);
+    onChange(newValue);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
+    onChange(pastedText);
+  };
+
+  const handleCircleClick = () => {
+    if (!disabled && inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">{placeholder}</Label>
-      <div className="flex justify-center">
-        <InputOTP 
-          maxLength={4} 
-          value={value} 
-          onChange={(v) => onChange(v.replace(/\D/g, "").slice(0, 4))}
-        >
-          <InputOTPGroup>
-            {[0, 1, 2, 3].map(i => (
-              <InputOTPSlot 
-                key={i} 
-                index={i} 
-                data-testid={`input-password-digit-${i}`}
-              />
-            ))}
-          </InputOTPGroup>
-        </InputOTP>
+    <div className="space-y-3">
+      <Label className="text-sm font-medium text-center block">{placeholder}</Label>
+      <div className="relative">
+        {/* Hidden input for capture */}
+        <input
+          ref={inputRef}
+          type="tel"
+          inputMode="numeric"
+          maxLength={4}
+          value={value}
+          onChange={handleInputChange}
+          onPaste={handlePaste}
+          disabled={disabled}
+          className="sr-only"
+          autoComplete="one-time-code"
+          aria-label="4-digit passcode"
+        />
+        
+        {/* Visual circles */}
+        <div className="flex items-center justify-center gap-4">
+          {[0, 1, 2, 3].map((index) => {
+            const isFilled = index < value.length;
+            const isActive = index === value.length && value.length < 4;
+            
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={handleCircleClick}
+                disabled={disabled}
+                className={`
+                  size-12 rounded-full border-2 bg-background flex items-center justify-center 
+                  transition-all duration-150 ring-offset-background
+                  ${isActive ? "ring-2 ring-primary border-primary" : "border-input"}
+                  ${disabled ? "opacity-50 cursor-not-allowed" : "hover:border-ring cursor-pointer"}
+                `}
+                data-testid={`dot-password-digit-${index}`}
+                data-filled={isFilled}
+                aria-hidden="true"
+              >
+                {isFilled && (
+                  <span 
+                    className="size-3 rounded-full bg-foreground transition-transform duration-150 animate-in zoom-in-50"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -50,6 +101,7 @@ export default function AuthPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showUsernameInput, setShowUsernameInput] = useState(true);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
 
   // Check for stored username on component mount
   useEffect(() => {
@@ -96,6 +148,13 @@ export default function AuthPage() {
     setUsername("");
   };
 
+  // Focus username input when it becomes visible
+  useEffect(() => {
+    if (showUsernameInput && usernameInputRef.current) {
+      usernameInputRef.current.focus();
+    }
+  }, [showUsernameInput]);
+
   if (user) {
     return null; // Will redirect via useEffect
   }
@@ -123,6 +182,7 @@ export default function AuthPage() {
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
                   <Input
+                    ref={usernameInputRef}
                     id="username"
                     type="text"
                     value={username}
@@ -134,17 +194,18 @@ export default function AuthPage() {
                 </div>
               )}
 
-              {/* Show current username if hidden */}
+              {/* Show current username as a clean label */}
               {!showUsernameInput && (
                 <div className="space-y-2">
                   <Label>Signing in as</Label>
-                  <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+                  <div className="flex items-center justify-between px-3 py-2 bg-muted rounded-md select-none" tabIndex={-1}>
                     <span className="font-medium" data-testid="text-current-username">{username}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={handleUsernameChange}
+                      disabled={loginMutation.isPending || registerMutation.isPending}
                       data-testid="button-change-username"
                     >
                       Change
@@ -153,11 +214,12 @@ export default function AuthPage() {
                 </div>
               )}
 
-              {/* 4-Digit Password Input */}
-              <FourDigitPasswordInput
+              {/* iPhone-style Passcode Input */}
+              <PasscodeInput
                 value={password}
                 onChange={setPassword}
                 placeholder={isRegisterMode ? "Create 4-digit password" : "Enter your 4-digit password"}
+                disabled={loginMutation.isPending || registerMutation.isPending}
               />
 
               <Button
