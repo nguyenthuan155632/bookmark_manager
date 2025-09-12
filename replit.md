@@ -7,6 +7,7 @@ This is a full-stack bookmark manager application built with React, Express, and
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Favicon preference: Simple, non-colorful favicon (implemented as minimal bookmark icon).
 
 ## System Architecture
 
