@@ -24,8 +24,14 @@ export function BookmarkDetailsModal({ isOpen, onClose, bookmark }: BookmarkDeta
   };
 
   const handleVisit = () => {
-    window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+    if (bookmark) {
+      window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+    }
   };
+
+  if (!bookmark) {
+    return null;
+  }
 
   const timeAgo = formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
 
