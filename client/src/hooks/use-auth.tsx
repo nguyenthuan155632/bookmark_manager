@@ -39,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      // Clear all cached data when switching users
+      queryClient.clear();
       queryClient.setQueryData(["/api/user"], user);
       // Store username in localStorage for future logins
       localStorage.setItem("bookmark_manager_username", user.username);
@@ -62,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      // Clear all cached data for new user
+      queryClient.clear();
       queryClient.setQueryData(["/api/user"], user);
       // Store username in localStorage for future logins
       localStorage.setItem("bookmark_manager_username", user.username);
@@ -84,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      // Clear all cached data on logout
+      queryClient.clear();
       queryClient.setQueryData(["/api/user"], null);
       // Keep username in localStorage for future logins
       toast({
