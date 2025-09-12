@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useRef, useEffect } from "react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon } from "lucide-react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Bookmark, Category } from "@shared/schema";
@@ -39,8 +40,52 @@ export function BookmarkCard({
   onSelect
 }: BookmarkCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [thumbnailRetryCount, setThumbnailRetryCount] = useState(0);
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Intersection observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsIntersecting(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Fetch screenshot status for this bookmark (for real-time updates)
+  const { data: screenshotData, refetch: refetchScreenshot } = useQuery<{
+    status: string;
+    screenshotUrl?: string;
+    updatedAt?: string;
+  }>({
+    queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`],
+    enabled: !isProtected && (
+      bookmark.screenshotStatus === 'pending' || 
+      thumbnailRetryCount > 0
+    ),
+    refetchInterval: (query) => (query.state.data?.status === 'pending') ? 3000 : false,
+    staleTime: 30000,
+  });
+
+  // Use real-time data if available, otherwise use bookmark data
+  const currentScreenshotUrl = screenshotData?.screenshotUrl || bookmark.screenshotUrl;
+  const currentScreenshotStatus = screenshotData?.status || bookmark.screenshotStatus || 'idle';
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
@@ -84,6 +129,28 @@ export function BookmarkCard({
     }
   });
 
+  // Screenshot generation mutation
+  const generateScreenshotMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", `/api/bookmarks/${bookmark.id}/screenshot`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`] });
+      setThumbnailRetryCount(prev => prev + 1);
+      setTimeout(() => {
+        refetchScreenshot();
+      }, 2000);
+    },
+    onError: (error: any) => {
+      console.error("Screenshot generation failed:", error);
+      toast({
+        variant: "destructive",
+        description: "Failed to generate screenshot",
+      });
+    }
+  });
+
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this bookmark?")) {
       deleteBookmarkMutation.mutate();
@@ -98,6 +165,23 @@ export function BookmarkCard({
       // Unlocked (regardless of hasPasscode) - visit the URL
       window.open(bookmark.url, '_blank', 'noopener,noreferrer');
     }
+  };
+
+  const handleGenerateScreenshot = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isProtected && currentScreenshotStatus !== 'pending') {
+      generateScreenshotMutation.mutate();
+    }
+  };
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setImageLoaded(false);
   };
 
   const getDomain = (url: string) => {
@@ -124,8 +208,110 @@ export function BookmarkCard({
 
   const timeAgo = isProtected ? "—" : formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
 
+  // Thumbnail component for different states
+  const ThumbnailDisplay = () => {
+    if (isProtected) {
+      return (
+        <div className="w-full h-32 bg-muted/40 rounded-md flex items-center justify-center" data-testid={`thumbnail-protected-${bookmark.id}`}>
+          <Lock size={24} className="text-muted-foreground" />
+        </div>
+      );
+    }
+
+    // Show thumbnail if available and loaded
+    if (currentScreenshotUrl && !imageError && isIntersecting) {
+      return (
+        <div className="relative w-full h-32 bg-muted/20 rounded-md overflow-hidden" data-testid={`thumbnail-container-${bookmark.id}`}>
+          {!imageLoaded && (
+            <Skeleton className="absolute inset-0 w-full h-full" />
+          )}
+          <img
+            ref={imageRef}
+            src={currentScreenshotUrl}
+            alt={`Screenshot of ${bookmark.name}`}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            loading="lazy"
+            data-testid={`thumbnail-image-${bookmark.id}`}
+          />
+          {currentScreenshotStatus === 'pending' && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+              <RefreshCw size={16} className="text-white animate-spin" />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Show different states
+    const renderPlaceholder = () => {
+      switch (currentScreenshotStatus) {
+        case 'pending':
+          return (
+            <div className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2" data-testid={`thumbnail-pending-${bookmark.id}`}>
+              <RefreshCw size={20} className="text-muted-foreground animate-spin" />
+              <span className="text-xs text-muted-foreground">Generating...</span>
+            </div>
+          );
+        case 'failed':
+          return (
+            <div 
+              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors" 
+              onClick={handleGenerateScreenshot}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleGenerateScreenshot(e as any);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Retry screenshot generation"
+              data-testid={`thumbnail-failed-${bookmark.id}`}
+            >
+              <div className="flex items-center space-x-2">
+                <AlertCircle size={16} className="text-muted-foreground" />
+                <RefreshCw size={14} className="text-muted-foreground group-hover/thumb:rotate-180 transition-transform" />
+              </div>
+              <span className="text-xs text-muted-foreground text-center">Failed to generate<br/>Click to retry</span>
+            </div>
+          );
+        case 'idle':
+        default:
+          return (
+            <div 
+              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors" 
+              onClick={handleGenerateScreenshot}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleGenerateScreenshot(e as any);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Generate screenshot preview"
+              data-testid={`thumbnail-idle-${bookmark.id}`}
+            >
+              <div className="flex items-center space-x-2">
+                <ImageIcon size={20} className="text-muted-foreground" />
+                <Camera size={16} className="text-muted-foreground group-hover/thumb:scale-110 transition-transform" />
+              </div>
+              <span className="text-xs text-muted-foreground text-center">No preview<br/>Click to generate</span>
+            </div>
+          );
+      }
+    };
+
+    return renderPlaceholder();
+  };
+
   return (
     <Card 
+      ref={cardRef}
       className={`group hover:shadow-md transition-shadow ${
         isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
       } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${
@@ -137,6 +323,10 @@ export function BookmarkCard({
       data-testid={`bookmark-card-${bookmark.id}`}
     >
       <CardContent className="p-4">
+        {/* Thumbnail Section */}
+        <div className="mb-4">
+          <ThumbnailDisplay />
+        </div>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start gap-3 flex-1">
             {bulkMode && (
@@ -224,6 +414,23 @@ export function BookmarkCard({
               title="Copy URL to clipboard"
             >
               <Copy size={16} />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
+                generateScreenshotMutation.isPending ? 'animate-pulse' : ''
+              }`}
+              onClick={handleGenerateScreenshot}
+              disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
+              title={currentScreenshotStatus === 'pending' ? 'Generating screenshot...' : 'Generate screenshot'}
+              data-testid={`button-screenshot-${bookmark.id}`}
+            >
+              {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
+                <RefreshCw size={16} className="animate-spin" />
+              ) : (
+                <Camera size={16} />
+              )}
             </Button>
             <Button
               size="sm"
