@@ -10,6 +10,10 @@ import {
   Filter,
   X,
   LogOut,
+  CheckSquare,
+  Square,
+  Trash2,
+  FolderOpen,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
@@ -22,6 +26,7 @@ import { AddBookmarkModal } from "@/components/add-bookmark-modal";
 import { AddCategoryModal } from "@/components/add-category-modal";
 import { PasscodeModal } from "@/components/passcode-modal";
 import { BookmarkDetailsModal } from "@/components/bookmark-details-modal";
+import { BulkActionToolbar } from "@/components/bulk-action-toolbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +39,18 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Bookmark, Category } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -63,6 +80,13 @@ function BookmarksContent() {
   const [unlockedBookmarks, setUnlockedBookmarks] = useState<Set<number>>(
     new Set(),
   );
+
+  // Bulk selection state
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [bulkPasscodes, setBulkPasscodes] = useState<Record<string, string>>({});
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
   const { theme, setTheme } = useTheme();
   const { logoutMutation } = useAuth();
   const queryClient = useQueryClient();
@@ -138,7 +162,14 @@ function BookmarksContent() {
   const { data: bookmarks = [], isLoading } = useQuery<
     (Bookmark & { category?: Category; hasPasscode?: boolean })[]
   >({
-    queryKey: [`/api/bookmarks?${bookmarkQueryParams.toString()}`],
+    queryKey: ["/api/bookmarks", {
+      search: searchQuery || undefined,
+      categoryId: selectedCategory || undefined,
+      tags: selectedTags.length > 0 ? selectedTags.join(",") : undefined,
+      isFavorite: location === "/favorites" ? "true" : undefined,
+      sortBy,
+      sortOrder
+    }],
   });
 
   const filteredBookmarks = useMemo(() => {
@@ -237,6 +268,153 @@ function BookmarksContent() {
     });
   };
 
+  // Bulk operations mutations
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async ({ ids, passcodes }: { ids: number[]; passcodes?: Record<string, string> }) => {
+      const response = await apiRequest("POST", "/api/bookmarks/bulk/delete", {
+        ids,
+        passcodes
+      });
+      return response.json();
+    },
+    onSuccess: (result: { deletedIds: number[]; failed: { id: number; reason: string }[] }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      
+      // Clear selections and exit bulk mode
+      setSelectedIds([]);
+      setBulkPasscodes({});
+      
+      const { deletedIds, failed } = result;
+      if (deletedIds.length > 0) {
+        toast({
+          description: `Successfully deleted ${deletedIds.length} bookmark(s)`,
+        });
+      }
+      
+      if (failed.length > 0) {
+        toast({
+          variant: "destructive", 
+          description: `Failed to delete ${failed.length} bookmark(s): ${failed.map(f => f.reason).join(", ")}`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || "Failed to delete bookmarks";
+      toast({
+        variant: "destructive",
+        description: errorMessage,
+      });
+    }
+  });
+
+  const bulkMoveMutation = useMutation({
+    mutationFn: async ({ ids, categoryId, passcodes }: { ids: number[]; categoryId: number | null; passcodes?: Record<string, string> }) => {
+      const response = await apiRequest("PATCH", "/api/bookmarks/bulk/move", {
+        ids,
+        categoryId,
+        passcodes
+      });
+      return response.json();
+    },
+    onSuccess: (result: { movedIds: number[]; failed: { id: number; reason: string }[] }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      
+      // Clear selections and exit bulk mode
+      setSelectedIds([]);
+      setBulkPasscodes({});
+      
+      const { movedIds, failed } = result;
+      if (movedIds.length > 0) {
+        toast({
+          description: `Successfully moved ${movedIds.length} bookmark(s)`,
+        });
+      }
+      
+      if (failed.length > 0) {
+        toast({
+          variant: "destructive",
+          description: `Failed to move ${failed.length} bookmark(s): ${failed.map(f => f.reason).join(", ")}`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || "Failed to move bookmarks";
+      toast({
+        variant: "destructive",
+        description: errorMessage,
+      });
+    }
+  });
+
+  // Bulk selection handlers
+  const handleBulkModeToggle = () => {
+    setBulkMode(!bulkMode);
+    if (bulkMode) {
+      // Exiting bulk mode - clear selections
+      setSelectedIds([]);
+      setBulkPasscodes({});
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === filteredBookmarks.length) {
+      // Deselect all
+      setSelectedIds([]);
+    } else {
+      // Select all
+      setSelectedIds(filteredBookmarks.map(b => b.id));
+    }
+  };
+
+  const handleSelectBookmark = (bookmarkId: number, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedIds(prev => [...prev, bookmarkId]);
+    } else {
+      setSelectedIds(prev => prev.filter(id => id !== bookmarkId));
+      // Remove passcode if unselecting
+      setBulkPasscodes(prev => {
+        const { [bookmarkId.toString()]: removed, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setShowBulkDeleteDialog(true);
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    
+    setIsBulkOperationLoading(true);
+    bulkDeleteMutation.mutate(
+      { ids: selectedIds, passcodes: Object.keys(bulkPasscodes).length > 0 ? bulkPasscodes : undefined },
+      {
+        onSettled: () => {
+          setIsBulkOperationLoading(false);
+          setShowBulkDeleteDialog(false);
+        }
+      }
+    );
+  };
+
+  const handleBulkMove = (categoryId: number | null) => {
+    if (selectedIds.length === 0) return;
+    
+    setIsBulkOperationLoading(true);
+    bulkMoveMutation.mutate(
+      { ids: selectedIds, categoryId, passcodes: Object.keys(bulkPasscodes).length > 0 ? bulkPasscodes : undefined },
+      {
+        onSettled: () => {
+          setIsBulkOperationLoading(false);
+        }
+      }
+    );
+  };
+
   // Handle successful passcode verification
   const handlePasscodeSuccess = () => {
     if (selectedProtectedBookmark) {
@@ -328,6 +506,16 @@ function BookmarksContent() {
             </div>
 
             <div className="flex items-center space-x-4">
+              <Button
+                size="sm"
+                variant={bulkMode ? "default" : "outline"}
+                onClick={handleBulkModeToggle}
+                data-testid="button-bulk-mode-toggle"
+              >
+                {bulkMode ? <CheckSquare size={16} /> : <Square size={16} />}
+                <span className="ml-2">Bulk Select</span>
+              </Button>
+
               <div className="flex items-center bg-muted rounded-md p-1">
                 <Button
                   size="sm"
@@ -571,6 +759,21 @@ function BookmarksContent() {
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto p-6">
+          {/* Bulk Action Toolbar */}
+          {bulkMode && (
+            <BulkActionToolbar
+              selectedCount={selectedIds.length}
+              totalCount={filteredBookmarks.length}
+              isAllSelected={selectedIds.length === filteredBookmarks.length && filteredBookmarks.length > 0}
+              onSelectAll={handleSelectAll}
+              onDeselectAll={() => setSelectedIds([])}
+              onBulkDelete={handleBulkDelete}
+              onBulkMove={handleBulkMove}
+              onExitBulkMode={handleBulkModeToggle}
+              isLoading={isBulkOperationLoading}
+            />
+          )}
+
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -629,6 +832,9 @@ function BookmarksContent() {
                     isProtected={isProtected}
                     onUnlock={() => handleUnlockBookmark(bookmark)}
                     onLock={() => handleLockBookmark(bookmark)}
+                    bulkMode={bulkMode}
+                    isSelected={selectedIds.includes(bookmark.id)}
+                    onSelect={handleSelectBookmark}
                   />
                 );
               })}
