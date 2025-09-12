@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2 } from "lucide-react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -94,6 +94,20 @@ export function BookmarkCard({ bookmark, onEdit, onView, onShare, isProtected = 
     }
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(bookmark.url);
+      toast({
+        description: "URL copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        description: "Failed to copy URL",
+      });
+    }
+  };
+
   const timeAgo = isProtected ? "—" : formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
 
   return (
@@ -166,6 +180,17 @@ export function BookmarkCard({ bookmark, onEdit, onView, onShare, isProtected = 
                 size={16}
                 className={isProtected ? "" : (bookmark.isFavorite ? "fill-current text-accent" : "")}
               />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-green-500"
+              onClick={handleCopy}
+              disabled={isProtected}
+              data-testid={`button-copy-${bookmark.id}`}
+              title="Copy URL to clipboard"
+            >
+              <Copy size={16} />
             </Button>
             <Button
               size="sm"
