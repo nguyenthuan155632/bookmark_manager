@@ -1,6 +1,6 @@
 import { bookmarks, categories, users, userPreferences, type Bookmark, type InsertBookmark, type InsertBookmarkInternal, type Category, type InsertCategory, type User, type InsertUser, type UserPreferences, type InsertUserPreferences } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, ilike, or, desc, asc, and, isNull, sql } from "drizzle-orm";
+import { eq, ilike, or, desc, asc, and, isNull, sql, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import ConnectPgSimple from "connect-pg-simple";
 import session from "express-session";
@@ -31,6 +31,16 @@ export interface IStorage {
   updateBookmark(userId: string, id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark>;
   deleteBookmark(userId: string, id: number): Promise<void>;
   verifyBookmarkPasscode(userId: string, id: number, passcode: string): Promise<boolean>;
+  
+  // Bulk operations
+  bulkDeleteBookmarks(userId: string, ids: number[], passcodes?: Record<string, string>): Promise<{
+    deletedIds: number[];
+    failed: { id: number; reason: string }[];
+  }>;
+  bulkMoveBookmarks(userId: string, ids: number[], categoryId: number | null, passcodes?: Record<string, string>): Promise<{
+    movedIds: number[];
+    failed: { id: number; reason: string }[];
+  }>;
   
   // Category methods
   getCategories(userId: string): Promise<Category[]>;
@@ -145,14 +155,22 @@ export class DatabaseStorage implements IStorage {
       description: bookmarks.description,
       url: bookmarks.url,
       tags: bookmarks.tags,
+      suggestedTags: bookmarks.suggestedTags,
       isFavorite: bookmarks.isFavorite,
       categoryId: bookmarks.categoryId,
       userId: bookmarks.userId,
-      createdAt: bookmarks.createdAt,
-      updatedAt: bookmarks.updatedAt,
       passcodeHash: bookmarks.passcodeHash,
       isShared: bookmarks.isShared,
       shareId: bookmarks.shareId,
+      screenshotUrl: bookmarks.screenshotUrl,
+      screenshotStatus: bookmarks.screenshotStatus,
+      screenshotUpdatedAt: bookmarks.screenshotUpdatedAt,
+      linkStatus: bookmarks.linkStatus,
+      httpStatus: bookmarks.httpStatus,
+      lastLinkCheckAt: bookmarks.lastLinkCheckAt,
+      linkFailCount: bookmarks.linkFailCount,
+      createdAt: bookmarks.createdAt,
+      updatedAt: bookmarks.updatedAt,
       category: categories,
     }).from(bookmarks)
     .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
@@ -189,14 +207,22 @@ export class DatabaseStorage implements IStorage {
       description: bookmarks.description,
       url: bookmarks.url,
       tags: bookmarks.tags,
+      suggestedTags: bookmarks.suggestedTags,
       isFavorite: bookmarks.isFavorite,
       categoryId: bookmarks.categoryId,
       userId: bookmarks.userId,
-      createdAt: bookmarks.createdAt,
-      updatedAt: bookmarks.updatedAt,
       passcodeHash: bookmarks.passcodeHash,
       isShared: bookmarks.isShared,
       shareId: bookmarks.shareId,
+      screenshotUrl: bookmarks.screenshotUrl,
+      screenshotStatus: bookmarks.screenshotStatus,
+      screenshotUpdatedAt: bookmarks.screenshotUpdatedAt,
+      linkStatus: bookmarks.linkStatus,
+      httpStatus: bookmarks.httpStatus,
+      lastLinkCheckAt: bookmarks.lastLinkCheckAt,
+      linkFailCount: bookmarks.linkFailCount,
+      createdAt: bookmarks.createdAt,
+      updatedAt: bookmarks.updatedAt,
       category: categories,
     }).from(bookmarks)
     .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
@@ -286,6 +312,150 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await bcrypt.compare(passcode, bookmark.passcodeHash);
+  }
+
+  // Bulk operations
+  async bulkDeleteBookmarks(userId: string, ids: number[], passcodes?: Record<string, string>): Promise<{
+    deletedIds: number[];
+    failed: { id: number; reason: string }[];
+  }> {
+    const deletedIds: number[] = [];
+    const failed: { id: number; reason: string }[] = [];
+
+    if (ids.length === 0) {
+      return { deletedIds, failed };
+    }
+
+    // Get all bookmarks that belong to this user
+    const userBookmarks = await db.select({
+      id: bookmarks.id,
+      passcodeHash: bookmarks.passcodeHash,
+    }).from(bookmarks).where(and(
+      inArray(bookmarks.id, ids),
+      eq(bookmarks.userId, userId)
+    ));
+
+    // Create a map for quick lookup
+    const userBookmarkMap = new Map(userBookmarks.map(b => [b.id, b]));
+
+    // Process each bookmark ID
+    for (const id of ids) {
+      const bookmark = userBookmarkMap.get(id);
+      
+      if (!bookmark) {
+        failed.push({ id, reason: "Bookmark not found or access denied" });
+        continue;
+      }
+
+      // Check if bookmark is protected and requires passcode
+      if (bookmark.passcodeHash) {
+        const providedPasscode = passcodes?.[id.toString()];
+        
+        if (!providedPasscode || typeof providedPasscode !== 'string') {
+          failed.push({ id, reason: "Passcode required for protected bookmark" });
+          continue;
+        }
+
+        const isValidPasscode = await bcrypt.compare(providedPasscode, bookmark.passcodeHash);
+        if (!isValidPasscode) {
+          failed.push({ id, reason: "Invalid passcode" });
+          continue;
+        }
+      }
+
+      // If we get here, bookmark can be deleted
+      deletedIds.push(id);
+    }
+
+    // Perform bulk deletion for all successful IDs
+    if (deletedIds.length > 0) {
+      await db.delete(bookmarks).where(and(
+        inArray(bookmarks.id, deletedIds),
+        eq(bookmarks.userId, userId)
+      ));
+    }
+
+    return { deletedIds, failed };
+  }
+
+  async bulkMoveBookmarks(userId: string, ids: number[], categoryId: number | null, passcodes?: Record<string, string>): Promise<{
+    movedIds: number[];
+    failed: { id: number; reason: string }[];
+  }> {
+    const movedIds: number[] = [];
+    const failed: { id: number; reason: string }[] = [];
+
+    if (ids.length === 0) {
+      return { movedIds, failed };
+    }
+
+    // If categoryId is provided, verify it belongs to the user
+    if (categoryId !== null) {
+      const categoryExists = await this.getCategory(userId, categoryId);
+      if (!categoryExists) {
+        // All bookmarks fail with same reason
+        return {
+          movedIds: [],
+          failed: ids.map(id => ({ id, reason: "Target category not found or access denied" }))
+        };
+      }
+    }
+
+    // Get all bookmarks that belong to this user
+    const userBookmarks = await db.select({
+      id: bookmarks.id,
+      passcodeHash: bookmarks.passcodeHash,
+    }).from(bookmarks).where(and(
+      inArray(bookmarks.id, ids),
+      eq(bookmarks.userId, userId)
+    ));
+
+    // Create a map for quick lookup
+    const userBookmarkMap = new Map(userBookmarks.map(b => [b.id, b]));
+
+    // Process each bookmark ID
+    for (const id of ids) {
+      const bookmark = userBookmarkMap.get(id);
+      
+      if (!bookmark) {
+        failed.push({ id, reason: "Bookmark not found or access denied" });
+        continue;
+      }
+
+      // Check if bookmark is protected and requires passcode
+      if (bookmark.passcodeHash) {
+        const providedPasscode = passcodes?.[id.toString()];
+        
+        if (!providedPasscode || typeof providedPasscode !== 'string') {
+          failed.push({ id, reason: "Passcode required for protected bookmark" });
+          continue;
+        }
+
+        const isValidPasscode = await bcrypt.compare(providedPasscode, bookmark.passcodeHash);
+        if (!isValidPasscode) {
+          failed.push({ id, reason: "Invalid passcode" });
+          continue;
+        }
+      }
+
+      // If we get here, bookmark can be moved
+      movedIds.push(id);
+    }
+
+    // Perform bulk update for all successful IDs
+    if (movedIds.length > 0) {
+      await db.update(bookmarks)
+        .set({
+          categoryId,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          inArray(bookmarks.id, movedIds),
+          eq(bookmarks.userId, userId)
+        ));
+    }
+
+    return { movedIds, failed };
   }
 
   // Category methods

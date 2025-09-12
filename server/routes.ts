@@ -5,6 +5,18 @@ import { insertBookmarkSchema, insertCategorySchema, insertUserPreferencesSchema
 import { requireAuth, setupAuth } from "./auth";
 import { z } from "zod";
 
+// Bulk operation schemas
+const bulkDeleteSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1, "At least one bookmark ID is required"),
+  passcodes: z.record(z.string(), z.string().min(4).max(64)).optional()
+});
+
+const bulkMoveSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1, "At least one bookmark ID is required"),
+  categoryId: z.number().int().positive().nullable(),
+  passcodes: z.record(z.string(), z.string().min(4).max(64)).optional()
+});
+
 // Vensera user ID for temporary fallback access
 const VENSERA_USER_ID = 'c73053f2-ec15-438c-8af0-3bf8c7954454';
 
@@ -294,6 +306,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching shared bookmark:", error);
       res.status(500).json({ message: "Failed to fetch shared bookmark" });
+    }
+  });
+
+  // Bulk operations for bookmarks
+  app.post("/api/bookmarks/bulk/delete", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Validate request body
+      const { ids, passcodes } = bulkDeleteSchema.parse(req.body);
+      
+      // Perform bulk deletion
+      const result = await storage.bulkDeleteBookmarks(userId, ids, passcodes);
+      
+      // Return results
+      res.json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error in bulk delete bookmarks:", error);
+      res.status(500).json({ message: "Failed to delete bookmarks" });
+    }
+  });
+
+  app.patch("/api/bookmarks/bulk/move", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      
+      // Validate request body
+      const { ids, categoryId, passcodes } = bulkMoveSchema.parse(req.body);
+      
+      // Perform bulk move
+      const result = await storage.bulkMoveBookmarks(userId, ids, categoryId, passcodes);
+      
+      // Return results
+      res.json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid request data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error in bulk move bookmarks:", error);
+      res.status(500).json({ message: "Failed to move bookmarks" });
     }
   });
 
