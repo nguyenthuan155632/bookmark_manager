@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock } from "lucide-react";
+import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -14,12 +14,13 @@ import { formatDistanceToNow } from "date-fns";
 interface BookmarkCardProps {
   bookmark: Bookmark & { category?: Category; hasPasscode?: boolean };
   onEdit?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
+  onView?: (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => void;
   isProtected?: boolean;
   onUnlock?: () => void;
   onLock?: () => void;
 }
 
-export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock, onLock }: BookmarkCardProps) {
+export function BookmarkCard({ bookmark, onEdit, onView, isProtected = false, onUnlock, onLock }: BookmarkCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -164,6 +165,16 @@ export function BookmarkCard({ bookmark, onEdit, isProtected = false, onUnlock, 
                 size={16}
                 className={isProtected ? "" : (bookmark.isFavorite ? "fill-current text-accent" : "")}
               />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+              onClick={() => onView?.(bookmark)}
+              disabled={isProtected}
+              data-testid={`button-view-${bookmark.id}`}
+            >
+              <Eye size={16} />
             </Button>
             <Button
               size="sm"

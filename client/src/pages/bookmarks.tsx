@@ -21,6 +21,7 @@ import { BookmarkCard } from "@/components/bookmark-card";
 import { AddBookmarkModal } from "@/components/add-bookmark-modal";
 import { AddCategoryModal } from "@/components/add-category-modal";
 import { PasscodeModal } from "@/components/passcode-modal";
+import { BookmarkDetailsModal } from "@/components/bookmark-details-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,6 +42,7 @@ function BookmarksContent() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<any>(null);
+  const [viewingBookmark, setViewingBookmark] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -157,6 +159,12 @@ function BookmarksContent() {
     setIsAddModalOpen(true);
   };
 
+  const handleView = (
+    bookmark: Bookmark & { category?: Category; hasPasscode?: boolean },
+  ) => {
+    setViewingBookmark(bookmark);
+  };
+
   // Handle protected bookmark unlock
   const handleUnlockBookmark = (
     bookmark: Bookmark & { category?: Category; hasPasscode?: boolean },
@@ -201,6 +209,10 @@ function BookmarksContent() {
   const handleCloseModal = () => {
     setIsAddModalOpen(false);
     setEditingBookmark(null);
+  };
+
+  const handleCloseViewModal = () => {
+    setViewingBookmark(null);
   };
 
   const removeTag = (tagToRemove: string) => {
@@ -560,6 +572,7 @@ function BookmarksContent() {
                     key={bookmark.id}
                     bookmark={bookmark}
                     onEdit={handleEdit}
+                    onView={handleView}
                     isProtected={isProtected}
                     onUnlock={() => handleUnlockBookmark(bookmark)}
                     onLock={() => handleLockBookmark(bookmark)}
@@ -601,6 +614,12 @@ function BookmarksContent() {
         isOpen={isAddModalOpen}
         onClose={handleCloseModal}
         editingBookmark={editingBookmark}
+      />
+
+      <BookmarkDetailsModal
+        isOpen={!!viewingBookmark}
+        onClose={handleCloseViewModal}
+        bookmark={viewingBookmark}
       />
 
       <AddCategoryModal
