@@ -126,14 +126,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = getUserId(req);
       const search = req.query.search as string;
-      const categoryId = req.query.categoryId
-        ? parseInt(req.query.categoryId as string)
-        : undefined;
+      const categoryIdParam = (req.query.categoryId as string | undefined)?.toLowerCase();
+      let categoryId: number | null | undefined = undefined;
+      if (
+        categoryIdParam === 'uncategorized' ||
+        categoryIdParam === 'unspecified' ||
+        categoryIdParam === 'none' ||
+        categoryIdParam === 'null'
+      ) {
+        categoryId = null;
+      } else if (categoryIdParam) {
+        const parsed = parseInt(categoryIdParam);
+        categoryId = isNaN(parsed) ? undefined : parsed;
+      }
       const isFavorite = req.query.isFavorite === 'true' ? true : undefined;
       const tags = req.query.tags ? (req.query.tags as string).split(',') : undefined;
       const linkStatus = req.query.linkStatus as string;
       const sortBy = (req.query.sortBy as 'name' | 'createdAt' | 'isFavorite') || 'createdAt';
       const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
 
       const bookmarks = await storage.getBookmarks(userId, {
         search,
@@ -143,6 +155,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         linkStatus,
         sortBy,
         sortOrder,
+        limit: typeof limit === 'number' && !Number.isNaN(limit) ? limit : undefined,
+        offset: typeof offset === 'number' && !Number.isNaN(offset) ? offset : undefined,
       });
 
       res.json(bookmarks);
@@ -666,8 +680,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
-      await storage.deleteCategory(userId, id);
-      res.status(204).send();
+
+      // Ensure category exists and belongs to user
+      const cat = await storage.getCategory(userId, id);
+      if (!cat) {
+        return res.status(404).json({ message: 'Category not found' });
+      }
+
+      // Determine strategy (optional): 'unlink' | 'delete'
+      const strategy = (req.query.strategy as string | undefined)?.toLowerCase();
+
+      // Get bookmarks in this category to decide behavior
+      const bookmarksInCategory = await storage.getBookmarks(userId, { categoryId: id });
+      const count = bookmarksInCategory.length;
+
+      if (count === 0) {
+        await storage.deleteCategory(userId, id);
+        return res.status(204).send();
+      }
+
+      if (!strategy) {
+        return res
+          .status(409)
+          .json({
+            message: 'Category contains bookmarks. Specify strategy query param.',
+            required: {
+              strategy: ['unlink', 'delete'],
+            },
+            count,
+          });
+      }
+
+      if (strategy === 'unlink') {
+        // Unlink all bookmarks from this category, then delete category
+        await storage.unlinkCategoryBookmarks(userId, id);
+        await storage.deleteCategory(userId, id);
+        return res.status(204).send();
+      }
+
+      if (strategy === 'delete') {
+        // Hard delete all bookmarks in this category (ignores passcodes)
+        await storage.deleteBookmarksByCategory(userId, id);
+        await storage.deleteCategory(userId, id);
+        return res.status(204).send();
+      }
+
+      return res.status(400).json({ message: 'Invalid strategy. Use unlink or delete.' });
     } catch (error) {
       console.error('Error deleting category:', error);
       res.status(500).json({ message: 'Failed to delete category' });

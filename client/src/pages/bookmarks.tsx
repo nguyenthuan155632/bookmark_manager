@@ -19,7 +19,7 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useLocation, useRoute } from 'wouter';
 import { ThemeProvider } from '@/components/theme-provider';
 import { useTheme } from '@/lib/theme';
@@ -144,28 +144,40 @@ function BookmarksContent() {
     queryKey: ['/api/stats'],
   });
 
-  // Fetch bookmarks with filters
-
-  const { data: bookmarks = [], isLoading } = useQuery<
-    (Bookmark & { category?: Category; hasPasscode?: boolean })[]
+  // Fetch bookmarks with lazy loading (infinite scroll)
+  const PAGE_SIZE = 40;
+  const {
+    data: bookmarksPages,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<
+    (Bookmark & { category?: Category; hasPasscode?: boolean })[],
+    Error
   >({
     queryKey: [
       '/api/bookmarks',
       {
         search: searchQuery || undefined,
-        categoryId: selectedCategory || undefined,
+        // Only pass numeric categoryId; special folders handled client-side
+        categoryId:
+          selectedCategory && !isNaN(parseInt(selectedCategory))
+            ? String(parseInt(selectedCategory))
+            : undefined,
         tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
         linkStatus: selectedLinkStatus || undefined,
         isFavorite: location === '/favorites' ? 'true' : undefined,
         sortBy,
         sortOrder,
+        limit: PAGE_SIZE,
       },
     ],
-    queryFn: async ({ queryKey }) => {
+    queryFn: async ({ queryKey, pageParam = 0 }) => {
       const [, params] = queryKey as [string, Record<string, any>];
       const searchParams = new URLSearchParams();
 
-      Object.entries(params).forEach(([key, value]) => {
+      Object.entries({ ...params, offset: pageParam }).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           searchParams.set(key, String(value));
         }
@@ -181,20 +193,75 @@ function BookmarksContent() {
 
       return response.json();
     },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
+    refetchOnWindowFocus: false,
   });
 
+  // Merge pages
+  const bookmarks = useMemo(
+    () => (bookmarksPages?.pages ? ([] as (Bookmark & { category?: Category; hasPasscode?: boolean })[]).concat(...bookmarksPages.pages) : []),
+    [bookmarksPages],
+  );
+
   const filteredBookmarks = useMemo(() => {
+    const isUncategorized = selectedCategory === 'uncategorized';
+    const isHidden = selectedCategory === 'hidden';
+    const isRootAll = location === '/';
+    const numericCategoryId = !isNaN(parseInt(selectedCategory))
+      ? parseInt(selectedCategory)
+      : null;
+
     return bookmarks.filter((bookmark) => {
+      // Tags filter
       if (selectedTags.length > 0) {
-        return selectedTags.some((tag) =>
+        const hasAnyTag = selectedTags.some((tag) =>
           bookmark.tags?.some((bookmarkTag) =>
             bookmarkTag.toLowerCase().includes(tag.toLowerCase()),
           ),
         );
+        if (!hasAnyTag) return false;
       }
+
+      // Special folders filtering
+      if (isUncategorized) {
+        return !bookmark.categoryId;
+      }
+      if (isHidden) {
+        return !!bookmark.hasPasscode;
+      }
+
+      // When a numeric category is selected, server already filters by categoryId,
+      // but keep client-side guard in case of cache reuse
+      if (numericCategoryId !== null) {
+        return bookmark.categoryId === numericCategoryId;
+      }
+
+      // On root All Bookmarks view, hide protected bookmarks
+      if (isRootAll && bookmark.hasPasscode) {
+        return false;
+      }
+
       return true;
     });
-  }, [bookmarks, selectedTags]);
+  }, [bookmarks, selectedTags, selectedCategory, location]);
+
+  // Infinite scroll sentinel
+  const [sentinelRef, setSentinelRef] = useState<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!sentinelRef) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: '300px 0px' },
+    );
+    observer.observe(sentinelRef);
+    return () => observer.disconnect();
+  }, [sentinelRef, hasNextPage, isFetchingNextPage, fetchNextPage, bookmarks, selectedCategory, searchQuery, selectedTags, selectedLinkStatus, sortBy, sortOrder, location]);
 
   const handleEdit = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
     setEditingBookmark(bookmark);
@@ -728,11 +795,11 @@ function BookmarksContent() {
 
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4" data-testid="header">
+        <header className="bg-card border-b border-border px-4 py-4" data-testid="header">
           {/* Desktop Layout */}
           <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4 min-w-0">
-              <div className="relative flex-1 max-w-4xl">
+              <div className="relative flex-1 min-w-[350px]">
                 <Search
                   className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
                   size={16}
@@ -943,7 +1010,7 @@ function BookmarksContent() {
                     variant="ghost"
                     size="sm"
                     onClick={clearFilters}
-                    className="text-xs"
+                    className="text-xs ml-0 pl-0"
                     data-testid="button-clear-filters"
                   >
                     Clear all
@@ -1038,7 +1105,7 @@ function BookmarksContent() {
                     variant="ghost"
                     size="sm"
                     onClick={clearFilters}
-                    className="text-xs"
+                    className="text-xs ml-0 pl-0"
                     data-testid="button-clear-filters"
                   >
                     Clear all
@@ -1048,7 +1115,7 @@ function BookmarksContent() {
             </div>
 
             {/* Line 2: Sort Select + Bookmark Count */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 mt-0">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <span data-testid="bookmark-count">{filteredBookmarks.length}</span>
                 <span>bookmarks</span>
@@ -1165,6 +1232,8 @@ function BookmarksContent() {
                   />
                 );
               })}
+              {/* Infinite scroll sentinel */}
+              <div ref={setSentinelRef} />
             </div>
           ) : (
             <div className="text-center py-12" data-testid="empty-state">

@@ -129,11 +129,12 @@ export function SharedBookmark() {
               onClick={handleVisit}
               aria-label="Visit Website"
               title="Visit Website"
-              className="flex items-center justify-center gap-2 h-10 w-10 px-0 sm:h-11 sm:w-auto sm:px-8"
+              variant="ghost"
+              className="flex items-center justify-center gap-2 h-12 w-12 p-0 sm:h-11 sm:w-auto sm:px-4"
               data-testid="button-visit-shared-bookmark"
             >
               <span className="hidden sm:inline">Visit Website</span>
-              <ExternalLink size={16} />
+              <ExternalLink size={18} />
             </Button>
           </div>
 

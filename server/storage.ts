@@ -36,12 +36,14 @@ export interface IStorage {
     userId: string,
     params?: {
       search?: string;
-      categoryId?: number;
+      categoryId?: number | null;
       isFavorite?: boolean;
       tags?: string[];
       linkStatus?: string;
       sortBy?: 'name' | 'createdAt' | 'isFavorite';
       sortOrder?: 'asc' | 'desc';
+      limit?: number;
+      offset?: number;
     },
   ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>;
   getBookmark(
@@ -78,6 +80,8 @@ export interface IStorage {
   getCategory(userId: string, id: number): Promise<Category | undefined>;
   createCategory(userId: string, category: InsertCategory): Promise<Category>;
   updateCategory(userId: string, id: number, category: Partial<InsertCategory>): Promise<Category>;
+  unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void>;
+  deleteBookmarksByCategory(userId: string, categoryId: number): Promise<number>;
   deleteCategory(userId: string, id: number): Promise<void>;
 
   // Stats methods
@@ -107,13 +111,13 @@ export interface IStorage {
   setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
   getSharedBookmark(shareId: string): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string;
-        tags: string[] | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-      }
+      name: string;
+      description: string | null;
+      url: string;
+      tags: string[] | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+    }
     | undefined
   >;
 
@@ -221,8 +225,13 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    if (params?.categoryId !== undefined) {
-      conditions.push(eq(bookmarks.categoryId, params.categoryId));
+    if (params && 'categoryId' in params) {
+      const cid = params.categoryId as number | null | undefined;
+      if (cid === null) {
+        conditions.push(isNull(bookmarks.categoryId));
+      } else if (typeof cid === 'number' && !Number.isNaN(cid)) {
+        conditions.push(eq(bookmarks.categoryId, cid));
+      }
     }
 
     if (params?.isFavorite !== undefined) {
@@ -307,6 +316,16 @@ export class DatabaseStorage implements IStorage {
       finalQuery = baseQuery.orderBy(
         sortOrder === 'asc' ? asc(bookmarks.createdAt) : desc(bookmarks.createdAt),
       );
+    }
+
+    // Apply pagination if provided
+    if (typeof params?.limit === 'number' && params.limit > 0) {
+      // @ts-expect-error drizzle limit chainable
+      finalQuery = finalQuery.limit(params.limit);
+    }
+    if (typeof params?.offset === 'number' && params.offset > 0) {
+      // @ts-expect-error drizzle offset chainable
+      finalQuery = finalQuery.offset(params.offset);
     }
 
     const results = await finalQuery;
@@ -662,6 +681,21 @@ export class DatabaseStorage implements IStorage {
     return updatedCategory;
   }
 
+  async unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void> {
+    await db
+      .update(bookmarks)
+      .set({ categoryId: null, updatedAt: new Date() })
+      .where(and(eq(bookmarks.userId, userId), eq(bookmarks.categoryId, categoryId)));
+  }
+
+  async deleteBookmarksByCategory(userId: string, categoryId: number): Promise<number> {
+    const deleted = await db
+      .delete(bookmarks)
+      .where(and(eq(bookmarks.userId, userId), eq(bookmarks.categoryId, categoryId)))
+      .returning({ id: bookmarks.id });
+    return deleted.length;
+  }
+
   async deleteCategory(userId: string, id: number): Promise<void> {
     await db.delete(categories).where(and(eq(categories.id, id), eq(categories.userId, userId)));
   }
@@ -841,13 +875,13 @@ export class DatabaseStorage implements IStorage {
 
   async getSharedBookmark(shareId: string): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string;
-        tags: string[] | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-      }
+      name: string;
+      description: string | null;
+      url: string;
+      tags: string[] | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+    }
     | undefined
   > {
     const [result] = await db
@@ -1290,7 +1324,7 @@ export class DatabaseStorage implements IStorage {
 
       // Fallback to a simple placeholder image service
       try {
-        const fallbackUrl = `https://via.placeholder.com/300x200/4f46e5/ffffff?text=Screenshot+Unavailable`;
+        const fallbackUrl = `https://placehold.co/600x400?text=Screenshot+Unavailable`;
         await this.updateScreenshotStatus(bookmarkId, 'ready', fallbackUrl);
       } catch (fallbackError) {
         console.error(`Fallback screenshot failed for bookmark ${bookmarkId}:`, fallbackError);

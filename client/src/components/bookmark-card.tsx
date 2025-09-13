@@ -12,12 +12,12 @@ import {
   Camera,
   RefreshCw,
   AlertCircle,
-  Image as ImageIcon,
   CheckCircle,
   XCircle,
   HelpCircle,
   Link,
   RotateCcw,
+  Files,
 } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
@@ -67,6 +67,9 @@ export function BookmarkCard({
   passcode,
   isShareLoading = false,
 }: BookmarkCardProps) {
+  // Default thumbnail when no screenshot is available
+  const DEFAULT_THUMBNAIL_URL =
+    'https://placehold.co/600x400/transparent/052450?text=No+Preview';
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [thumbnailRetryCount, setThumbnailRetryCount] = useState(0);
@@ -158,6 +161,59 @@ export function BookmarkCard({
         variant: 'destructive',
         description: 'Failed to delete bookmark',
       });
+    },
+  });
+
+  // Duplicate bookmark mutation (non-protected only)
+  const duplicateBookmarkMutation = useMutation({
+    mutationFn: async () => {
+      // Determine next incrementing suffix within the same category
+      const queries = queryClient.getQueriesData<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>(
+        { queryKey: ['/api/bookmarks'] },
+      );
+      const all = queries
+        .map(([, data]) => data || [])
+        .flat()
+        .filter((b) => (b.categoryId ?? null) === (bookmark.categoryId ?? null));
+
+      const stripSuffix = (name: string) => {
+        const m = name.match(/^(.*)\s*\((\d+)\)\s*$/);
+        return m ? m[1] : name;
+      };
+      const base = stripSuffix(bookmark.name).trim();
+      let maxN = 1;
+      for (const b of all) {
+        const n = (() => {
+          const m = b.name.match(/^\s*"?\s*(.*)\s*\((\d+)\)\s*"?\s*$/) || b.name.match(/^(.+?)\s*\((\d+)\)$/);
+          if (m && stripSuffix(b.name).trim() === base) {
+            return parseInt(m[2], 10) || 1;
+          }
+          if (b.name.trim() === base) return 1;
+          return 0;
+        })();
+        if (n > maxN) maxN = n;
+      }
+      const nextName = `${base} (${Math.max(2, maxN + 1)})`;
+
+      const body = {
+        name: nextName,
+        description: bookmark.description || undefined,
+        url: bookmark.url,
+        tags: bookmark.tags || [],
+        isFavorite: bookmark.isFavorite || false,
+        categoryId: bookmark.categoryId ?? undefined,
+        // Never duplicate sharing/protection/screenshot/link meta
+        isShared: false,
+      } as const;
+      return await apiRequest('POST', '/api/bookmarks', body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      toast({ description: 'Bookmark duplicated' });
+    },
+    onError: () => {
+      toast({ variant: 'destructive', description: 'Failed to duplicate bookmark' });
     },
   });
 
@@ -396,9 +452,8 @@ export function BookmarkCard({
             ref={imageRef}
             src={currentScreenshotUrl}
             alt={`Screenshot of ${bookmark.name}`}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             loading="lazy"
@@ -427,40 +482,12 @@ export function BookmarkCard({
             </div>
           );
         case 'failed':
-          return (
-            <div
-              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors"
-              onClick={handleGenerateScreenshot}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleGenerateScreenshot(e as any);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label="Retry screenshot generation"
-              data-testid={`thumbnail-failed-${bookmark.id}`}
-            >
-              <div className="flex items-center space-x-2">
-                <AlertCircle size={16} className="text-muted-foreground" />
-                <RefreshCw
-                  size={14}
-                  className="text-muted-foreground group-hover/thumb:rotate-180 transition-transform"
-                />
-              </div>
-              <span className="text-xs text-muted-foreground text-center">
-                Failed to generate
-                <br />
-                Click to retry
-              </span>
-            </div>
-          );
         case 'idle':
-        default:
+        default: {
+          // Show a default large image with option to generate on click
           return (
             <div
-              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2 group/thumb cursor-pointer hover:bg-muted/30 transition-colors"
+              className="relative w-full h-32 bg-muted/20 rounded-md overflow-hidden group/thumb cursor-pointer"
               onClick={handleGenerateScreenshot}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -471,22 +498,17 @@ export function BookmarkCard({
               role="button"
               tabIndex={0}
               aria-label="Generate screenshot preview"
-              data-testid={`thumbnail-idle-${bookmark.id}`}
+              data-testid={`thumbnail-default-${bookmark.id}`}
             >
-              <div className="flex items-center space-x-2">
-                <ImageIcon size={20} className="text-muted-foreground" />
-                <Camera
-                  size={16}
-                  className="text-muted-foreground group-hover/thumb:scale-110 transition-transform"
-                />
-              </div>
-              <span className="text-xs text-muted-foreground text-center">
-                No preview
-                <br />
-                Click to generate
-              </span>
+              <img
+                src={DEFAULT_THUMBNAIL_URL}
+                alt={`Default preview for ${bookmark.name}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
           );
+        }
       }
     };
 
@@ -496,13 +518,9 @@ export function BookmarkCard({
   return (
     <Card
       ref={cardRef}
-      className={`group hover:shadow-md transition-shadow ${
-        isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
-      } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${
-        bulkMode ? 'cursor-pointer' : ''
-      }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className={`group hover:shadow-md transition-shadow ${isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
+        } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${bulkMode ? 'cursor-pointer' : ''
+        }`}
       onClick={bulkMode ? () => onSelect?.(bookmark.id, !isSelected) : undefined}
       data-testid={`bookmark-card-${bookmark.id}`}
     >
@@ -596,33 +614,32 @@ export function BookmarkCard({
           <span data-testid={`bookmark-date-${bookmark.id}`}>{timeAgo}</span>
         </div>
 
-        {!isProtected &&
-          ((bookmark.tags?.length ?? 0) > 0 || bookmark.isShared || bookmark.linkStatus) && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              <LinkStatusBadge />
-              {bookmark.tags &&
-                bookmark.tags.map((tag, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="text-xs hover:bg-secondary/80 cursor-pointer"
-                    data-testid={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}-${bookmark.id}`}
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              {bookmark.isShared && (
+        {!isProtected && (bookmark.tags?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            <LinkStatusBadge />
+            {bookmark.tags &&
+              bookmark.tags.map((tag, index) => (
                 <Badge
-                  variant="outline"
-                  className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
-                  data-testid={`shared-badge-${bookmark.id}`}
+                  key={index}
+                  variant="secondary"
+                  className="text-xs hover:bg-secondary/80 cursor-pointer"
+                  data-testid={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}-${bookmark.id}`}
                 >
-                  <Share2 size={10} className="mr-1" />
-                  Shared
+                  {tag}
                 </Badge>
-              )}
-            </div>
-          )}
+              ))}
+            {bookmark.isShared && (
+              <Badge
+                variant="outline"
+                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
+                data-testid={`shared-badge-${bookmark.id}`}
+              >
+                <Share2 size={10} className="mr-1" />
+                Shared
+              </Badge>
+            )}
+          </div>
+        )}
 
         {isProtected && (
           <div className="flex flex-wrap gap-1 mb-3">
@@ -657,6 +674,28 @@ export function BookmarkCard({
         {/* Action Buttons - Bottom of Card, Flex Wrap */}
         <div className="mb-3">
           <div className="flex flex-wrap items-center justify-center gap-1">
+            {!isProtected && !bookmark.hasPasscode && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!duplicateBookmarkMutation.isPending) {
+                    duplicateBookmarkMutation.mutate();
+                  }
+                }}
+                disabled={duplicateBookmarkMutation.isPending}
+                title="Duplicate bookmark"
+                data-testid={`button-duplicate-${bookmark.id}`}
+              >
+                {duplicateBookmarkMutation.isPending ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Files size={16} />
+                )}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="ghost"
@@ -691,9 +730,8 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
-                bookmark.isShared ? 'text-blue-500' : ''
-              }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${bookmark.isShared ? 'text-blue-500' : ''
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 onShare?.(bookmark);
@@ -746,9 +784,8 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
-                generateScreenshotMutation.isPending ? 'animate-pulse' : ''
-              }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${generateScreenshotMutation.isPending ? 'animate-pulse' : ''
+                }`}
               onClick={handleGenerateScreenshot}
               disabled={
                 generateScreenshotMutation.isPending ||
@@ -772,9 +809,8 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
-                checkLinkMutation.isPending ? 'animate-pulse' : ''
-              }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${checkLinkMutation.isPending ? 'animate-pulse' : ''
+                }`}
               onClick={handleCheckLink}
               disabled={checkLinkMutation.isPending || isProtected}
               title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}

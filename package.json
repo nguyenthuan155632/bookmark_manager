@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ci": "npm run check && npm run lint && npm run format:check && npm test"
+    "ci": "npm run check && npm run lint && npm run format:check && npm test",
+    "seed": "tsx server/scripts/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
