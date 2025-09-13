@@ -1,10 +1,24 @@
-import { bookmarks, categories, users, userPreferences, type Bookmark, type InsertBookmark, type InsertBookmarkInternal, type Category, type InsertCategory, type User, type InsertUser, type UserPreferences, type InsertUserPreferences } from "@shared/schema";
-import { db, pool } from "./db";
-import { eq, ilike, or, desc, asc, and, isNull, sql, inArray } from "drizzle-orm";
-import bcrypt from "bcrypt";
-import ConnectPgSimple from "connect-pg-simple";
-import session from "express-session";
-import crypto from "crypto";
+import {
+  bookmarks,
+  categories,
+  users,
+  userPreferences,
+  type Bookmark,
+  type InsertBookmark,
+  type InsertBookmarkInternal,
+  type Category,
+  type InsertCategory,
+  type User,
+  type InsertUser,
+  type UserPreferences,
+  type InsertUserPreferences,
+} from '@shared/schema';
+import { db, pool } from './db';
+import { eq, ilike, or, desc, asc, and, isNull, sql, inArray } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
+import ConnectPgSimple from 'connect-pg-simple';
+import session from 'express-session';
+import crypto from 'crypto';
 
 const PgSession = ConnectPgSimple(session);
 
@@ -18,27 +32,42 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
 
   // Bookmark methods
-  getBookmarks(userId: string, params?: {
-    search?: string;
-    categoryId?: number;
-    isFavorite?: boolean;
-    tags?: string[];
-    linkStatus?: string;
-    sortBy?: 'name' | 'createdAt' | 'isFavorite';
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>;
-  getBookmark(userId: string, id: number): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean }) | undefined>;
+  getBookmarks(
+    userId: string,
+    params?: {
+      search?: string;
+      categoryId?: number;
+      isFavorite?: boolean;
+      tags?: string[];
+      linkStatus?: string;
+      sortBy?: 'name' | 'createdAt' | 'isFavorite';
+      sortOrder?: 'asc' | 'desc';
+    },
+  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>;
+  getBookmark(
+    userId: string,
+    id: number,
+  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean }) | undefined>;
   createBookmark(userId: string, bookmark: InsertBookmark): Promise<Bookmark>;
   updateBookmark(userId: string, id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark>;
   deleteBookmark(userId: string, id: number): Promise<void>;
   verifyBookmarkPasscode(userId: string, id: number, passcode: string): Promise<boolean>;
 
   // Bulk operations
-  bulkDeleteBookmarks(userId: string, ids: number[], passcodes?: Record<string, string>): Promise<{
+  bulkDeleteBookmarks(
+    userId: string,
+    ids: number[],
+    passcodes?: Record<string, string>,
+  ): Promise<{
     deletedIds: number[];
     failed: { id: number; reason: string }[];
   }>;
-  bulkMoveBookmarks(userId: string, ids: number[], categoryId: number | null, passcodes?: Record<string, string>): Promise<{
+  bulkMoveBookmarks(
+    userId: string,
+    ids: number[],
+    categoryId: number | null,
+    passcodes?: Record<string, string>,
+  ): Promise<{
     movedIds: number[];
     failed: { id: number; reason: string }[];
   }>;
@@ -68,38 +97,72 @@ export interface IStorage {
 
   // User Preferences methods
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
-  updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences>;
+  updateUserPreferences(
+    userId: string,
+    preferences: Partial<InsertUserPreferences>,
+  ): Promise<UserPreferences>;
 
   // Bookmark sharing methods
   generateShareId(): string;
   setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
-  getSharedBookmark(shareId: string): Promise<{
-    name: string;
-    description: string | null;
-    url: string;
-    tags: string[] | null;
-    createdAt: Date;
-    category?: { name: string } | null;
-  } | undefined>;
+  getSharedBookmark(shareId: string): Promise<
+    | {
+        name: string;
+        description: string | null;
+        url: string;
+        tags: string[] | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+      }
+    | undefined
+  >;
 
   // Auto-tagging methods
-  updateBookmarkSuggestedTags(userId: string, bookmarkId: number, suggestedTags: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
-  acceptSuggestedTags(userId: string, bookmarkId: number, tagsToAccept: string[]): Promise<Bookmark & { hasPasscode?: boolean }>;
+  updateBookmarkSuggestedTags(
+    userId: string,
+    bookmarkId: number,
+    suggestedTags: string[],
+  ): Promise<Bookmark & { hasPasscode?: boolean }>;
+  acceptSuggestedTags(
+    userId: string,
+    bookmarkId: number,
+    tagsToAccept: string[],
+  ): Promise<Bookmark & { hasPasscode?: boolean }>;
   generateAutoTags(url: string, name?: string, description?: string): Promise<string[]>;
 
   // Screenshot methods
-  triggerScreenshot(userId: string, bookmarkId: number): Promise<{ status: string; message: string }>;
+  triggerScreenshot(
+    userId: string,
+    bookmarkId: number,
+  ): Promise<{ status: string; message: string }>;
   updateScreenshotStatus(bookmarkId: number, status: string, url?: string): Promise<void>;
-  getScreenshotStatus(userId: string, bookmarkId: number): Promise<{ status: string; screenshotUrl?: string; updatedAt?: Date } | undefined>;
+  getScreenshotStatus(
+    userId: string,
+    bookmarkId: number,
+  ): Promise<{ status: string; screenshotUrl?: string; updatedAt?: Date } | undefined>;
 
   // Link checking methods
-  checkBookmarkLink(userId: string, bookmarkId: number): Promise<{ linkStatus: string; httpStatus?: number; lastLinkCheckAt: Date }>;
-  bulkCheckBookmarkLinks(userId: string, bookmarkIds?: number[]): Promise<{
+  checkBookmarkLink(
+    userId: string,
+    bookmarkId: number,
+  ): Promise<{ linkStatus: string; httpStatus?: number; lastLinkCheckAt: Date }>;
+  bulkCheckBookmarkLinks(
+    userId: string,
+    bookmarkIds?: number[],
+  ): Promise<{
     checkedIds: number[];
     failed: { id: number; reason: string }[];
   }>;
-  updateLinkStatus(bookmarkId: number, linkStatus: string, httpStatus?: number, linkFailCount?: number): Promise<void>;
-  getBookmarksForLinkCheck(limit: number, userId?: string): Promise<{ id: number; url: string; lastLinkCheckAt: Date | null }[]>;
+  updateLinkStatus(
+    bookmarkId: number,
+    linkStatus: string,
+    httpStatus?: number,
+    linkFailCount?: number,
+  ): Promise<void>;
+  getBookmarksForLinkCheck(
+    limit: number,
+    userId?: string,
+  ): Promise<{ id: number; url: string; lastLinkCheckAt: Date | null }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -125,23 +188,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   // Bookmark methods
-  async getBookmarks(userId: string, params?: {
-    search?: string;
-    categoryId?: number;
-    isFavorite?: boolean;
-    tags?: string[];
-    linkStatus?: string;
-    sortBy?: 'name' | 'createdAt' | 'isFavorite';
-    sortOrder?: 'asc' | 'desc';
-  }): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]> {
+  async getBookmarks(
+    userId: string,
+    params?: {
+      search?: string;
+      categoryId?: number;
+      isFavorite?: boolean;
+      tags?: string[];
+      linkStatus?: string;
+      sortBy?: 'name' | 'createdAt' | 'isFavorite';
+      sortOrder?: 'asc' | 'desc';
+    },
+  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]> {
     // Build conditions - always filter by userId first
     const conditions = [eq(bookmarks.userId, userId)];
 
@@ -168,9 +231,11 @@ export class DatabaseStorage implements IStorage {
 
     if (params?.tags && params.tags.length > 0) {
       // Use proper array search with array_to_string for tag filtering
-      const tagCondition = or(...params.tags.map(tag =>
-        sql`array_to_string(${bookmarks.tags}, ' ') ILIKE ${`%${tag}%`}`
-      ));
+      const tagCondition = or(
+        ...params.tags.map(
+          (tag) => sql`array_to_string(${bookmarks.tags}, ' ') ILIKE ${`%${tag}%`}`,
+        ),
+      );
       if (tagCondition) {
         conditions.push(tagCondition);
       }
@@ -182,7 +247,7 @@ export class DatabaseStorage implements IStorage {
         // For 'unknown' status, include both NULL values and 'unknown' values
         const unknownCondition = or(
           isNull(bookmarks.linkStatus),
-          eq(bookmarks.linkStatus, 'unknown')
+          eq(bookmarks.linkStatus, 'unknown'),
         );
         if (unknownCondition) {
           conditions.push(unknownCondition);
@@ -193,31 +258,36 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Build query with conditions
-    let baseQuery = db.select({
-      id: bookmarks.id,
-      name: bookmarks.name,
-      description: bookmarks.description,
-      url: bookmarks.url,
-      tags: bookmarks.tags,
-      suggestedTags: bookmarks.suggestedTags,
-      isFavorite: bookmarks.isFavorite,
-      categoryId: bookmarks.categoryId,
-      userId: bookmarks.userId,
-      passcodeHash: bookmarks.passcodeHash,
-      isShared: bookmarks.isShared,
-      shareId: bookmarks.shareId,
-      screenshotUrl: bookmarks.screenshotUrl,
-      screenshotStatus: bookmarks.screenshotStatus,
-      screenshotUpdatedAt: bookmarks.screenshotUpdatedAt,
-      linkStatus: bookmarks.linkStatus,
-      httpStatus: bookmarks.httpStatus,
-      lastLinkCheckAt: bookmarks.lastLinkCheckAt,
-      linkFailCount: bookmarks.linkFailCount,
-      createdAt: bookmarks.createdAt,
-      updatedAt: bookmarks.updatedAt,
-      category: categories,
-    }).from(bookmarks)
-      .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
+    let baseQuery = db
+      .select({
+        id: bookmarks.id,
+        name: bookmarks.name,
+        description: bookmarks.description,
+        url: bookmarks.url,
+        tags: bookmarks.tags,
+        suggestedTags: bookmarks.suggestedTags,
+        isFavorite: bookmarks.isFavorite,
+        categoryId: bookmarks.categoryId,
+        userId: bookmarks.userId,
+        passcodeHash: bookmarks.passcodeHash,
+        isShared: bookmarks.isShared,
+        shareId: bookmarks.shareId,
+        screenshotUrl: bookmarks.screenshotUrl,
+        screenshotStatus: bookmarks.screenshotStatus,
+        screenshotUpdatedAt: bookmarks.screenshotUpdatedAt,
+        linkStatus: bookmarks.linkStatus,
+        httpStatus: bookmarks.httpStatus,
+        lastLinkCheckAt: bookmarks.lastLinkCheckAt,
+        linkFailCount: bookmarks.linkFailCount,
+        createdAt: bookmarks.createdAt,
+        updatedAt: bookmarks.updatedAt,
+        category: categories,
+      })
+      .from(bookmarks)
+      .leftJoin(
+        categories,
+        and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)),
+      )
       .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     // Add sorting
@@ -226,15 +296,21 @@ export class DatabaseStorage implements IStorage {
 
     let finalQuery;
     if (sortBy === 'name') {
-      finalQuery = baseQuery.orderBy(sortOrder === 'asc' ? asc(bookmarks.name) : desc(bookmarks.name));
+      finalQuery = baseQuery.orderBy(
+        sortOrder === 'asc' ? asc(bookmarks.name) : desc(bookmarks.name),
+      );
     } else if (sortBy === 'isFavorite') {
-      finalQuery = baseQuery.orderBy(sortOrder === 'asc' ? asc(bookmarks.isFavorite) : desc(bookmarks.isFavorite));
+      finalQuery = baseQuery.orderBy(
+        sortOrder === 'asc' ? asc(bookmarks.isFavorite) : desc(bookmarks.isFavorite),
+      );
     } else {
-      finalQuery = baseQuery.orderBy(sortOrder === 'asc' ? asc(bookmarks.createdAt) : desc(bookmarks.createdAt));
+      finalQuery = baseQuery.orderBy(
+        sortOrder === 'asc' ? asc(bookmarks.createdAt) : desc(bookmarks.createdAt),
+      );
     }
 
     const results = await finalQuery;
-    return results.map(row => {
+    return results.map((row) => {
       const { passcodeHash, ...bookmarkData } = row;
       return {
         ...bookmarkData,
@@ -244,32 +320,40 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getBookmark(userId: string, id: number): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean }) | undefined> {
-    const [result] = await db.select({
-      id: bookmarks.id,
-      name: bookmarks.name,
-      description: bookmarks.description,
-      url: bookmarks.url,
-      tags: bookmarks.tags,
-      suggestedTags: bookmarks.suggestedTags,
-      isFavorite: bookmarks.isFavorite,
-      categoryId: bookmarks.categoryId,
-      userId: bookmarks.userId,
-      passcodeHash: bookmarks.passcodeHash,
-      isShared: bookmarks.isShared,
-      shareId: bookmarks.shareId,
-      screenshotUrl: bookmarks.screenshotUrl,
-      screenshotStatus: bookmarks.screenshotStatus,
-      screenshotUpdatedAt: bookmarks.screenshotUpdatedAt,
-      linkStatus: bookmarks.linkStatus,
-      httpStatus: bookmarks.httpStatus,
-      lastLinkCheckAt: bookmarks.lastLinkCheckAt,
-      linkFailCount: bookmarks.linkFailCount,
-      createdAt: bookmarks.createdAt,
-      updatedAt: bookmarks.updatedAt,
-      category: categories,
-    }).from(bookmarks)
-      .leftJoin(categories, and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)))
+  async getBookmark(
+    userId: string,
+    id: number,
+  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean }) | undefined> {
+    const [result] = await db
+      .select({
+        id: bookmarks.id,
+        name: bookmarks.name,
+        description: bookmarks.description,
+        url: bookmarks.url,
+        tags: bookmarks.tags,
+        suggestedTags: bookmarks.suggestedTags,
+        isFavorite: bookmarks.isFavorite,
+        categoryId: bookmarks.categoryId,
+        userId: bookmarks.userId,
+        passcodeHash: bookmarks.passcodeHash,
+        isShared: bookmarks.isShared,
+        shareId: bookmarks.shareId,
+        screenshotUrl: bookmarks.screenshotUrl,
+        screenshotStatus: bookmarks.screenshotStatus,
+        screenshotUpdatedAt: bookmarks.screenshotUpdatedAt,
+        linkStatus: bookmarks.linkStatus,
+        httpStatus: bookmarks.httpStatus,
+        lastLinkCheckAt: bookmarks.lastLinkCheckAt,
+        linkFailCount: bookmarks.linkFailCount,
+        createdAt: bookmarks.createdAt,
+        updatedAt: bookmarks.updatedAt,
+        category: categories,
+      })
+      .from(bookmarks)
+      .leftJoin(
+        categories,
+        and(eq(bookmarks.categoryId, categories.id), eq(categories.userId, userId)),
+      )
       .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
 
     if (!result) return undefined;
@@ -282,7 +366,10 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async createBookmark(userId: string, bookmark: InsertBookmark): Promise<Bookmark & { hasPasscode?: boolean }> {
+  async createBookmark(
+    userId: string,
+    bookmark: InsertBookmark,
+  ): Promise<Bookmark & { hasPasscode?: boolean }> {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     let bookmarkData: InsertBookmarkInternal = {
@@ -298,10 +385,7 @@ export class DatabaseStorage implements IStorage {
       bookmarkData.passcodeHash = null;
     }
 
-    const [newBookmark] = await db
-      .insert(bookmarks)
-      .values(bookmarkData)
-      .returning();
+    const [newBookmark] = await db.insert(bookmarks).values(bookmarkData).returning();
 
     // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = newBookmark;
@@ -311,7 +395,11 @@ export class DatabaseStorage implements IStorage {
     } as Bookmark & { hasPasscode?: boolean };
   }
 
-  async updateBookmark(userId: string, id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark & { hasPasscode?: boolean }> {
+  async updateBookmark(
+    userId: string,
+    id: number,
+    bookmark: Partial<InsertBookmark>,
+  ): Promise<Bookmark & { hasPasscode?: boolean }> {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     let updateData: Partial<InsertBookmarkInternal> = {
@@ -347,9 +435,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async verifyBookmarkPasscode(userId: string, id: number, passcode: string): Promise<boolean> {
-    const [bookmark] = await db.select({
-      passcodeHash: bookmarks.passcodeHash,
-    }).from(bookmarks).where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
+    const [bookmark] = await db
+      .select({
+        passcodeHash: bookmarks.passcodeHash,
+      })
+      .from(bookmarks)
+      .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
 
     if (!bookmark || !bookmark.passcodeHash) {
       return false; // No bookmark found or no passcode set
@@ -359,7 +450,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Bulk operations
-  async bulkDeleteBookmarks(userId: string, ids: number[], passcodes?: Record<string, string>): Promise<{
+  async bulkDeleteBookmarks(
+    userId: string,
+    ids: number[],
+    passcodes?: Record<string, string>,
+  ): Promise<{
     deletedIds: number[];
     failed: { id: number; reason: string }[];
   }> {
@@ -371,23 +466,23 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Get all bookmarks that belong to this user
-    const userBookmarks = await db.select({
-      id: bookmarks.id,
-      passcodeHash: bookmarks.passcodeHash,
-    }).from(bookmarks).where(and(
-      inArray(bookmarks.id, ids),
-      eq(bookmarks.userId, userId)
-    ));
+    const userBookmarks = await db
+      .select({
+        id: bookmarks.id,
+        passcodeHash: bookmarks.passcodeHash,
+      })
+      .from(bookmarks)
+      .where(and(inArray(bookmarks.id, ids), eq(bookmarks.userId, userId)));
 
     // Create a map for quick lookup
-    const userBookmarkMap = new Map(userBookmarks.map(b => [b.id, b]));
+    const userBookmarkMap = new Map(userBookmarks.map((b) => [b.id, b]));
 
     // Process each bookmark ID
     for (const id of ids) {
       const bookmark = userBookmarkMap.get(id);
 
       if (!bookmark) {
-        failed.push({ id, reason: "Bookmark not found or access denied" });
+        failed.push({ id, reason: 'Bookmark not found or access denied' });
         continue;
       }
 
@@ -396,13 +491,13 @@ export class DatabaseStorage implements IStorage {
         const providedPasscode = passcodes?.[id.toString()];
 
         if (!providedPasscode || typeof providedPasscode !== 'string') {
-          failed.push({ id, reason: "Passcode required for protected bookmark" });
+          failed.push({ id, reason: 'Passcode required for protected bookmark' });
           continue;
         }
 
         const isValidPasscode = await bcrypt.compare(providedPasscode, bookmark.passcodeHash);
         if (!isValidPasscode) {
-          failed.push({ id, reason: "Invalid passcode" });
+          failed.push({ id, reason: 'Invalid passcode' });
           continue;
         }
       }
@@ -413,16 +508,20 @@ export class DatabaseStorage implements IStorage {
 
     // Perform bulk deletion for all successful IDs
     if (deletedIds.length > 0) {
-      await db.delete(bookmarks).where(and(
-        inArray(bookmarks.id, deletedIds),
-        eq(bookmarks.userId, userId)
-      ));
+      await db
+        .delete(bookmarks)
+        .where(and(inArray(bookmarks.id, deletedIds), eq(bookmarks.userId, userId)));
     }
 
     return { deletedIds, failed };
   }
 
-  async bulkMoveBookmarks(userId: string, ids: number[], categoryId: number | null, passcodes?: Record<string, string>): Promise<{
+  async bulkMoveBookmarks(
+    userId: string,
+    ids: number[],
+    categoryId: number | null,
+    passcodes?: Record<string, string>,
+  ): Promise<{
     movedIds: number[];
     failed: { id: number; reason: string }[];
   }> {
@@ -440,29 +539,29 @@ export class DatabaseStorage implements IStorage {
         // All bookmarks fail with same reason
         return {
           movedIds: [],
-          failed: ids.map(id => ({ id, reason: "Target category not found or access denied" }))
+          failed: ids.map((id) => ({ id, reason: 'Target category not found or access denied' })),
         };
       }
     }
 
     // Get all bookmarks that belong to this user
-    const userBookmarks = await db.select({
-      id: bookmarks.id,
-      passcodeHash: bookmarks.passcodeHash,
-    }).from(bookmarks).where(and(
-      inArray(bookmarks.id, ids),
-      eq(bookmarks.userId, userId)
-    ));
+    const userBookmarks = await db
+      .select({
+        id: bookmarks.id,
+        passcodeHash: bookmarks.passcodeHash,
+      })
+      .from(bookmarks)
+      .where(and(inArray(bookmarks.id, ids), eq(bookmarks.userId, userId)));
 
     // Create a map for quick lookup
-    const userBookmarkMap = new Map(userBookmarks.map(b => [b.id, b]));
+    const userBookmarkMap = new Map(userBookmarks.map((b) => [b.id, b]));
 
     // Process each bookmark ID
     for (const id of ids) {
       const bookmark = userBookmarkMap.get(id);
 
       if (!bookmark) {
-        failed.push({ id, reason: "Bookmark not found or access denied" });
+        failed.push({ id, reason: 'Bookmark not found or access denied' });
         continue;
       }
 
@@ -471,13 +570,13 @@ export class DatabaseStorage implements IStorage {
         const providedPasscode = passcodes?.[id.toString()];
 
         if (!providedPasscode || typeof providedPasscode !== 'string') {
-          failed.push({ id, reason: "Passcode required for protected bookmark" });
+          failed.push({ id, reason: 'Passcode required for protected bookmark' });
           continue;
         }
 
         const isValidPasscode = await bcrypt.compare(providedPasscode, bookmark.passcodeHash);
         if (!isValidPasscode) {
-          failed.push({ id, reason: "Invalid passcode" });
+          failed.push({ id, reason: 'Invalid passcode' });
           continue;
         }
       }
@@ -488,15 +587,13 @@ export class DatabaseStorage implements IStorage {
 
     // Perform bulk update for all successful IDs
     if (movedIds.length > 0) {
-      await db.update(bookmarks)
+      await db
+        .update(bookmarks)
         .set({
           categoryId,
           updatedAt: new Date(),
         })
-        .where(and(
-          inArray(bookmarks.id, movedIds),
-          eq(bookmarks.userId, userId)
-        ));
+        .where(and(inArray(bookmarks.id, movedIds), eq(bookmarks.userId, userId)));
     }
 
     return { movedIds, failed };
@@ -504,19 +601,28 @@ export class DatabaseStorage implements IStorage {
 
   // Category methods
   async getCategories(userId: string): Promise<Category[]> {
-    return await db.select().from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name));
+    return await db
+      .select()
+      .from(categories)
+      .where(eq(categories.userId, userId))
+      .orderBy(asc(categories.name));
   }
 
   async getCategoriesWithCounts(userId: string): Promise<(Category & { bookmarkCount: number })[]> {
-    const results = await db.select({
-      id: categories.id,
-      name: categories.name,
-      parentId: categories.parentId,
-      userId: categories.userId,
-      createdAt: categories.createdAt,
-      bookmarkCount: sql<number>`count(${bookmarks.id})::int`,
-    }).from(categories)
-      .leftJoin(bookmarks, and(eq(categories.id, bookmarks.categoryId), eq(bookmarks.userId, userId)))
+    const results = await db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        parentId: categories.parentId,
+        userId: categories.userId,
+        createdAt: categories.createdAt,
+        bookmarkCount: sql<number>`count(${bookmarks.id})::int`,
+      })
+      .from(categories)
+      .leftJoin(
+        bookmarks,
+        and(eq(categories.id, bookmarks.categoryId), eq(bookmarks.userId, userId)),
+      )
       .where(eq(categories.userId, userId))
       .groupBy(categories.id)
       .orderBy(asc(categories.name));
@@ -525,7 +631,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCategory(userId: string, id: number): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(and(eq(categories.id, id), eq(categories.userId, userId)));
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, id), eq(categories.userId, userId)));
     return category || undefined;
   }
 
@@ -540,7 +649,11 @@ export class DatabaseStorage implements IStorage {
     return newCategory;
   }
 
-  async updateCategory(userId: string, id: number, category: Partial<InsertCategory>): Promise<Category> {
+  async updateCategory(
+    userId: string,
+    id: number,
+    category: Partial<InsertCategory>,
+  ): Promise<Category> {
     const [updatedCategory] = await db
       .update(categories)
       .set(category)
@@ -567,38 +680,53 @@ export class DatabaseStorage implements IStorage {
       unknown: number;
     };
   }> {
-    const [totalResult] = await db.select({
-      count: sql<number>`count(*)::int`,
-    }).from(bookmarks).where(eq(bookmarks.userId, userId));
+    const [totalResult] = await db
+      .select({
+        count: sql<number>`count(*)::int`,
+      })
+      .from(bookmarks)
+      .where(eq(bookmarks.userId, userId));
 
-    const [favoritesResult] = await db.select({
-      count: sql<number>`count(*)::int`,
-    }).from(bookmarks).where(and(eq(bookmarks.isFavorite, true), eq(bookmarks.userId, userId)));
+    const [favoritesResult] = await db
+      .select({
+        count: sql<number>`count(*)::int`,
+      })
+      .from(bookmarks)
+      .where(and(eq(bookmarks.isFavorite, true), eq(bookmarks.userId, userId)));
 
-    const [categoriesResult] = await db.select({
-      count: sql<number>`count(*)::int`,
-    }).from(categories).where(eq(categories.userId, userId));
+    const [categoriesResult] = await db
+      .select({
+        count: sql<number>`count(*)::int`,
+      })
+      .from(categories)
+      .where(eq(categories.userId, userId));
 
     // Get all unique tags for this user
-    const tagResults = await db.select({
-      tags: bookmarks.tags,
-    }).from(bookmarks).where(and(
-      eq(bookmarks.userId, userId),
-      sql`${bookmarks.tags} IS NOT NULL AND array_length(${bookmarks.tags}, 1) > 0`
-    ));
+    const tagResults = await db
+      .select({
+        tags: bookmarks.tags,
+      })
+      .from(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          sql`${bookmarks.tags} IS NOT NULL AND array_length(${bookmarks.tags}, 1) > 0`,
+        ),
+      );
 
     const allTags = new Set<string>();
-    tagResults.forEach(result => {
+    tagResults.forEach((result) => {
       if (result.tags) {
-        result.tags.forEach(tag => allTags.add(tag));
+        result.tags.forEach((tag) => allTags.add(tag));
       }
     });
 
     // Get link status counts
-    const linkStatusResults = await db.select({
-      status: sql<string>`COALESCE(${bookmarks.linkStatus}, 'unknown')`,
-      count: sql<number>`count(*)::int`,
-    })
+    const linkStatusResults = await db
+      .select({
+        status: sql<string>`COALESCE(${bookmarks.linkStatus}, 'unknown')`,
+        count: sql<number>`count(*)::int`,
+      })
       .from(bookmarks)
       .where(eq(bookmarks.userId, userId))
       .groupBy(sql`COALESCE(${bookmarks.linkStatus}, 'unknown')`);
@@ -611,7 +739,7 @@ export class DatabaseStorage implements IStorage {
       unknown: 0,
     };
 
-    linkStatusResults.forEach(result => {
+    linkStatusResults.forEach((result) => {
       switch (result.status) {
         case 'ok':
           linkStats.working = result.count;
@@ -640,11 +768,17 @@ export class DatabaseStorage implements IStorage {
 
   // User Preferences methods
   async getUserPreferences(userId: string): Promise<UserPreferences | undefined> {
-    const [preferences] = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId));
+    const [preferences] = await db
+      .select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId));
     return preferences || undefined;
   }
 
-  async updateUserPreferences(userId: string, preferences: Partial<InsertUserPreferences>): Promise<UserPreferences> {
+  async updateUserPreferences(
+    userId: string,
+    preferences: Partial<InsertUserPreferences>,
+  ): Promise<UserPreferences> {
     // Check if preferences record exists for this user
     const existingPreferences = await this.getUserPreferences(userId);
 
@@ -665,8 +799,8 @@ export class DatabaseStorage implements IStorage {
         .insert(userPreferences)
         .values({
           userId,
-          theme: preferences.theme || "light",
-          viewMode: preferences.viewMode || "grid",
+          theme: preferences.theme || 'light',
+          viewMode: preferences.viewMode || 'grid',
         })
         .returning();
       return newPreferences;
@@ -678,7 +812,11 @@ export class DatabaseStorage implements IStorage {
     return crypto.randomUUID();
   }
 
-  async setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark> {
+  async setBookmarkSharing(
+    userId: string,
+    bookmarkId: number,
+    isShared: boolean,
+  ): Promise<Bookmark> {
     // If enabling sharing, generate a shareId; if disabling, set to null
     const shareId = isShared ? this.generateShareId() : null;
 
@@ -697,31 +835,33 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Remove passcodeHash from response
-    const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
+    const { passcodeHash: _passcodeHash, ...bookmarkResponse } = updatedBookmark;
     return bookmarkResponse as Bookmark;
   }
 
-  async getSharedBookmark(shareId: string): Promise<{
-    name: string;
-    description: string | null;
-    url: string;
-    tags: string[] | null;
-    createdAt: Date;
-    category?: { name: string } | null;
-  } | undefined> {
-    const [result] = await db.select({
-      name: bookmarks.name,
-      description: bookmarks.description,
-      url: bookmarks.url,
-      tags: bookmarks.tags,
-      createdAt: bookmarks.createdAt,
-      categoryName: categories.name,
-    }).from(bookmarks)
+  async getSharedBookmark(shareId: string): Promise<
+    | {
+        name: string;
+        description: string | null;
+        url: string;
+        tags: string[] | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+      }
+    | undefined
+  > {
+    const [result] = await db
+      .select({
+        name: bookmarks.name,
+        description: bookmarks.description,
+        url: bookmarks.url,
+        tags: bookmarks.tags,
+        createdAt: bookmarks.createdAt,
+        categoryName: categories.name,
+      })
+      .from(bookmarks)
       .leftJoin(categories, eq(bookmarks.categoryId, categories.id))
-      .where(and(
-        eq(bookmarks.shareId, shareId),
-        eq(bookmarks.isShared, true)
-      ));
+      .where(and(eq(bookmarks.shareId, shareId), eq(bookmarks.isShared, true)));
 
     if (!result) return undefined;
 
@@ -736,7 +876,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Auto-tagging methods
-  async updateBookmarkSuggestedTags(userId: string, bookmarkId: number, suggestedTags: string[]): Promise<Bookmark & { hasPasscode?: boolean }> {
+  async updateBookmarkSuggestedTags(
+    userId: string,
+    bookmarkId: number,
+    suggestedTags: string[],
+  ): Promise<Bookmark & { hasPasscode?: boolean }> {
     const [updatedBookmark] = await db
       .update(bookmarks)
       .set({
@@ -758,7 +902,11 @@ export class DatabaseStorage implements IStorage {
     } as Bookmark & { hasPasscode?: boolean };
   }
 
-  async acceptSuggestedTags(userId: string, bookmarkId: number, tagsToAccept: string[]): Promise<Bookmark & { hasPasscode?: boolean }> {
+  async acceptSuggestedTags(
+    userId: string,
+    bookmarkId: number,
+    tagsToAccept: string[],
+  ): Promise<Bookmark & { hasPasscode?: boolean }> {
     // First get the current bookmark to merge tags
     const bookmark = await this.getBookmark(userId, bookmarkId);
     if (!bookmark) {
@@ -770,7 +918,9 @@ export class DatabaseStorage implements IStorage {
     const newTags = Array.from(new Set([...currentTags, ...tagsToAccept]));
 
     // Remove accepted tags from suggested tags
-    const remainingSuggestedTags = (bookmark.suggestedTags || []).filter(tag => !tagsToAccept.includes(tag));
+    const remainingSuggestedTags = (bookmark.suggestedTags || []).filter(
+      (tag) => !tagsToAccept.includes(tag),
+    );
 
     const [updatedBookmark] = await db
       .update(bookmarks)
@@ -860,7 +1010,7 @@ export class DatabaseStorage implements IStorage {
       // Add domain-specific tags
       for (const [domainPattern, domainTags] of Object.entries(domainTagMap)) {
         if (domain.includes(domainPattern.replace('www.', '')) || domain === domainPattern) {
-          domainTags.forEach(tag => tags.add(tag));
+          domainTags.forEach((tag) => tags.add(tag));
           break; // Only match the first domain pattern
         }
       }
@@ -884,39 +1034,39 @@ export class DatabaseStorage implements IStorage {
 
       // Technology-specific detection from URL and content
       const techKeywords = {
-        'react': 'react',
-        'vue': 'vue',
-        'angular': 'angular',
-        'javascript': 'javascript',
-        'typescript': 'typescript',
-        'python': 'python',
-        'java': 'java',
-        'php': 'php',
-        'ruby': 'ruby',
-        'go': 'golang',
-        'rust': 'rust',
-        'swift': 'swift',
-        'kotlin': 'kotlin',
-        'docker': 'docker',
-        'kubernetes': 'kubernetes',
-        'aws': 'aws',
-        'azure': 'azure',
-        'gcp': 'gcp',
-        'mongodb': 'database',
-        'postgresql': 'database',
-        'mysql': 'database',
-        'redis': 'database',
-        'graphql': 'graphql',
-        'rest': 'api',
-        'node': 'nodejs',
-        'express': 'nodejs',
-        'next': 'nextjs',
-        'nuxt': 'nuxtjs',
-        'svelte': 'svelte',
-        'flutter': 'flutter',
-        'laravel': 'laravel',
-        'django': 'django',
-        'rails': 'rails',
+        react: 'react',
+        vue: 'vue',
+        angular: 'angular',
+        javascript: 'javascript',
+        typescript: 'typescript',
+        python: 'python',
+        java: 'java',
+        php: 'php',
+        ruby: 'ruby',
+        go: 'golang',
+        rust: 'rust',
+        swift: 'swift',
+        kotlin: 'kotlin',
+        docker: 'docker',
+        kubernetes: 'kubernetes',
+        aws: 'aws',
+        azure: 'azure',
+        gcp: 'gcp',
+        mongodb: 'database',
+        postgresql: 'database',
+        mysql: 'database',
+        redis: 'database',
+        graphql: 'graphql',
+        rest: 'api',
+        node: 'nodejs',
+        express: 'nodejs',
+        next: 'nextjs',
+        nuxt: 'nuxtjs',
+        svelte: 'svelte',
+        flutter: 'flutter',
+        laravel: 'laravel',
+        django: 'django',
+        rails: 'rails',
       };
 
       const contentToAnalyze = `${url} ${name || ''} ${description || ''}`.toLowerCase();
@@ -949,18 +1099,27 @@ export class DatabaseStorage implements IStorage {
           const pageTitle = titleMatch?.[1]?.trim();
 
           // Extract meta description
-          const descMatch = html.match(/<meta[^>]*name=['"]description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+          const descMatch = html.match(
+            /<meta[^>]*name=['"]description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i,
+          );
           const metaDescription = descMatch?.[1]?.trim();
 
           // Extract meta keywords
-          const keywordsMatch = html.match(/<meta[^>]*name=['"]keywords['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+          const keywordsMatch = html.match(
+            /<meta[^>]*name=['"]keywords['"][^>]*content=['"]([^'"]+)['"][^>]*>/i,
+          );
           const metaKeywords = keywordsMatch?.[1]?.trim();
 
           // Analyze extracted content for additional tags
-          const metaContent = `${pageTitle || ''} ${metaDescription || ''} ${metaKeywords || ''}`.toLowerCase();
+          const metaContent =
+            `${pageTitle || ''} ${metaDescription || ''} ${metaKeywords || ''}`.toLowerCase();
 
           // Content type detection
-          if (metaContent.includes('tutorial') || metaContent.includes('how to') || metaContent.includes('guide')) {
+          if (
+            metaContent.includes('tutorial') ||
+            metaContent.includes('how to') ||
+            metaContent.includes('guide')
+          ) {
             tags.add('tutorial');
           }
           if (metaContent.includes('video') || metaContent.includes('watch')) {
@@ -969,7 +1128,11 @@ export class DatabaseStorage implements IStorage {
           if (metaContent.includes('article') || metaContent.includes('blog')) {
             tags.add('article');
           }
-          if (metaContent.includes('tool') || metaContent.includes('app') || metaContent.includes('software')) {
+          if (
+            metaContent.includes('tool') ||
+            metaContent.includes('app') ||
+            metaContent.includes('software')
+          ) {
             tags.add('tool');
           }
           if (metaContent.includes('news') || metaContent.includes('breaking')) {
@@ -988,7 +1151,10 @@ export class DatabaseStorage implements IStorage {
         }
       } catch (fetchError) {
         // Silently fail metadata fetching - we'll use URL-based tags
-        console.warn(`Failed to fetch metadata for ${url}:`, fetchError instanceof Error ? fetchError.message : 'Unknown error');
+        console.warn(
+          `Failed to fetch metadata for ${url}:`,
+          fetchError instanceof Error ? fetchError.message : 'Unknown error',
+        );
       }
 
       // Convert set to array and limit to reasonable number
@@ -996,7 +1162,6 @@ export class DatabaseStorage implements IStorage {
 
       // Return up to 8 tags, prioritizing more specific ones
       return tagArray.slice(0, 8);
-
     } catch (error) {
       console.error('Error generating auto tags:', error);
       // Return empty array if URL parsing or other errors occur
@@ -1005,7 +1170,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Screenshot methods implementation
-  async triggerScreenshot(userId: string, bookmarkId: number): Promise<{ status: string; message: string }> {
+  async triggerScreenshot(
+    userId: string,
+    bookmarkId: number,
+  ): Promise<{ status: string; message: string }> {
     try {
       // Check if bookmark exists and belongs to user
       const bookmark = await this.getBookmark(userId, bookmarkId);
@@ -1048,17 +1216,17 @@ export class DatabaseStorage implements IStorage {
         updateData.screenshotUrl = url;
       }
 
-      await db
-        .update(bookmarks)
-        .set(updateData)
-        .where(eq(bookmarks.id, bookmarkId));
+      await db.update(bookmarks).set(updateData).where(eq(bookmarks.id, bookmarkId));
     } catch (error) {
       console.error('Error updating screenshot status:', error);
       throw error;
     }
   }
 
-  async getScreenshotStatus(userId: string, bookmarkId: number): Promise<{ status: string; screenshotUrl?: string; updatedAt?: Date } | undefined> {
+  async getScreenshotStatus(
+    userId: string,
+    bookmarkId: number,
+  ): Promise<{ status: string; screenshotUrl?: string; updatedAt?: Date } | undefined> {
     try {
       const [result] = await db
         .select({
@@ -1115,7 +1283,10 @@ export class DatabaseStorage implements IStorage {
         throw new Error('Screenshot service unavailable');
       }
     } catch (error) {
-      console.warn(`Screenshot generation failed for bookmark ${bookmarkId}:`, error instanceof Error ? error.message : 'Unknown error');
+      console.warn(
+        `Screenshot generation failed for bookmark ${bookmarkId}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
 
       // Fallback to a simple placeholder image service
       try {
@@ -1129,7 +1300,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Link checking methods implementation
-  async checkBookmarkLink(userId: string, bookmarkId: number): Promise<{ linkStatus: string; httpStatus?: number; lastLinkCheckAt: Date }> {
+  async checkBookmarkLink(
+    userId: string,
+    bookmarkId: number,
+  ): Promise<{ linkStatus: string; httpStatus?: number; lastLinkCheckAt: Date }> {
     try {
       // Check if bookmark exists and belongs to user
       const bookmark = await this.getBookmark(userId, bookmarkId);
@@ -1141,10 +1315,14 @@ export class DatabaseStorage implements IStorage {
       const currentFailCount = bookmark.linkFailCount || 0;
       if (currentFailCount > 0 && bookmark.lastLinkCheckAt) {
         const backoffMinutes = this.calculateBackoffMinutes(currentFailCount);
-        const backoffEndTime = new Date(bookmark.lastLinkCheckAt.getTime() + backoffMinutes * 60 * 1000);
+        const backoffEndTime = new Date(
+          bookmark.lastLinkCheckAt.getTime() + backoffMinutes * 60 * 1000,
+        );
 
         if (new Date() < backoffEndTime) {
-          console.warn(`Bookmark ${bookmarkId} is in backoff period until ${backoffEndTime.toISOString()} (${currentFailCount} failures)`);
+          console.warn(
+            `Bookmark ${bookmarkId} is in backoff period until ${backoffEndTime.toISOString()} (${currentFailCount} failures)`,
+          );
           // Return current status without checking
           return {
             linkStatus: bookmark.linkStatus || 'unknown',
@@ -1154,7 +1332,9 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      console.log(`Checking link for bookmark ${bookmarkId}: ${bookmark.url} (${currentFailCount} previous failures)`);
+      console.log(
+        `Checking link for bookmark ${bookmarkId}: ${bookmark.url} (${currentFailCount} previous failures)`,
+      );
       const result = await this.performLinkCheck(bookmark.url);
 
       // Calculate new fail count with exponential backoff logic
@@ -1165,16 +1345,13 @@ export class DatabaseStorage implements IStorage {
       } else {
         newFailCount = currentFailCount + 1;
         const nextCheckIn = this.calculateBackoffMinutes(newFailCount);
-        console.warn(`✗ Link check failed for bookmark ${bookmarkId}: ${result.linkStatus} (${result.httpStatus || 'N/A'}). Next check in ${nextCheckIn} minutes (${newFailCount} total failures)`);
+        console.warn(
+          `✗ Link check failed for bookmark ${bookmarkId}: ${result.linkStatus} (${result.httpStatus || 'N/A'}). Next check in ${nextCheckIn} minutes (${newFailCount} total failures)`,
+        );
       }
 
       // Update the bookmark with link check results
-      await this.updateLinkStatus(
-        bookmarkId,
-        result.linkStatus,
-        result.httpStatus,
-        newFailCount
-      );
+      await this.updateLinkStatus(bookmarkId, result.linkStatus, result.httpStatus, newFailCount);
 
       return {
         linkStatus: result.linkStatus,
@@ -1187,7 +1364,9 @@ export class DatabaseStorage implements IStorage {
       // Increment fail count on error
       const bookmark = await this.getBookmark(userId, bookmarkId);
       const newFailCount = (bookmark?.linkFailCount || 0) + 1;
-      console.warn(`Link check error for bookmark ${bookmarkId}, incrementing fail count to ${newFailCount}`);
+      console.warn(
+        `Link check error for bookmark ${bookmarkId}, incrementing fail count to ${newFailCount}`,
+      );
 
       // Update with error status and incremented fail count
       await this.updateLinkStatus(bookmarkId, 'broken', undefined, newFailCount);
@@ -1196,7 +1375,10 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async bulkCheckBookmarkLinks(userId: string, bookmarkIds?: number[]): Promise<{
+  async bulkCheckBookmarkLinks(
+    userId: string,
+    bookmarkIds?: number[],
+  ): Promise<{
     checkedIds: number[];
     failed: { id: number; reason: string }[];
   }> {
@@ -1209,16 +1391,20 @@ export class DatabaseStorage implements IStorage {
         for (const id of bookmarkIds) {
           const bookmark = await this.getBookmark(userId, id);
           if (bookmark) {
-            bookmarksToCheck.push({ id: bookmark.id, url: bookmark.url, linkFailCount: bookmark.linkFailCount || 0 });
+            bookmarksToCheck.push({
+              id: bookmark.id,
+              url: bookmark.url,
+              linkFailCount: bookmark.linkFailCount || 0,
+            });
           }
         }
       } else {
         // Check all user's bookmarks
         const userBookmarks = await this.getBookmarks(userId);
-        bookmarksToCheck = userBookmarks.map(b => ({
+        bookmarksToCheck = userBookmarks.map((b) => ({
           id: b.id,
           url: b.url,
-          linkFailCount: b.linkFailCount || 0
+          linkFailCount: b.linkFailCount || 0,
         }));
       }
 
@@ -1238,7 +1424,7 @@ export class DatabaseStorage implements IStorage {
               bookmark.id,
               result.linkStatus,
               result.httpStatus,
-              result.linkStatus === 'ok' ? 0 : bookmark.linkFailCount + 1
+              result.linkStatus === 'ok' ? 0 : bookmark.linkFailCount + 1,
             );
 
             checkedIds.push(bookmark.id);
@@ -1246,11 +1432,16 @@ export class DatabaseStorage implements IStorage {
             console.error(`Error checking link for bookmark ${bookmark.id}:`, error);
             failed.push({
               id: bookmark.id,
-              reason: error instanceof Error ? error.message : 'Unknown error'
+              reason: error instanceof Error ? error.message : 'Unknown error',
             });
 
             // Still update with error status
-            await this.updateLinkStatus(bookmark.id, 'broken', undefined, bookmark.linkFailCount + 1);
+            await this.updateLinkStatus(
+              bookmark.id,
+              'broken',
+              undefined,
+              bookmark.linkFailCount + 1,
+            );
           }
         });
 
@@ -1258,7 +1449,7 @@ export class DatabaseStorage implements IStorage {
 
         // Small delay between batches to be respectful
         if (i + concurrencyLimit < bookmarksToCheck.length) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
 
@@ -1269,7 +1460,12 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateLinkStatus(bookmarkId: number, linkStatus: string, httpStatus?: number, linkFailCount?: number): Promise<void> {
+  async updateLinkStatus(
+    bookmarkId: number,
+    linkStatus: string,
+    httpStatus?: number,
+    linkFailCount?: number,
+  ): Promise<void> {
     try {
       const updateData: any = {
         linkStatus,
@@ -1284,17 +1480,19 @@ export class DatabaseStorage implements IStorage {
         updateData.linkFailCount = linkFailCount;
       }
 
-      await db
-        .update(bookmarks)
-        .set(updateData)
-        .where(eq(bookmarks.id, bookmarkId));
+      await db.update(bookmarks).set(updateData).where(eq(bookmarks.id, bookmarkId));
     } catch (error) {
       console.error(`Error updating link status for bookmark ${bookmarkId}:`, error);
       throw error;
     }
   }
 
-  async getBookmarksForLinkCheck(limit: number, userId?: string): Promise<{ id: number; url: string; lastLinkCheckAt: Date | null; linkFailCount?: number | null }[]> {
+  async getBookmarksForLinkCheck(
+    limit: number,
+    userId?: string,
+  ): Promise<
+    { id: number; url: string; lastLinkCheckAt: Date | null; linkFailCount?: number | null }[]
+  > {
     try {
       const conditions = [];
 
@@ -1317,7 +1515,7 @@ export class DatabaseStorage implements IStorage {
           // Prioritize by fail count (lower first), then by last check time
           asc(sql`COALESCE(${bookmarks.linkFailCount}, 0)`),
           sql`CASE WHEN ${bookmarks.lastLinkCheckAt} IS NULL THEN 0 ELSE 1 END`,
-          asc(bookmarks.lastLinkCheckAt)
+          asc(bookmarks.lastLinkCheckAt),
         )
         .limit(limit * 2); // Get more than needed since we'll filter in JS
 
@@ -1325,7 +1523,7 @@ export class DatabaseStorage implements IStorage {
 
       // Filter by backoff logic in JavaScript
       const currentTime = new Date();
-      const filteredBookmarks = allBookmarks.filter(bookmark => {
+      const filteredBookmarks = allBookmarks.filter((bookmark) => {
         // Never been checked - always include
         if (!bookmark.lastLinkCheckAt) {
           return true;
@@ -1334,7 +1532,9 @@ export class DatabaseStorage implements IStorage {
         // Check if enough time has passed based on exponential backoff
         const failCount = bookmark.linkFailCount || 0;
         const backoffMinutes = this.calculateBackoffMinutes(failCount);
-        const backoffEndTime = new Date(bookmark.lastLinkCheckAt.getTime() + backoffMinutes * 60 * 1000);
+        const backoffEndTime = new Date(
+          bookmark.lastLinkCheckAt.getTime() + backoffMinutes * 60 * 1000,
+        );
 
         return currentTime >= backoffEndTime;
       });
@@ -1357,7 +1557,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Private method to perform the actual link checking
-  private async performLinkCheck(url: string): Promise<{ linkStatus: string; httpStatus?: number }> {
+  private async performLinkCheck(
+    url: string,
+  ): Promise<{ linkStatus: string; httpStatus?: number }> {
     try {
       // Use the comprehensive SSRF-safe validation from the link checker service
       // This ensures consistent security across all link checking operations
@@ -1384,11 +1586,11 @@ export class DatabaseStorage implements IStorage {
             method,
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; BookmarkBot/1.0; +bookmark-checker)',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.5',
               'Accept-Encoding': 'gzip, deflate',
-              'DNT': '1',
-              'Connection': 'close',
+              DNT: '1',
+              Connection: 'close',
               'Upgrade-Insecure-Requests': '1',
             },
             signal: controller.signal,
@@ -1418,7 +1620,9 @@ export class DatabaseStorage implements IStorage {
           const redirectUrl = new URL(location, currentUrl).toString();
           const redirectValidation = await this.validateUrlForSsrf(redirectUrl);
           if (!redirectValidation.valid) {
-            console.warn(`Redirect blocked for security: ${redirectValidation.reason} - Redirect URL: ${redirectUrl}`);
+            console.warn(
+              `Redirect blocked for security: ${redirectValidation.reason} - Redirect URL: ${redirectUrl}`,
+            );
             return { linkStatus: 'broken', httpStatus: response.status };
           }
 
@@ -1486,7 +1690,7 @@ export class DatabaseStorage implements IStorage {
 
     const isPrivateIP = (ip: string): boolean => {
       const parts = ip.split('.').map(Number);
-      if (parts.length !== 4 || parts.some(part => isNaN(part) || part < 0 || part > 255)) {
+      if (parts.length !== 4 || parts.some((part) => isNaN(part) || part < 0 || part > 255)) {
         return true; // Invalid IP, consider it private for safety
       }
 
@@ -1515,9 +1719,14 @@ export class DatabaseStorage implements IStorage {
 
     const isBlockedHostname = (hostname: string): boolean => {
       const blocked = [
-        'localhost', '127.0.0.1', '::1', '0.0.0.0',
-        'metadata.google.internal', '169.254.169.254',
-        'metadata.azure.com', 'metadata.packet.net'
+        'localhost',
+        '127.0.0.1',
+        '::1',
+        '0.0.0.0',
+        'metadata.google.internal',
+        '169.254.169.254',
+        'metadata.azure.com',
+        'metadata.packet.net',
       ];
       return blocked.includes(hostname.toLowerCase());
     };
@@ -1529,7 +1738,7 @@ export class DatabaseStorage implements IStorage {
       if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
         return {
           valid: false,
-          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.`
+          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.`,
         };
       }
 
@@ -1560,7 +1769,10 @@ export class DatabaseStorage implements IStorage {
       const port = parsedUrl.port;
       if (port) {
         const portNum = parseInt(port, 10);
-        const blockedPorts = [22, 23, 25, 53, 135, 139, 445, 993, 995, 1433, 3306, 3389, 5432, 5984, 6379, 8080, 9200, 27017];
+        const blockedPorts = [
+          22, 23, 25, 53, 135, 139, 445, 993, 995, 1433, 3306, 3389, 5432, 5984, 6379, 8080, 9200,
+          27017,
+        ];
         if (blockedPorts.includes(portNum)) {
           console.warn(`SSRF attempt blocked: Dangerous port ${portNum} for URL ${url}`);
           return { valid: false, reason: `Blocked port: ${portNum}` };

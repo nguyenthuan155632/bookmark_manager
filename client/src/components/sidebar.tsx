@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { Folder, Home, Star, Plus, BookmarkIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import type { Category } from "@shared/schema";
+import { Link, useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { Folder, Home, Star, Plus, BookmarkIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import type { Category } from '@shared/schema';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -18,36 +17,29 @@ interface SidebarProps {
   };
 }
 
-export function Sidebar({
-  isOpen,
-  onClose,
-  onCreateFolder,
-  stats,
-}: SidebarProps) {
+export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps) {
   const [location] = useLocation();
 
-  const { data: categories = [] } = useQuery<
-    (Category & { bookmarkCount: number })[]
-  >({
-    queryKey: ["/api/categories?withCounts=true"],
+  const { data: categories = [] } = useQuery<(Category & { bookmarkCount: number })[]>({
+    queryKey: ['/api/categories?withCounts=true'],
   });
 
   const isActive = (path: string) => location === path;
 
   const navItems = [
     {
-      path: "/",
+      path: '/',
       icon: Home,
-      label: "All Bookmarks",
+      label: 'All Bookmarks',
       count: stats.total,
-      active: isActive("/"),
+      active: isActive('/'),
     },
     {
-      path: "/favorites",
+      path: '/favorites',
       icon: Star,
-      label: "Favorites",
+      label: 'Favorites',
       count: stats.favorites,
-      active: isActive("/favorites"),
+      active: isActive('/favorites'),
     },
   ];
 
@@ -55,17 +47,14 @@ export function Sidebar({
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden" onClick={onClose} />
       )}
 
       {/* Sidebar */}
       <aside
         className={`
         w-64 bg-card border-r border-border flex flex-col transition-transform duration-300 
-        -translate-x-full ${isOpen ? "translate-x-0" : ""} 
+        -translate-x-full ${isOpen ? 'translate-x-0' : ''} 
         lg:translate-x-0 fixed lg:relative z-30 h-full
       `}
       >
@@ -84,14 +73,14 @@ export function Sidebar({
           {navItems.map((item) => (
             <Link key={item.path} href={item.path}>
               <Button
-                variant={item.active ? "default" : "ghost"}
+                variant={item.active ? 'default' : 'ghost'}
                 className={`w-full justify-start space-x-3 ${
                   item.active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
                 onClick={onClose}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <item.icon size={20} />
                 <span className="flex-1 text-left">{item.label}</span>
@@ -99,8 +88,8 @@ export function Sidebar({
                   <span
                     className={`text-xs min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center ${
                       item.active
-                        ? "bg-primary-foreground text-primary"
-                        : "bg-secondary text-secondary-foreground"
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
                     }`}
                   >
                     {item.count}
@@ -136,7 +125,7 @@ export function Sidebar({
                     variant="ghost"
                     className="w-full justify-start space-x-3 text-muted-foreground hover:bg-muted hover:text-foreground"
                     onClick={onClose}
-                    data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
+                    data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     <Folder size={16} />
                     <span className="flex-1 text-left">{category.name}</span>
@@ -146,9 +135,7 @@ export function Sidebar({
               ))}
 
               {categories.length === 0 && (
-                <p className="text-sm text-muted-foreground px-3 py-2">
-                  No folders yet
-                </p>
+                <p className="text-sm text-muted-foreground px-3 py-2">No folders yet</p>
               )}
             </div>
           </div>

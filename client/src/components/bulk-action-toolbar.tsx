@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { Trash2, FolderOpen, CheckSquare, Square, X, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Trash2, FolderOpen, CheckSquare, Square, X, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +18,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import type { Category } from "@shared/schema";
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import type { Category } from '@shared/schema';
 
 interface BulkActionToolbarProps {
   selectedCount: number;
@@ -43,13 +43,13 @@ export function BulkActionToolbar({
   onBulkDelete,
   onBulkMove,
   onExitBulkMode,
-  isLoading = false
+  isLoading = false,
 }: BulkActionToolbarProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Fetch categories for move operation
   const { data: categories = [] } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
+    queryKey: ['/api/categories'],
   });
 
   const handleSelectAllToggle = () => {
@@ -72,7 +72,7 @@ export function BulkActionToolbar({
 
   const handleMoveToCategory = (value: string) => {
     if (selectedCount === 0) return;
-    const categoryId = value === "uncategorized" ? null : parseInt(value);
+    const categoryId = value === 'uncategorized' ? null : parseInt(value);
     onBulkMove(categoryId);
   };
 
@@ -86,7 +86,7 @@ export function BulkActionToolbar({
               <Badge variant="secondary" className="px-3 py-1" data-testid="bulk-selection-count">
                 {selectedCount} of {totalCount} selected
               </Badge>
-              
+
               <Button
                 size="sm"
                 variant="outline"
@@ -95,15 +95,16 @@ export function BulkActionToolbar({
                 data-testid="button-select-all-toggle"
               >
                 {isAllSelected ? <Square size={14} /> : <CheckSquare size={14} />}
-                <span className="ml-2">
-                  {isAllSelected ? "Deselect All" : "Select All"}
-                </span>
+                <span className="ml-2">{isAllSelected ? 'Deselect All' : 'Select All'}</span>
               </Button>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               {/* Move to Category */}
-              <Select onValueChange={handleMoveToCategory} disabled={selectedCount === 0 || isLoading}>
+              <Select
+                onValueChange={handleMoveToCategory}
+                disabled={selectedCount === 0 || isLoading}
+              >
                 <SelectTrigger className="w-48 h-8" data-testid="select-move-category">
                   <FolderOpen size={14} className="mr-2" />
                   <SelectValue placeholder="Move to..." />
@@ -157,19 +158,18 @@ export function BulkActionToolbar({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Selected Bookmarks</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedCount} bookmark{selectedCount === 1 ? '' : 's'}? 
-              This action cannot be undone.
+              Are you sure you want to delete {selectedCount} bookmark
+              {selectedCount === 1 ? '' : 's'}? This action cannot be undone.
               {selectedCount > 5 && (
                 <div className="mt-2 p-2 bg-destructive/10 rounded text-destructive-foreground">
-                  <strong>Warning:</strong> You're about to delete {selectedCount} bookmarks at once.
+                  <strong>Warning:</strong> You're about to delete {selectedCount} bookmarks at
+                  once.
                 </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-cancel-bulk-delete">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel data-testid="button-cancel-bulk-delete">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

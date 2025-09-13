@@ -15,19 +15,22 @@ async function seed() {
 
     // Seed categories
     console.log('Creating categories...');
-    const createdCategories = await db.insert(categories).values([
-      { name: 'Development', parentId: null, userId: VENSERA_USER_ID },
-      { name: 'Design', parentId: null, userId: VENSERA_USER_ID },
-      { name: 'JavaScript', parentId: null, userId: VENSERA_USER_ID },
-      { name: 'Learning', parentId: null, userId: VENSERA_USER_ID },
-      { name: 'Tools', parentId: null, userId: VENSERA_USER_ID },
-    ]).returning();
+    const createdCategories = await db
+      .insert(categories)
+      .values([
+        { name: 'Development', parentId: null, userId: VENSERA_USER_ID },
+        { name: 'Design', parentId: null, userId: VENSERA_USER_ID },
+        { name: 'JavaScript', parentId: null, userId: VENSERA_USER_ID },
+        { name: 'Learning', parentId: null, userId: VENSERA_USER_ID },
+        { name: 'Tools', parentId: null, userId: VENSERA_USER_ID },
+      ])
+      .returning();
 
-    const devCategory = createdCategories.find(c => c.name === 'Development');
-    const designCategory = createdCategories.find(c => c.name === 'Design');
-    const jsCategory = createdCategories.find(c => c.name === 'JavaScript');
-    const learningCategory = createdCategories.find(c => c.name === 'Learning');
-    const toolsCategory = createdCategories.find(c => c.name === 'Tools');
+    const devCategory = createdCategories.find((c) => c.name === 'Development');
+    const designCategory = createdCategories.find((c) => c.name === 'Design');
+    const jsCategory = createdCategories.find((c) => c.name === 'JavaScript');
+    const learningCategory = createdCategories.find((c) => c.name === 'Learning');
+    const toolsCategory = createdCategories.find((c) => c.name === 'Tools');
 
     // Seed bookmarks
     console.log('Creating bookmarks...');
@@ -52,7 +55,7 @@ async function seed() {
       },
       {
         name: 'Dribbble',
-        description: 'Discover the world\'s top designers & creative professionals.',
+        description: "Discover the world's top designers & creative professionals.",
         url: 'https://dribbble.com',
         tags: ['design', 'inspiration', 'ui', 'ux'],
         isFavorite: false,
@@ -97,7 +100,7 @@ async function seed() {
       },
       {
         name: 'GitHub',
-        description: 'The world\'s leading software development platform.',
+        description: "The world's leading software development platform.",
         url: 'https://github.com',
         tags: ['git', 'development', 'collaboration'],
         isFavorite: true,
@@ -133,7 +136,8 @@ async function seed() {
       },
       {
         name: 'npm',
-        description: 'The package manager for JavaScript and the world\'s largest software registry.',
+        description:
+          "The package manager for JavaScript and the world's largest software registry.",
         url: 'https://www.npmjs.com',
         tags: ['javascript', 'packages', 'node'],
         isFavorite: false,

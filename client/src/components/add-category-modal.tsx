@@ -1,14 +1,26 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { insertCategorySchema, type InsertCategory } from "@shared/schema";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { insertCategorySchema, type InsertCategory } from '@shared/schema';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 type FormData = InsertCategory;
 
@@ -24,29 +36,29 @@ export function AddCategoryModal({ isOpen, onClose }: AddCategoryModalProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(insertCategorySchema),
     defaultValues: {
-      name: "",
+      name: '',
       parentId: null,
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCategory) => {
-      return await apiRequest("POST", "/api/categories", data);
+      return await apiRequest('POST', '/api/categories', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories?withCounts=true"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/categories?withCounts=true'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
-        description: "Folder created successfully!",
+        description: 'Folder created successfully!',
       });
       handleClose();
     },
     onError: (error: any) => {
       toast({
-        variant: "destructive",
-        description: error.message || "Failed to create folder",
+        variant: 'destructive',
+        description: error.message || 'Failed to create folder',
       });
-    }
+    },
   });
 
   const handleClose = () => {
@@ -63,11 +75,9 @@ export function AddCategoryModal({ isOpen, onClose }: AddCategoryModalProps) {
       <DialogContent data-testid="add-category-modal">
         <DialogHeader>
           <DialogTitle>Create New Folder</DialogTitle>
-          <DialogDescription>
-            Create a new folder to organize your bookmarks
-          </DialogDescription>
+          <DialogDescription>Create a new folder to organize your bookmarks</DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -103,7 +113,7 @@ export function AddCategoryModal({ isOpen, onClose }: AddCategoryModalProps) {
                 disabled={createMutation.isPending}
                 data-testid="button-save-folder"
               >
-                {createMutation.isPending ? "Creating..." : "Create Folder"}
+                {createMutation.isPending ? 'Creating...' : 'Create Folder'}
               </Button>
             </div>
           </form>

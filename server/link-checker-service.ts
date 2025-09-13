@@ -1,4 +1,4 @@
-import { storage } from "./storage";
+import { storage } from './storage';
 import { URL } from 'url';
 import * as dns from 'dns';
 import { promisify } from 'util';
@@ -9,7 +9,7 @@ const dnsLookup = promisify(dns.lookup);
 // Private IP range checks
 const isPrivateIP = (ip: string): boolean => {
   const parts = ip.split('.').map(Number);
-  if (parts.length !== 4 || parts.some(part => isNaN(part) || part < 0 || part > 255)) {
+  if (parts.length !== 4 || parts.some((part) => isNaN(part) || part < 0 || part > 255)) {
     return true; // Invalid IP, consider it private for safety
   }
 
@@ -52,7 +52,7 @@ const isBlockedHostname = (hostname: string): boolean => {
     'metadata.google.internal', // Google Cloud metadata
     '169.254.169.254', // AWS/Azure metadata
     'metadata.azure.com',
-    'metadata.packet.net'
+    'metadata.packet.net',
   ];
 
   return blocked.includes(hostname.toLowerCase());
@@ -96,7 +96,9 @@ export class LinkCheckerService {
       this.performPeriodicCheck();
     }, this.CHECK_INTERVAL);
 
-    console.log(`Link Checker Service started with ${this.CHECK_INTERVAL / 1000 / 60} minute intervals`);
+    console.log(
+      `Link Checker Service started with ${this.CHECK_INTERVAL / 1000 / 60} minute intervals`,
+    );
   }
 
   /**
@@ -218,7 +220,7 @@ export class LinkCheckerService {
               bookmark.id,
               result.linkStatus,
               result.httpStatus,
-              result.linkStatus === 'ok' ? 0 : undefined // Reset fail count on success
+              result.linkStatus === 'ok' ? 0 : undefined, // Reset fail count on success
             );
 
             results.checked++;
@@ -234,17 +236,24 @@ export class LinkCheckerService {
                 break;
             }
 
-            console.log(`✓ Checked bookmark ${bookmark.id}: ${result.linkStatus} (${result.httpStatus || 'N/A'})`);
+            console.log(
+              `✓ Checked bookmark ${bookmark.id}: ${result.linkStatus} (${result.httpStatus || 'N/A'})`,
+            );
           } catch (error) {
             console.error(`✗ Failed to check bookmark ${bookmark.id}:`, error);
             results.failed++;
-            results.errors.push(`Bookmark ${bookmark.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            results.errors.push(
+              `Bookmark ${bookmark.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            );
 
             // Update with error status
             try {
               await storage.updateLinkStatus(bookmark.id, 'broken', undefined, undefined);
             } catch (updateError) {
-              console.error(`Failed to update error status for bookmark ${bookmark.id}:`, updateError);
+              console.error(
+                `Failed to update error status for bookmark ${bookmark.id}:`,
+                updateError,
+              );
             }
           }
         });
@@ -254,20 +263,22 @@ export class LinkCheckerService {
 
         // Small delay between batches to be respectful to external servers
         if (i + this.MAX_CONCURRENT_CHECKS < bookmarksToCheck.length) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
         }
       }
 
       const duration = Date.now() - startTime;
       console.log(`Periodic link check completed in ${duration}ms`);
-      console.log(`Results: ${results.checked} checked, ${results.ok} ok, ${results.broken} broken, ${results.timeout} timeout, ${results.failed} failed`);
+      console.log(
+        `Results: ${results.checked} checked, ${results.ok} ok, ${results.broken} broken, ${results.timeout} timeout, ${results.failed} failed`,
+      );
 
       return results;
     } catch (error) {
       console.error('Error during periodic link check:', error);
       return {
         error: error instanceof Error ? error.message : 'Unknown error',
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     } finally {
       // Always reset the in-progress flag
@@ -286,7 +297,7 @@ export class LinkCheckerService {
       if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
         return {
           valid: false,
-          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.`
+          reason: `Blocked protocol: ${parsedUrl.protocol}. Only HTTP and HTTPS are allowed.`,
         };
       }
 
@@ -298,7 +309,7 @@ export class LinkCheckerService {
         console.warn(`SSRF attempt blocked: ${hostname} from URL ${url}`);
         return {
           valid: false,
-          reason: `Blocked hostname: ${hostname}`
+          reason: `Blocked hostname: ${hostname}`,
         };
       }
 
@@ -311,7 +322,7 @@ export class LinkCheckerService {
           console.warn(`SSRF attempt blocked: Private IPv4 ${address} for hostname ${hostname}`);
           return {
             valid: false,
-            reason: `Blocked private IPv4 address: ${address}`
+            reason: `Blocked private IPv4 address: ${address}`,
           };
         }
 
@@ -320,7 +331,7 @@ export class LinkCheckerService {
           console.warn(`SSRF attempt blocked: Private IPv6 ${address} for hostname ${hostname}`);
           return {
             valid: false,
-            reason: `Blocked private IPv6 address: ${address}`
+            reason: `Blocked private IPv6 address: ${address}`,
           };
         }
       } catch (dnsError) {
@@ -328,7 +339,7 @@ export class LinkCheckerService {
         console.warn(`DNS lookup failed for ${hostname}:`, dnsError);
         return {
           valid: false,
-          reason: 'DNS lookup failed - invalid or unreachable hostname'
+          reason: 'DNS lookup failed - invalid or unreachable hostname',
         };
       }
 
@@ -337,15 +348,15 @@ export class LinkCheckerService {
       if (port) {
         const portNum = parseInt(port, 10);
         const blockedPorts = [
-          22,   // SSH
-          23,   // Telnet
-          25,   // SMTP
-          53,   // DNS
-          135,  // RPC
-          139,  // NetBIOS
-          445,  // SMB
-          993,  // IMAPS
-          995,  // POP3S
+          22, // SSH
+          23, // Telnet
+          25, // SMTP
+          53, // DNS
+          135, // RPC
+          139, // NetBIOS
+          445, // SMB
+          993, // IMAPS
+          995, // POP3S
           1433, // SQL Server
           3306, // MySQL
           3389, // RDP
@@ -354,14 +365,14 @@ export class LinkCheckerService {
           6379, // Redis
           8080, // Alternative HTTP (often internal)
           9200, // Elasticsearch
-          27017 // MongoDB
+          27017, // MongoDB
         ];
 
         if (blockedPorts.includes(portNum)) {
           console.warn(`SSRF attempt blocked: Dangerous port ${portNum} for URL ${url}`);
           return {
             valid: false,
-            reason: `Blocked port: ${portNum}`
+            reason: `Blocked port: ${portNum}`,
           };
         }
       }
@@ -371,7 +382,7 @@ export class LinkCheckerService {
       console.warn(`URL validation error for ${url}:`, error);
       return {
         valid: false,
-        reason: 'Invalid URL format'
+        reason: 'Invalid URL format',
       };
     }
   }
@@ -379,7 +390,9 @@ export class LinkCheckerService {
   /**
    * Perform a single link check with comprehensive SSRF protection
    */
-  private async performSingleLinkCheck(url: string): Promise<{ linkStatus: string; httpStatus?: number }> {
+  private async performSingleLinkCheck(
+    url: string,
+  ): Promise<{ linkStatus: string; httpStatus?: number }> {
     try {
       // 1. Comprehensive SSRF validation
       const validation = await this.validateUrlForSsrf(url);
@@ -403,11 +416,11 @@ export class LinkCheckerService {
             method,
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; BookmarkBot/1.0; +bookmark-checker)',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.5',
               'Accept-Encoding': 'gzip, deflate',
-              'DNT': '1',
-              'Connection': 'close',
+              DNT: '1',
+              Connection: 'close',
               'Upgrade-Insecure-Requests': '1',
             },
             signal: controller.signal,
@@ -427,7 +440,11 @@ export class LinkCheckerService {
         response = await fetchWithLimits(currentUrl, 'HEAD');
 
         // Handle redirects manually with limits
-        while (response.status >= 300 && response.status < 400 && redirectCount < this.MAX_REDIRECTS) {
+        while (
+          response.status >= 300 &&
+          response.status < 400 &&
+          redirectCount < this.MAX_REDIRECTS
+        ) {
           const location = response.headers.get('location');
           if (!location) {
             break;
@@ -437,7 +454,9 @@ export class LinkCheckerService {
           const redirectUrl = new URL(location, currentUrl).toString();
           const redirectValidation = await this.validateUrlForSsrf(redirectUrl);
           if (!redirectValidation.valid) {
-            console.warn(`Redirect blocked for security: ${redirectValidation.reason} - Redirect URL: ${redirectUrl}`);
+            console.warn(
+              `Redirect blocked for security: ${redirectValidation.reason} - Redirect URL: ${redirectUrl}`,
+            );
             return { linkStatus: 'broken', httpStatus: response.status };
           }
 
@@ -447,7 +466,11 @@ export class LinkCheckerService {
         }
 
         // If we hit redirect limit, return broken
-        if (redirectCount >= this.MAX_REDIRECTS && response.status >= 300 && response.status < 400) {
+        if (
+          redirectCount >= this.MAX_REDIRECTS &&
+          response.status >= 300 &&
+          response.status < 400
+        ) {
           console.warn(`Too many redirects (${redirectCount}) for URL: ${url}`);
           return { linkStatus: 'broken', httpStatus: response.status };
         }

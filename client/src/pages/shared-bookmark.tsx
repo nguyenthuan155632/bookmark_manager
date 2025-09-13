@@ -1,25 +1,25 @@
-import { useEffect, useState } from "react";
-import { useRoute } from "wouter";
-import { ExternalLink, Calendar, Tag, Folder, Globe, ArrowLeft } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { Bookmark, Category } from "@shared/schema";
-import { formatDistanceToNow } from "date-fns";
+import { useEffect, useState } from 'react';
+import { useRoute } from 'wouter';
+import { ExternalLink, Calendar, Tag, Folder, Globe, ArrowLeft } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Bookmark, Category } from '@shared/schema';
+import { formatDistanceToNow } from 'date-fns';
 
 export function SharedBookmark() {
-  const [, params] = useRoute("/shared/:shareId");
+  const [, params] = useRoute('/shared/:shareId');
   const [bookmark, setBookmark] = useState<(Bookmark & { category?: Category }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!params?.shareId) {
-      setError("Invalid share link");
+      setError('Invalid share link');
       setIsLoading(false);
       return;
     }
@@ -27,22 +27,22 @@ export function SharedBookmark() {
     const fetchSharedBookmark = async () => {
       try {
         const response = await fetch(`/api/shared/${params.shareId}`);
-        
+
         if (response.status === 404) {
-          setError("Bookmark not found or is no longer shared");
+          setError('Bookmark not found or is no longer shared');
           setIsLoading(false);
           return;
         }
-        
+
         if (!response.ok) {
-          throw new Error("Failed to load bookmark");
+          throw new Error('Failed to load bookmark');
         }
-        
+
         const data = await response.json();
         setBookmark(data);
       } catch (err) {
-        console.error("Error fetching shared bookmark:", err);
-        setError("Failed to load bookmark");
+        console.error('Error fetching shared bookmark:', err);
+        setError('Failed to load bookmark');
       } finally {
         setIsLoading(false);
       }
@@ -95,9 +95,7 @@ export function SharedBookmark() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-foreground">
-            {error || "Bookmark not found"}
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground">{error || 'Bookmark not found'}</h1>
           <p className="text-muted-foreground">
             This bookmark may have been removed or is no longer shared.
           </p>
@@ -119,20 +117,22 @@ export function SharedBookmark() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h1 className="text-3xl font-bold text-foreground" data-testid="shared-bookmark-title">
+              <h1
+                className="text-3xl font-bold text-foreground"
+                data-testid="shared-bookmark-title"
+              >
                 {bookmark.name}
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Shared bookmark • {timeAgo}
-              </p>
+              <p className="text-sm text-muted-foreground">Shared bookmark • {timeAgo}</p>
             </div>
             <Button
               onClick={handleVisit}
-              size="lg"
-              className="flex items-center gap-2"
+              aria-label="Visit Website"
+              title="Visit Website"
+              className="flex items-center justify-center gap-2 h-10 w-10 px-0 sm:h-11 sm:w-auto sm:px-8"
               data-testid="button-visit-shared-bookmark"
             >
-              <span>Visit Website</span>
+              <span className="hidden sm:inline">Visit Website</span>
               <ExternalLink size={16} />
             </Button>
           </div>
@@ -148,10 +148,16 @@ export function SharedBookmark() {
               {/* URL Section */}
               <div className="space-y-2">
                 <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm font-mono break-all text-foreground" data-testid="shared-bookmark-url">
+                  <p
+                    className="text-sm font-mono break-all text-foreground"
+                    data-testid="shared-bookmark-url"
+                  >
                     {bookmark.url}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2" data-testid="shared-bookmark-domain">
+                  <p
+                    className="text-xs text-muted-foreground mt-2"
+                    data-testid="shared-bookmark-domain"
+                  >
                     {getDomain(bookmark.url)}
                   </p>
                 </div>
@@ -163,7 +169,7 @@ export function SharedBookmark() {
                   <Separator />
                   <div className="space-y-3">
                     <h3 className="font-medium text-foreground">Description</h3>
-                    <div 
+                    <div
                       className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:text-sm prose-a:text-primary prose-strong:text-foreground prose-code:text-sm prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:text-sm prose-blockquote:border-l-primary prose-li:text-sm"
                       data-testid="shared-bookmark-description"
                     >
@@ -235,7 +241,8 @@ export function SharedBookmark() {
           {/* Footer */}
           <div className="text-center pt-8 border-t">
             <p className="text-sm text-muted-foreground">
-              This bookmark was shared publicly. Create your own bookmark manager to organize and share your links.
+              This bookmark was shared publicly. Create your own bookmark manager to organize and
+              share your links.
             </p>
           </div>
         </div>

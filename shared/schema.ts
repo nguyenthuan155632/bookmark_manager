@@ -1,56 +1,58 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, integer } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
+import { sql } from 'drizzle-orm';
+import { pgTable, text, varchar, boolean, timestamp, integer } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod';
 
 // User schema (moved up to be defined before it's referenced)
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const users = pgTable('users', {
+  id: varchar('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
 });
 
 // User Preferences schema (moved up to be defined before it's referenced)
-export const userPreferences = pgTable("user_preferences", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  userId: varchar("user_id").notNull(),
-  theme: varchar("theme", { length: 10 }).notNull().default("light"),
-  viewMode: varchar("view_mode", { length: 10 }).notNull().default("grid"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const userPreferences = pgTable('user_preferences', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  userId: varchar('user_id').notNull(),
+  theme: varchar('theme', { length: 10 }).notNull().default('light'),
+  viewMode: varchar('view_mode', { length: 10 }).notNull().default('grid'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const categories = pgTable("categories", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar("name", { length: 255 }).notNull(),
-  parentId: integer("parent_id"),
-  userId: varchar("user_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+export const categories = pgTable('categories', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  name: varchar('name', { length: 255 }).notNull(),
+  parentId: integer('parent_id'),
+  userId: varchar('user_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const bookmarks = pgTable("bookmarks", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  url: text("url").notNull(),
-  tags: text("tags").array().default([]),
-  suggestedTags: text("suggested_tags").array().default([]),
-  isFavorite: boolean("is_favorite").default(false),
-  categoryId: integer("category_id"),
-  userId: varchar("user_id").notNull(),
-  passcodeHash: text("passcode_hash"),
-  isShared: boolean("is_shared").default(false),
-  shareId: varchar("share_id", { length: 36 }).unique(),
-  screenshotUrl: text("screenshot_url"),
-  screenshotStatus: varchar("screenshot_status", { length: 16 }).default("idle"),
-  screenshotUpdatedAt: timestamp("screenshot_updated_at"),
-  linkStatus: varchar("link_status", { length: 16 }).default("unknown"),
-  httpStatus: integer("http_status"),
-  lastLinkCheckAt: timestamp("last_link_check_at"),
-  linkFailCount: integer("link_fail_count").default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const bookmarks = pgTable('bookmarks', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  url: text('url').notNull(),
+  tags: text('tags').array().default([]),
+  suggestedTags: text('suggested_tags').array().default([]),
+  isFavorite: boolean('is_favorite').default(false),
+  categoryId: integer('category_id'),
+  userId: varchar('user_id').notNull(),
+  passcodeHash: text('passcode_hash'),
+  isShared: boolean('is_shared').default(false),
+  shareId: varchar('share_id', { length: 36 }).unique(),
+  screenshotUrl: text('screenshot_url'),
+  screenshotStatus: varchar('screenshot_status', { length: 16 }).default('idle'),
+  screenshotUpdatedAt: timestamp('screenshot_updated_at'),
+  linkStatus: varchar('link_status', { length: 16 }).default('unknown'),
+  httpStatus: integer('http_status'),
+  lastLinkCheckAt: timestamp('last_link_check_at'),
+  linkFailCount: integer('link_fail_count').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Relations
@@ -102,29 +104,32 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
 });
 
 // Client-facing bookmark schemas (using 'passcode' instead of 'passcodeHash')
-export const insertBookmarkSchema = createInsertSchema(bookmarks).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  userId: true, // userId will be added server-side from authenticated user
-  passcodeHash: true, // Exclude internal hash field from client API
-  suggestedTags: true, // Server-managed auto-tagging
-  screenshotUrl: true, // Server-managed screenshot functionality
-  screenshotStatus: true, // Server-managed screenshot status
-  screenshotUpdatedAt: true, // Server-managed timestamp
-  linkStatus: true, // Server-managed link checking
-  httpStatus: true, // Server-managed HTTP status
-  lastLinkCheckAt: true, // Server-managed timestamp
-  linkFailCount: true, // Server-managed failure counter
-}).extend({
-  // Add client-facing passcode field with validation
-  passcode: z.string()
-    .min(4, "Passcode must be at least 4 characters long")
-    .max(64, "Passcode must be no more than 64 characters long")
-    .transform(val => val === "" ? null : val) // Transform empty string to null
-    .nullable()
-    .optional(),
-});
+export const insertBookmarkSchema = createInsertSchema(bookmarks)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    userId: true, // userId will be added server-side from authenticated user
+    passcodeHash: true, // Exclude internal hash field from client API
+    suggestedTags: true, // Server-managed auto-tagging
+    screenshotUrl: true, // Server-managed screenshot functionality
+    screenshotStatus: true, // Server-managed screenshot status
+    screenshotUpdatedAt: true, // Server-managed timestamp
+    linkStatus: true, // Server-managed link checking
+    httpStatus: true, // Server-managed HTTP status
+    lastLinkCheckAt: true, // Server-managed timestamp
+    linkFailCount: true, // Server-managed failure counter
+  })
+  .extend({
+    // Add client-facing passcode field with validation
+    passcode: z
+      .string()
+      .min(4, 'Passcode must be at least 4 characters long')
+      .max(64, 'Passcode must be no more than 64 characters long')
+      .transform((val) => (val === '' ? null : val)) // Transform empty string to null
+      .nullable()
+      .optional(),
+  });
 
 // Internal server-side schema that includes the passcodeHash field
 export const insertBookmarkInternalSchema = createInsertSchema(bookmarks).omit({

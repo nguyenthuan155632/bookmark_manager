@@ -1,19 +1,37 @@
-import { useState, useRef, useEffect } from "react";
-import { Star, Globe, Edit, Trash2, ExternalLink, Lock, Eye, Share2, Copy, Camera, RefreshCw, AlertCircle, Image as ImageIcon, CheckCircle, XCircle, HelpCircle, Link, MoreHorizontal, RotateCcw } from "lucide-react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import type { Bookmark, Category } from "@shared/schema";
-import { formatDistanceToNow } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRef, useEffect, useState } from 'react';
+import {
+  Star,
+  Globe,
+  Edit,
+  Trash2,
+  ExternalLink,
+  Lock,
+  Eye,
+  Share2,
+  Copy,
+  Camera,
+  RefreshCw,
+  AlertCircle,
+  Image as ImageIcon,
+  CheckCircle,
+  XCircle,
+  HelpCircle,
+  Link,
+  RotateCcw,
+} from 'lucide-react';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import type { Bookmark, Category } from '@shared/schema';
+import { formatDistanceToNow } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BookmarkCardProps {
   bookmark: Bookmark & { category?: Category; hasPasscode?: boolean };
@@ -47,9 +65,8 @@ export function BookmarkCard({
   isSelected = false,
   onSelect,
   passcode,
-  isShareLoading = false
+  isShareLoading = false,
 }: BookmarkCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [thumbnailRetryCount, setThumbnailRetryCount] = useState(0);
@@ -68,7 +85,7 @@ export function BookmarkCard({
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (cardRef.current) {
@@ -85,11 +102,8 @@ export function BookmarkCard({
     updatedAt?: string;
   }>({
     queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`],
-    enabled: !isProtected && (
-      bookmark.screenshotStatus === 'pending' ||
-      thumbnailRetryCount > 0
-    ),
-    refetchInterval: (query) => (query.state.data?.status === 'pending') ? 3000 : false,
+    enabled: !isProtected && (bookmark.screenshotStatus === 'pending' || thumbnailRetryCount > 0),
+    refetchInterval: (query) => (query.state.data?.status === 'pending' ? 3000 : false),
     staleTime: 30000,
   });
 
@@ -99,109 +113,109 @@ export function BookmarkCard({
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("PATCH", `/api/bookmarks/${bookmark.id}`, {
-        isFavorite: !bookmark.isFavorite
+      return await apiRequest('PATCH', `/api/bookmarks/${bookmark.id}`, {
+        isFavorite: !bookmark.isFavorite,
       });
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
       queryClient.invalidateQueries({
-        queryKey: ["/api/bookmarks"],
-        exact: false
+        queryKey: ['/api/bookmarks'],
+        exact: false,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
-        description: bookmark.isFavorite
-          ? "Removed from favorites"
-          : "Added to favorites",
+        description: bookmark.isFavorite ? 'Removed from favorites' : 'Added to favorites',
       });
     },
     onError: () => {
       toast({
-        variant: "destructive",
-        description: "Failed to update favorite status",
+        variant: 'destructive',
+        description: 'Failed to update favorite status',
       });
-    }
+    },
   });
 
   const deleteBookmarkMutation = useMutation({
     mutationFn: async () => {
       // Include passcode in request body for protected bookmarks
       const body = bookmark.hasPasscode && passcode ? { passcode } : undefined;
-      return await apiRequest("DELETE", `/api/bookmarks/${bookmark.id}`, body);
+      return await apiRequest('DELETE', `/api/bookmarks/${bookmark.id}`, body);
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
       queryClient.invalidateQueries({
-        queryKey: ["/api/bookmarks"],
-        exact: false
+        queryKey: ['/api/bookmarks'],
+        exact: false,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
-        description: "Bookmark deleted",
+        description: 'Bookmark deleted',
       });
     },
     onError: () => {
       toast({
-        variant: "destructive",
-        description: "Failed to delete bookmark",
+        variant: 'destructive',
+        description: 'Failed to delete bookmark',
       });
-    }
+    },
   });
 
   // Screenshot generation mutation
   const generateScreenshotMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", `/api/bookmarks/${bookmark.id}/screenshot`);
+      return await apiRequest('POST', `/api/bookmarks/${bookmark.id}/screenshot`);
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
       queryClient.invalidateQueries({
-        queryKey: ["/api/bookmarks"],
-        exact: false
+        queryKey: ['/api/bookmarks'],
+        exact: false,
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`] });
-      setThumbnailRetryCount(prev => prev + 1);
+      queryClient.invalidateQueries({
+        queryKey: [`/api/bookmarks/${bookmark.id}/screenshot/status`],
+      });
+      setThumbnailRetryCount((prev) => prev + 1);
       setTimeout(() => {
         refetchScreenshot();
       }, 2000);
     },
     onError: (error: any) => {
-      console.error("Screenshot generation failed:", error);
+      console.error('Screenshot generation failed:', error);
       toast({
-        variant: "destructive",
-        description: "Failed to generate screenshot",
+        variant: 'destructive',
+        description: 'Failed to generate screenshot',
       });
-    }
+    },
   });
 
   // Link checking mutation
   const checkLinkMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", `/api/bookmarks/${bookmark.id}/check-link`);
+      return await apiRequest('POST', `/api/bookmarks/${bookmark.id}/check-link`);
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
       queryClient.invalidateQueries({
-        queryKey: ["/api/bookmarks"],
-        exact: false
+        queryKey: ['/api/bookmarks'],
+        exact: false,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       toast({
-        description: "Link status updated",
+        description: 'Link status updated',
       });
     },
     onError: (error: any) => {
-      console.error("Link check failed:", error);
+      console.error('Link check failed:', error);
       toast({
-        variant: "destructive",
-        description: "Failed to check link status",
+        variant: 'destructive',
+        description: 'Failed to check link status',
       });
-    }
+    },
   });
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this bookmark?")) {
+    if (confirm('Are you sure you want to delete this bookmark?')) {
       deleteBookmarkMutation.mutate();
     }
   };
@@ -252,17 +266,19 @@ export function BookmarkCard({
     try {
       await navigator.clipboard.writeText(bookmark.url);
       toast({
-        description: "URL copied to clipboard",
+        description: 'URL copied to clipboard',
       });
     } catch (error) {
       toast({
-        variant: "destructive",
-        description: "Failed to copy URL",
+        variant: 'destructive',
+        description: 'Failed to copy URL',
       });
     }
   };
 
-  const timeAgo = isProtected ? "—" : formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
+  const timeAgo = isProtected
+    ? '—'
+    : formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
 
   // Helper function to get link status info
   const getLinkStatusInfo = () => {
@@ -274,7 +290,7 @@ export function BookmarkCard({
         bgColor: 'bg-muted/20',
         borderColor: 'border-muted-foreground/20',
         label: 'Unknown',
-        tooltip: 'Status hidden for protected bookmark'
+        tooltip: 'Status hidden for protected bookmark',
       };
     }
 
@@ -293,7 +309,7 @@ export function BookmarkCard({
           bgColor: 'bg-green-50 dark:bg-green-950',
           borderColor: 'border-green-200 dark:border-green-800',
           label: 'Working',
-          tooltip: `Link is working • ${lastCheckedText}${bookmark.httpStatus ? ` • HTTP ${bookmark.httpStatus}` : ''}`
+          tooltip: `Link is working • ${lastCheckedText}${bookmark.httpStatus ? ` • HTTP ${bookmark.httpStatus}` : ''}`,
         };
       case 'broken':
         return {
@@ -303,7 +319,7 @@ export function BookmarkCard({
           bgColor: 'bg-red-50 dark:bg-red-950',
           borderColor: 'border-red-200 dark:border-red-800',
           label: 'Broken',
-          tooltip: `Link is broken • ${lastCheckedText}${bookmark.httpStatus ? ` • HTTP ${bookmark.httpStatus}` : ''}`
+          tooltip: `Link is broken • ${lastCheckedText}${bookmark.httpStatus ? ` • HTTP ${bookmark.httpStatus}` : ''}`,
         };
       case 'timeout':
         return {
@@ -313,7 +329,7 @@ export function BookmarkCard({
           bgColor: 'bg-orange-50 dark:bg-orange-950',
           borderColor: 'border-orange-200 dark:border-orange-800',
           label: 'Timeout',
-          tooltip: `Link timed out • ${lastCheckedText}`
+          tooltip: `Link timed out • ${lastCheckedText}`,
         };
       case 'unknown':
       default:
@@ -324,7 +340,7 @@ export function BookmarkCard({
           bgColor: 'bg-muted/20',
           borderColor: 'border-muted-foreground/20',
           label: 'Unchecked',
-          tooltip: lastCheckedText
+          tooltip: lastCheckedText,
         };
     }
   };
@@ -359,7 +375,10 @@ export function BookmarkCard({
   const ThumbnailDisplay = () => {
     if (isProtected) {
       return (
-        <div className="w-full h-32 bg-muted/40 rounded-md flex items-center justify-center" data-testid={`thumbnail-protected-${bookmark.id}`}>
+        <div
+          className="w-full h-32 bg-muted/40 rounded-md flex items-center justify-center"
+          data-testid={`thumbnail-protected-${bookmark.id}`}
+        >
           <Lock size={24} className="text-muted-foreground" />
         </div>
       );
@@ -368,16 +387,18 @@ export function BookmarkCard({
     // Show thumbnail if available and loaded
     if (currentScreenshotUrl && !imageError && isIntersecting) {
       return (
-        <div className="relative w-full h-32 bg-muted/20 rounded-md overflow-hidden" data-testid={`thumbnail-container-${bookmark.id}`}>
-          {!imageLoaded && (
-            <Skeleton className="absolute inset-0 w-full h-full" />
-          )}
+        <div
+          className="relative w-full h-32 bg-muted/20 rounded-md overflow-hidden"
+          data-testid={`thumbnail-container-${bookmark.id}`}
+        >
+          {!imageLoaded && <Skeleton className="absolute inset-0 w-full h-full" />}
           <img
             ref={imageRef}
             src={currentScreenshotUrl}
             alt={`Screenshot of ${bookmark.name}`}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             loading="lazy"
@@ -397,7 +418,10 @@ export function BookmarkCard({
       switch (currentScreenshotStatus) {
         case 'pending':
           return (
-            <div className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2" data-testid={`thumbnail-pending-${bookmark.id}`}>
+            <div
+              className="w-full h-32 bg-muted/20 rounded-md flex flex-col items-center justify-center space-y-2"
+              data-testid={`thumbnail-pending-${bookmark.id}`}
+            >
               <RefreshCw size={20} className="text-muted-foreground animate-spin" />
               <span className="text-xs text-muted-foreground">Generating...</span>
             </div>
@@ -420,9 +444,16 @@ export function BookmarkCard({
             >
               <div className="flex items-center space-x-2">
                 <AlertCircle size={16} className="text-muted-foreground" />
-                <RefreshCw size={14} className="text-muted-foreground group-hover/thumb:rotate-180 transition-transform" />
+                <RefreshCw
+                  size={14}
+                  className="text-muted-foreground group-hover/thumb:rotate-180 transition-transform"
+                />
               </div>
-              <span className="text-xs text-muted-foreground text-center">Failed to generate<br />Click to retry</span>
+              <span className="text-xs text-muted-foreground text-center">
+                Failed to generate
+                <br />
+                Click to retry
+              </span>
             </div>
           );
         case 'idle':
@@ -444,9 +475,16 @@ export function BookmarkCard({
             >
               <div className="flex items-center space-x-2">
                 <ImageIcon size={20} className="text-muted-foreground" />
-                <Camera size={16} className="text-muted-foreground group-hover/thumb:scale-110 transition-transform" />
+                <Camera
+                  size={16}
+                  className="text-muted-foreground group-hover/thumb:scale-110 transition-transform"
+                />
               </div>
-              <span className="text-xs text-muted-foreground text-center">No preview<br />Click to generate</span>
+              <span className="text-xs text-muted-foreground text-center">
+                No preview
+                <br />
+                Click to generate
+              </span>
             </div>
           );
       }
@@ -458,9 +496,11 @@ export function BookmarkCard({
   return (
     <Card
       ref={cardRef}
-      className={`group hover:shadow-md transition-shadow ${isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
-        } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${bulkMode ? 'cursor-pointer' : ''
-        }`}
+      className={`group hover:shadow-md transition-shadow ${
+        isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
+      } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${
+        bulkMode ? 'cursor-pointer' : ''
+      }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={bulkMode ? () => onSelect?.(bookmark.id, !isSelected) : undefined}
@@ -484,19 +524,32 @@ export function BookmarkCard({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               {isProtected && (
-                <Lock size={14} className="text-muted-foreground flex-shrink-0" data-testid={`lock-icon-${bookmark.id}`} />
+                <Lock
+                  size={14}
+                  className="text-muted-foreground flex-shrink-0"
+                  data-testid={`lock-icon-${bookmark.id}`}
+                />
               )}
-              <h3 className="font-medium text-foreground line-clamp-2" data-testid={`bookmark-title-${bookmark.id}`}>
-                {isProtected ? "••• Protected Bookmark •••" : bookmark.name}
+              <h3
+                className="font-medium text-foreground line-clamp-2"
+                data-testid={`bookmark-title-${bookmark.id}`}
+              >
+                {isProtected ? '••• Protected Bookmark •••' : bookmark.name}
               </h3>
             </div>
             {isProtected ? (
-              <p className="text-sm text-muted-foreground italic line-clamp-2" data-testid={`bookmark-protected-text-${bookmark.id}`}>
+              <p
+                className="text-sm text-muted-foreground italic line-clamp-2"
+                data-testid={`bookmark-protected-text-${bookmark.id}`}
+              >
                 Protected content - click to unlock
               </p>
             ) : (
               bookmark.description && (
-                <div className="text-sm text-muted-foreground line-clamp-2" data-testid={`bookmark-description-${bookmark.id}`}>
+                <div
+                  className="text-sm text-muted-foreground line-clamp-2"
+                  data-testid={`bookmark-description-${bookmark.id}`}
+                >
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
@@ -509,13 +562,21 @@ export function BookmarkCard({
                       h6: ({ children }) => <span className="font-semibold">{children}</span>,
                       strong: ({ children }) => <span className="font-bold">{children}</span>,
                       em: ({ children }) => <span className="italic">{children}</span>,
-                      code: ({ children }) => <span className="bg-muted px-1 py-0.5 rounded text-xs font-mono">{children}</span>,
-                      a: ({ children, href }) => <span className="text-primary underline">{children}</span>,
+                      code: ({ children }) => (
+                        <span className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
+                          {children}
+                        </span>
+                      ),
+                      a: ({ children }) => (
+                        <span className="text-primary underline">{children}</span>
+                      ),
                       ul: ({ children }) => <span className="inline">{children}</span>,
                       ol: ({ children }) => <span className="inline">{children}</span>,
                       li: ({ children }) => <span className="inline">{children} • </span>,
                       pre: () => null, // Hide code blocks in card preview
-                      blockquote: ({ children }) => <span className="italic border-l-2 border-primary/30 pl-2">{children}</span>
+                      blockquote: ({ children }) => (
+                        <span className="italic border-l-2 border-primary/30 pl-2">{children}</span>
+                      ),
                     }}
                   >
                     {bookmark.description}
@@ -529,37 +590,39 @@ export function BookmarkCard({
         <div className="flex items-center space-x-2 text-xs text-muted-foreground mb-3">
           <Globe size={12} />
           <span className="truncate" data-testid={`bookmark-domain-${bookmark.id}`}>
-            {isProtected ? "••••••••" : getDomain(bookmark.url)}
+            {isProtected ? '••••••••' : getDomain(bookmark.url)}
           </span>
           <span>•</span>
           <span data-testid={`bookmark-date-${bookmark.id}`}>{timeAgo}</span>
         </div>
 
-        {!isProtected && ((bookmark.tags?.length ?? 0) > 0 || bookmark.isShared || bookmark.linkStatus) && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            <LinkStatusBadge />
-            {bookmark.tags && bookmark.tags.map((tag, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="text-xs hover:bg-secondary/80 cursor-pointer"
-                data-testid={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}-${bookmark.id}`}
-              >
-                {tag}
-              </Badge>
-            ))}
-            {bookmark.isShared && (
-              <Badge
-                variant="outline"
-                className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
-                data-testid={`shared-badge-${bookmark.id}`}
-              >
-                <Share2 size={10} className="mr-1" />
-                Shared
-              </Badge>
-            )}
-          </div>
-        )}
+        {!isProtected &&
+          ((bookmark.tags?.length ?? 0) > 0 || bookmark.isShared || bookmark.linkStatus) && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              <LinkStatusBadge />
+              {bookmark.tags &&
+                bookmark.tags.map((tag, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="text-xs hover:bg-secondary/80 cursor-pointer"
+                    data-testid={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}-${bookmark.id}`}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              {bookmark.isShared && (
+                <Badge
+                  variant="outline"
+                  className="text-xs text-blue-600 border-blue-200 bg-blue-50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-950"
+                  data-testid={`shared-badge-${bookmark.id}`}
+                >
+                  <Share2 size={10} className="mr-1" />
+                  Shared
+                </Badge>
+              )}
+            </div>
+          )}
 
         {isProtected && (
           <div className="flex flex-wrap gap-1 mb-3">
@@ -607,7 +670,7 @@ export function BookmarkCard({
             >
               <Star
                 size={16}
-                className={isProtected ? "" : (bookmark.isFavorite ? "fill-current text-accent" : "")}
+                className={isProtected ? '' : bookmark.isFavorite ? 'fill-current text-accent' : ''}
               />
             </Button>
 
@@ -628,14 +691,21 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${bookmark.isShared ? 'text-blue-500' : ''
-                }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
+                bookmark.isShared ? 'text-blue-500' : ''
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 onShare?.(bookmark);
               }}
               disabled={isProtected || bookmark.hasPasscode || isShareLoading}
-              title={bookmark.hasPasscode ? "Protected bookmarks cannot be shared" : (bookmark.isShared ? "Stop sharing" : "Share bookmark")}
+              title={
+                bookmark.hasPasscode
+                  ? 'Protected bookmarks cannot be shared'
+                  : bookmark.isShared
+                    ? 'Stop sharing'
+                    : 'Share bookmark'
+              }
               data-testid={`button-share-${bookmark.id}`}
             >
               {isShareLoading ? (
@@ -676,11 +746,20 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${generateScreenshotMutation.isPending ? 'animate-pulse' : ''
-                }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
+                generateScreenshotMutation.isPending ? 'animate-pulse' : ''
+              }`}
               onClick={handleGenerateScreenshot}
-              disabled={generateScreenshotMutation.isPending || isProtected || currentScreenshotStatus === 'pending'}
-              title={currentScreenshotStatus === 'pending' ? 'Generating screenshot...' : 'Generate screenshot'}
+              disabled={
+                generateScreenshotMutation.isPending ||
+                isProtected ||
+                currentScreenshotStatus === 'pending'
+              }
+              title={
+                currentScreenshotStatus === 'pending'
+                  ? 'Generating screenshot...'
+                  : 'Generate screenshot'
+              }
               data-testid={`button-screenshot-${bookmark.id}`}
             >
               {generateScreenshotMutation.isPending || currentScreenshotStatus === 'pending' ? (
@@ -693,8 +772,9 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${checkLinkMutation.isPending ? 'animate-pulse' : ''
-                }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
+                checkLinkMutation.isPending ? 'animate-pulse' : ''
+              }`}
               onClick={handleCheckLink}
               disabled={checkLinkMutation.isPending || isProtected}
               title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}

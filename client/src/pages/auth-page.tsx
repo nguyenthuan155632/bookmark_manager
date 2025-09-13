@@ -1,21 +1,21 @@
 // Authentication page with custom 4-digit password UI
-import { useState, useEffect, useRef } from "react";
-import { useAuth, getStoredUsername } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { useLocation } from "wouter";
-import { Bookmark, Shield, Users, Search } from "lucide-react";
+import { useState, useEffect, useRef } from 'react';
+import { useAuth, getStoredUsername } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { useLocation } from 'wouter';
+import { Bookmark, Shield, Users, Search } from 'lucide-react';
 
 // iPhone-style passcode input component
-function PasscodeInput({ 
-  value, 
-  onChange, 
-  placeholder = "Enter 4-digit password",
-  disabled = false
-}: { 
-  value: string; 
+function PasscodeInput({
+  value,
+  onChange,
+  placeholder = 'Enter 4-digit password',
+  disabled = false,
+}: {
+  value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
@@ -23,13 +23,13 @@ function PasscodeInput({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value.replace(/\D/g, "").slice(0, 4);
+    const newValue = e.target.value.replace(/\D/g, '').slice(0, 4);
     onChange(newValue);
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pastedText = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
+    const pastedText = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
     onChange(pastedText);
   };
 
@@ -57,13 +57,13 @@ function PasscodeInput({
           autoComplete="one-time-code"
           aria-label="4-digit passcode"
         />
-        
+
         {/* Visual circles */}
         <div className="flex items-center justify-center gap-1.5">
           {[0, 1, 2, 3].map((index) => {
             const isFilled = index < value.length;
             const isActive = index === value.length && value.length < 4;
-            
+
             return (
               <button
                 key={index}
@@ -73,17 +73,15 @@ function PasscodeInput({
                 className={`
                   size-5 rounded-full border bg-background flex items-center justify-center 
                   transition-all duration-150 ring-offset-background
-                  ${isActive ? "ring-1 ring-primary border-primary" : "border-input"}
-                  ${disabled ? "opacity-50 cursor-not-allowed" : "hover:border-ring cursor-pointer"}
+                  ${isActive ? 'ring-1 ring-primary border-primary' : 'border-input'}
+                  ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-ring cursor-pointer'}
                 `}
                 data-testid={`dot-password-digit-${index}`}
                 data-filled={isFilled}
                 aria-hidden="true"
               >
                 {isFilled && (
-                  <span 
-                    className="size-1.5 rounded-full bg-foreground transition-transform duration-150 animate-in zoom-in-50"
-                  />
+                  <span className="size-1.5 rounded-full bg-foreground transition-transform duration-150 animate-in zoom-in-50" />
                 )}
               </button>
             );
@@ -98,8 +96,8 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
   const [isRegisterMode, setIsRegisterMode] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showUsernameInput, setShowUsernameInput] = useState(true);
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,13 +113,13 @@ export default function AuthPage() {
   // Redirect to home if already authenticated
   useEffect(() => {
     if (user) {
-      setLocation("/");
+      setLocation('/');
     }
   }, [user, setLocation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password.length !== 4) {
       return; // Don't submit if password isn't 4 digits
     }
@@ -136,8 +134,8 @@ export default function AuthPage() {
   const handleModeSwitch = () => {
     const nextMode = !isRegisterMode;
     setIsRegisterMode(nextMode);
-    setPassword(""); // Clear password when switching modes
-    
+    setPassword(''); // Clear password when switching modes
+
     // Show username input for registration or if no stored username for login
     const storedUsername = getStoredUsername();
     setShowUsernameInput(nextMode ? true : !storedUsername);
@@ -145,7 +143,7 @@ export default function AuthPage() {
 
   const handleUsernameChange = () => {
     setShowUsernameInput(true);
-    setUsername("");
+    setUsername('');
   };
 
   // Focus username input when it becomes visible
@@ -166,13 +164,12 @@ export default function AuthPage() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
-              {isRegisterMode ? "Create Account" : "Welcome Back"}
+              {isRegisterMode ? 'Create Account' : 'Welcome Back'}
             </CardTitle>
             <CardDescription>
-              {isRegisterMode 
-                ? "Create your account to start organizing your bookmarks"
-                : "Sign in to access your bookmark collection"
-              }
+              {isRegisterMode
+                ? 'Create your account to start organizing your bookmarks'
+                : 'Sign in to access your bookmark collection'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -198,8 +195,13 @@ export default function AuthPage() {
               {!showUsernameInput && (
                 <div className="space-y-2">
                   <Label>Signing in as</Label>
-                  <div className="flex items-center justify-between px-3 py-2 bg-muted rounded-md select-none" tabIndex={-1}>
-                    <span className="font-medium" data-testid="text-current-username">{username}</span>
+                  <div
+                    className="flex items-center justify-between px-3 py-2 bg-muted rounded-md select-none"
+                    tabIndex={-1}
+                  >
+                    <span className="font-medium" data-testid="text-current-username">
+                      {username}
+                    </span>
                     <Button
                       type="button"
                       variant="ghost"
@@ -218,33 +220,36 @@ export default function AuthPage() {
               <PasscodeInput
                 value={password}
                 onChange={setPassword}
-                placeholder={isRegisterMode ? "Create 4-digit password" : "Enter your 4-digit password"}
+                placeholder={
+                  isRegisterMode ? 'Create 4-digit password' : 'Enter your 4-digit password'
+                }
                 disabled={loginMutation.isPending || registerMutation.isPending}
               />
 
               <Button
                 type="submit"
                 className="w-full"
-                disabled={password.length !== 4 || !username || loginMutation.isPending || registerMutation.isPending}
-                data-testid={isRegisterMode ? "button-register" : "button-login"}
-              >
-                {(loginMutation.isPending || registerMutation.isPending) 
-                  ? "Please wait..." 
-                  : (isRegisterMode ? "Create Account" : "Sign In")
+                disabled={
+                  password.length !== 4 ||
+                  !username ||
+                  loginMutation.isPending ||
+                  registerMutation.isPending
                 }
+                data-testid={isRegisterMode ? 'button-register' : 'button-login'}
+              >
+                {loginMutation.isPending || registerMutation.isPending
+                  ? 'Please wait...'
+                  : isRegisterMode
+                    ? 'Create Account'
+                    : 'Sign In'}
               </Button>
             </form>
 
             <div className="text-center">
-              <Button
-                variant="link"
-                onClick={handleModeSwitch}
-                data-testid="button-switch-mode"
-              >
-                {isRegisterMode 
-                  ? "Already have an account? Sign in" 
-                  : "Don't have an account? Sign up"
-                }
+              <Button variant="link" onClick={handleModeSwitch} data-testid="button-switch-mode">
+                {isRegisterMode
+                  ? 'Already have an account? Sign in'
+                  : "Don't have an account? Sign up"}
               </Button>
             </div>
           </CardContent>
@@ -260,11 +265,9 @@ export default function AuthPage() {
             </div>
             <h1 className="text-3xl font-bold">Memorize</h1>
           </div>
-          
-          <h2 className="text-4xl font-bold mb-6">
-            Organize Your Digital Life
-          </h2>
-          
+
+          <h2 className="text-4xl font-bold mb-6">Organize Your Digital Life</h2>
+
           <p className="text-xl text-primary-foreground/80 mb-8">
             Keep all your important bookmarks organized, searchable, and secure in one place.
           </p>

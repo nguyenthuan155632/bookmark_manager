@@ -1,0 +1,10 @@
+dist
+node_modules
+*.png
+*.jpg
+*.svg
+*.gif
+*.webp
+*.mp4
+*.zip
+*.log

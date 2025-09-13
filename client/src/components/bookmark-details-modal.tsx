@@ -1,12 +1,12 @@
-import { ExternalLink, Calendar, Tag, Folder, Lock } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import type { Bookmark, Category } from "@shared/schema";
-import { formatDistanceToNow } from "date-fns";
+import { ExternalLink, Calendar, Tag, Folder, Lock } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import type { Bookmark, Category } from '@shared/schema';
+import { formatDistanceToNow } from 'date-fns';
 
 interface BookmarkDetailsModalProps {
   isOpen: boolean;
@@ -37,9 +37,15 @@ export function BookmarkDetailsModal({ isOpen, onClose, bookmark }: BookmarkDeta
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="modal-bookmark-details">
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        data-testid="modal-bookmark-details"
+      >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl" data-testid="bookmark-details-title">
+          <DialogTitle
+            className="flex items-center gap-2 text-xl"
+            data-testid="bookmark-details-title"
+          >
             {bookmark.hasPasscode && (
               <Lock size={18} className="text-muted-foreground flex-shrink-0" />
             )}
@@ -84,13 +90,11 @@ export function BookmarkDetailsModal({ isOpen, onClose, bookmark }: BookmarkDeta
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="font-medium">Description</span>
                 </div>
-                <div 
+                <div
                   className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:text-sm prose-a:text-primary prose-strong:text-foreground prose-code:text-sm prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:text-sm prose-blockquote:border-l-primary prose-li:text-sm"
                   data-testid="bookmark-description-rendered"
                 >
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {bookmark.description}
-                  </ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{bookmark.description}</ReactMarkdown>
                 </div>
               </div>
             </>
@@ -130,7 +134,11 @@ export function BookmarkDetailsModal({ isOpen, onClose, bookmark }: BookmarkDeta
                   <Folder size={14} />
                   <span className="font-medium">Folder</span>
                 </div>
-                <Badge variant="outline" className="text-sm" data-testid="bookmark-category-details">
+                <Badge
+                  variant="outline"
+                  className="text-sm"
+                  data-testid="bookmark-category-details"
+                >
                   {bookmark.category.name}
                 </Badge>
               </div>
@@ -154,7 +162,7 @@ export function BookmarkDetailsModal({ isOpen, onClose, bookmark }: BookmarkDeta
               <div>
                 <span className="text-muted-foreground">Favorite:</span>
                 <p className="font-medium" data-testid="bookmark-favorite-status">
-                  {bookmark.isFavorite ? "Yes" : "No"}
+                  {bookmark.isFavorite ? 'Yes' : 'No'}
                 </p>
               </div>
               {bookmark.hasPasscode && (
