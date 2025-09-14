@@ -22,7 +22,7 @@ async function hashPassword(password: string) {
   return `${buf.toString('hex')}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+export async function comparePasswords(supplied: string, stored: string) {
   const [hashed, salt] = stored.split('.');
   const hashedBuf = Buffer.from(hashed, 'hex');
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -112,6 +112,55 @@ export function setupAuth(app: Express) {
   app.get('/api/user', (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  // Update username
+  app.patch('/api/user/username', async (req, res, next) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: 'Authentication required' });
+    try {
+      const userId = req.user!.id;
+      const { username } = req.body as { username?: string };
+      if (!username || typeof username !== 'string' || username.trim().length < 3) {
+        return res.status(400).json({ message: 'Username must be at least 3 characters' });
+      }
+      const existing = await storage.getUserByUsername(username.trim());
+      if (existing && existing.id !== userId) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+      const updated = await storage.updateUserUsername(userId, username.trim());
+      // Refresh session user to reflect changes immediately
+      req.login(updated, (err) => {
+        if (err) return next(err);
+        return res.json({ id: updated.id, username: updated.username });
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update username' });
+    }
+  });
+
+  // Update password
+  app.patch('/api/user/password', async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: 'Authentication required' });
+    try {
+      const userId = req.user!.id;
+      const { currentPassword, newPassword } = req.body as {
+        currentPassword?: string;
+        newPassword?: string;
+      };
+      if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 4) {
+        return res.status(400).json({ message: 'New password must be at least 4 characters' });
+      }
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!currentPassword || !(await comparePasswords(currentPassword, user.password))) {
+        return res.status(401).json({ message: 'Current password is incorrect' });
+      }
+      const hashed = await hashPassword(newPassword);
+      await storage.updateUserPassword(userId, hashed);
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update password' });
+    }
   });
 }
 

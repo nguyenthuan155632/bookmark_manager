@@ -38,6 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear all cached data when switching users
       queryClient.clear();
       queryClient.setQueryData(['/api/user'], user);
+      // Refresh preferences to apply user's saved theme
+      queryClient.invalidateQueries({ queryKey: ['/api/preferences'] });
       // Store username in localStorage for future logins
       localStorage.setItem('bookmark_manager_username', user.username);
       toast({
@@ -63,6 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear all cached data for new user
       queryClient.clear();
       queryClient.setQueryData(['/api/user'], user);
+      // Ensure preferences are fresh for new session
+      queryClient.invalidateQueries({ queryKey: ['/api/preferences'] });
       // Store username in localStorage for future logins
       localStorage.setItem('bookmark_manager_username', user.username);
       toast({

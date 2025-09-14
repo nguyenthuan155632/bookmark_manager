@@ -1,4 +1,4 @@
-// Authentication page with custom 4-digit password UI
+// Authentication page with username + password UI (multi-character)
 import { useState, useEffect, useRef } from 'react';
 import { useAuth, getStoredUsername } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -6,91 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useLocation } from 'wouter';
-import { Bookmark, Shield, Users, Search } from 'lucide-react';
+import { Bookmark, Shield, Users, Search, Eye, EyeOff, Lock } from 'lucide-react';
 
-// iPhone-style passcode input component
-function PasscodeInput({
-  value,
-  onChange,
-  placeholder = 'Enter 4-digit password',
-  disabled = false,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value.replace(/\D/g, '').slice(0, 4);
-    onChange(newValue);
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedText = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-    onChange(pastedText);
-  };
-
-  const handleCircleClick = () => {
-    if (!disabled && inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <Label className="text-sm font-medium text-center block">{placeholder}</Label>
-      <div className="relative">
-        {/* Hidden input for capture */}
-        <input
-          ref={inputRef}
-          type="tel"
-          inputMode="numeric"
-          maxLength={4}
-          value={value}
-          onChange={handleInputChange}
-          onPaste={handlePaste}
-          disabled={disabled}
-          className="sr-only"
-          autoComplete="one-time-code"
-          aria-label="4-digit passcode"
-        />
-
-        {/* Visual circles */}
-        <div className="flex items-center justify-center gap-1.5">
-          {[0, 1, 2, 3].map((index) => {
-            const isFilled = index < value.length;
-            const isActive = index === value.length && value.length < 4;
-
-            return (
-              <button
-                key={index}
-                type="button"
-                onClick={handleCircleClick}
-                disabled={disabled}
-                className={`
-                  size-5 rounded-full border bg-background flex items-center justify-center 
-                  transition-all duration-150 ring-offset-background
-                  ${isActive ? 'ring-1 ring-primary border-primary' : 'border-input'}
-                  ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-ring cursor-pointer'}
-                `}
-                data-testid={`dot-password-digit-${index}`}
-                data-filled={isFilled}
-                aria-hidden="true"
-              >
-                {isFilled && (
-                  <span className="size-1.5 rounded-full bg-foreground transition-transform duration-150 animate-in zoom-in-50" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
+// Removed the old 4-digit passcode UI in favor of standard password field
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -98,8 +16,11 @@ export default function AuthPage() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
   const [showUsernameInput, setShowUsernameInput] = useState(true);
   const usernameInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   // Check for stored username on component mount
   useEffect(() => {
@@ -120,16 +41,29 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length !== 4) {
-      return; // Don't submit if password isn't 4 digits
-    }
-
     if (isRegisterMode) {
       registerMutation.mutate({ username, password });
     } else {
       loginMutation.mutate({ username, password });
     }
   };
+
+  // Password strength helper
+  const getStrength = (pwd: string) => {
+    let score = 0;
+    if (pwd.length >= 4) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    // Normalize to 0-3 for UI
+    const normalized = Math.min(3, Math.max(0, Math.floor((score / 5) * 3)));
+    const label = ['Weak', 'Medium', 'Strong'][normalized];
+    const percent = [33, 66, 100][normalized];
+    const color = ['bg-red-500', 'bg-amber-500', 'bg-emerald-500'][normalized];
+    return { label, percent, color } as const;
+  };
+  const strength = getStrength(password);
 
   const handleModeSwitch = () => {
     const nextMode = !isRegisterMode;
@@ -146,10 +80,12 @@ export default function AuthPage() {
     setUsername('');
   };
 
-  // Focus username input when it becomes visible
+  // Manage default focus: username when visible, otherwise password
   useEffect(() => {
-    if (showUsernameInput && usernameInputRef.current) {
-      usernameInputRef.current.focus();
+    if (showUsernameInput) {
+      usernameInputRef.current?.focus();
+    } else {
+      passwordInputRef.current?.focus();
     }
   }, [showUsernameInput]);
 
@@ -216,25 +152,62 @@ export default function AuthPage() {
                 </div>
               )}
 
-              {/* iPhone-style Passcode Input */}
-              <PasscodeInput
-                value={password}
-                onChange={setPassword}
-                placeholder={
-                  isRegisterMode ? 'Create 4-digit password' : 'Enter your 4-digit password'
-                }
-                disabled={loginMutation.isPending || registerMutation.isPending}
-              />
+              {/* Password Input */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    ref={passwordInputRef}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyUp={(e) => setCapsLockOn((e as any).getModifierState && (e as any).getModifierState('CapsLock'))}
+                    placeholder={isRegisterMode ? 'Create a password' : 'Enter your password'}
+                    required
+                    minLength={4}
+                    autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
+                    data-testid="input-password"
+                    className="pl-10 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    disabled={loginMutation.isPending || registerMutation.isPending}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {password.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full ${strength.color} transition-all`}
+                        style={{ width: `${strength.percent}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Strength: {strength.label}</span>
+                      {capsLockOn && (
+                        <span className="text-amber-600 dark:text-amber-400">Caps Lock is on</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {password.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Use at least 4 characters. You can use letters, numbers, and symbols.
+                  </p>
+                )}
+              </div>
 
               <Button
                 type="submit"
                 className="w-full"
-                disabled={
-                  password.length !== 4 ||
-                  !username ||
-                  loginMutation.isPending ||
-                  registerMutation.isPending
-                }
+                disabled={!username || password.length < 4 || loginMutation.isPending || registerMutation.isPending}
                 data-testid={isRegisterMode ? 'button-register' : 'button-login'}
               >
                 {loginMutation.isPending || registerMutation.isPending

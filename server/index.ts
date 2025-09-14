@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from 'express';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic, log } from './vite';
-import { linkCheckerService } from './link-checker-service';
 
 const app = express();
 app.use(express.json());
@@ -72,15 +71,13 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
 
-      // Start the background link checking service
-      linkCheckerService.start();
+      // Global background link checker disabled; per-user schedulers handled in routes middleware
     },
   );
 
   // Graceful shutdown
   process.on('SIGTERM', () => {
     log('SIGTERM received, shutting down gracefully');
-    linkCheckerService.stop();
     server.close(() => {
       log('Server closed');
       process.exit(0);
@@ -89,7 +86,6 @@ app.use((req, res, next) => {
 
   process.on('SIGINT', () => {
     log('SIGINT received, shutting down gracefully');
-    linkCheckerService.stop();
     server.close(() => {
       log('Server closed');
       process.exit(0);

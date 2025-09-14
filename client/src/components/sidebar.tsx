@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Folder, Home, Star, Plus, BookmarkIcon, Trash2, Lock } from 'lucide-react';
+import { Folder, Home, Star, Plus, BookmarkIcon, Trash2, Lock, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Category, Bookmark } from '@shared/schema';
@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { apiRequest } from '@/lib/queryClient';
+import { categorySlug } from '@/lib/slug';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -56,7 +57,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
   const hiddenCount = allBookmarks.filter((b) => b?.hasPasscode).length;
 
   const deleteMutation = useMutation({
-    mutationFn: async (params: { id: number; strategy?: 'unlink' | 'delete' }) => {
+    mutationFn: async (params: { id: number; strategy?: 'unlink' | 'delete'; name?: string }) => {
       const url = params.strategy
         ? `/api/categories/${params.id}?strategy=${params.strategy}`
         : `/api/categories/${params.id}`;
@@ -68,9 +69,12 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
       // If currently viewing this category, navigate home
-      if (location.startsWith(`/category/${variables.id}`)) {
+      const maybeSlug = variables.name ? categorySlug({ id: variables.id, name: variables.name }) : undefined;
+      if (
+        (maybeSlug && location === `/category/${maybeSlug}`) ||
+        location.startsWith(`/category/${variables.id}`)
+      )
         setLocation('/');
-      }
     },
     onError: async (error: any) => {
       const message = typeof error?.message === 'string' ? error.message : 'Delete failed';
@@ -81,7 +85,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
   const handleDeleteCategory = (category: Category & { bookmarkCount: number }) => {
     if (category.bookmarkCount === 0) {
       // Immediate delete, no confirmation
-      deleteMutation.mutate({ id: category.id });
+      deleteMutation.mutate({ id: category.id, name: category.name });
       return;
     }
     setPendingCategory(category);
@@ -92,7 +96,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     if (!pendingCategory) return;
     try {
       setIsProcessing(true);
-      await deleteMutation.mutateAsync({ id: pendingCategory.id, strategy });
+      await deleteMutation.mutateAsync({ id: pendingCategory.id, strategy, name: pendingCategory.name });
       setConfirmOpen(false);
       setPendingCategory(null);
     } catch (err) {
@@ -123,6 +127,12 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       label: 'Favorites',
       count: stats.favorites,
       active: isActive('/favorites'),
+    },
+    {
+      path: '/settings',
+      icon: Settings,
+      label: 'Settings',
+      active: isActive('/settings'),
     },
   ];
 
@@ -242,7 +252,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
 
               {categories.map((category) => (
                 <div key={category.id} className="group flex items-center">
-                  <Link href={`/category/${category.id}`} className="flex-1">
+                  <Link href={`/category/${categorySlug(category)}`} className="flex-1">
                     <Button
                       variant="ghost"
                       className="w-full justify-start space-x-3 text-muted-foreground hover:bg-muted hover:text-foreground pr-0 hover:pr-2"

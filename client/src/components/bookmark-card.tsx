@@ -487,7 +487,7 @@ export function BookmarkCard({
           // Show a default large image with option to generate on click
           return (
             <div
-              className="relative w-full h-32 bg-muted/20 rounded-md overflow-hidden group/thumb cursor-pointer"
+              className="relative w-full h-32 bg-muted/20 rounded-md overflow-hidden group/thumb cursor-pointer justify-items-center"
               onClick={handleGenerateScreenshot}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -503,7 +503,7 @@ export function BookmarkCard({
               <img
                 src={DEFAULT_THUMBNAIL_URL}
                 alt={`Default preview for ${bookmark.name}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover max-w-[60%]"
                 loading="lazy"
               />
             </div>

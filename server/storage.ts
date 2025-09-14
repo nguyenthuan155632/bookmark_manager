@@ -30,6 +30,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserUsername(userId: string, username: string): Promise<User>;
+  updateUserPassword(userId: string, hashedPassword: string): Promise<User>;
 
   // Bookmark methods
   getBookmarks(
@@ -177,6 +179,7 @@ export class DatabaseStorage implements IStorage {
     this.sessionStore = new PgSession({
       pool: pool,
       tableName: 'session',
+      schemaName: process.env.DB_SCHEMA || 'public',
       createTableIfMissing: true,
     });
   }
@@ -196,17 +199,37 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUserUsername(userId: string, username: string): Promise<User> {
+    const [updated] = await db
+      .update(users)
+      .set({ username })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
+  async updateUserPassword(userId: string, hashedPassword: string): Promise<User> {
+    const [updated] = await db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
+  }
+
   // Bookmark methods
   async getBookmarks(
     userId: string,
     params?: {
       search?: string;
-      categoryId?: number;
+      categoryId?: number | null;
       isFavorite?: boolean;
       tags?: string[];
       linkStatus?: string;
       sortBy?: 'name' | 'createdAt' | 'isFavorite';
       sortOrder?: 'asc' | 'desc';
+      limit?: number;
+      offset?: number;
     },
   ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]> {
     // Build conditions - always filter by userId first
@@ -307,24 +330,27 @@ export class DatabaseStorage implements IStorage {
     if (sortBy === 'name') {
       finalQuery = baseQuery.orderBy(
         sortOrder === 'asc' ? asc(bookmarks.name) : desc(bookmarks.name),
+        // Tie-breaker for deterministic pagination
+        desc(bookmarks.id),
       );
     } else if (sortBy === 'isFavorite') {
       finalQuery = baseQuery.orderBy(
         sortOrder === 'asc' ? asc(bookmarks.isFavorite) : desc(bookmarks.isFavorite),
+        desc(bookmarks.id),
       );
     } else {
       finalQuery = baseQuery.orderBy(
         sortOrder === 'asc' ? asc(bookmarks.createdAt) : desc(bookmarks.createdAt),
+        // Tie-breaker
+        desc(bookmarks.id),
       );
     }
 
     // Apply pagination if provided
     if (typeof params?.limit === 'number' && params.limit > 0) {
-      // @ts-expect-error drizzle limit chainable
       finalQuery = finalQuery.limit(params.limit);
     }
     if (typeof params?.offset === 'number' && params.offset > 0) {
-      // @ts-expect-error drizzle offset chainable
       finalQuery = finalQuery.offset(params.offset);
     }
 

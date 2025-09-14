@@ -63,15 +63,33 @@ export class LinkCheckerService {
   private isRunning = false;
   private isCheckInProgress = false;
   private lastRunAt: Date | null = null;
-  private readonly CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
-  private readonly BATCH_SIZE = 25; // Check 25 bookmarks per batch
+  private CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
+  private BATCH_SIZE = 25; // Check 25 bookmarks per batch
   private readonly MAX_CONCURRENT_CHECKS = 5; // Max concurrent link checks
   private readonly MAX_CONTENT_LENGTH = 1024 * 1024 * 10; // 10MB limit
   private readonly MAX_REDIRECTS = 5; // Maximum redirects to follow
   private readonly REQUEST_TIMEOUT = 10000; // 10 second timeout
 
-  constructor() {
-    console.log('Link Checker Service initialized');
+  constructor() { }
+
+  setConfig(config: { intervalMinutes?: number; batchSize?: number }) {
+    if (typeof config.intervalMinutes === 'number' && config.intervalMinutes > 0) {
+      this.CHECK_INTERVAL = config.intervalMinutes * 60 * 1000;
+      if (this.isRunning) {
+        if (this.intervalId) clearInterval(this.intervalId);
+        this.intervalId = setInterval(() => this.performPeriodicCheck(), this.CHECK_INTERVAL);
+      }
+    }
+    if (typeof config.batchSize === 'number' && config.batchSize > 0) {
+      this.BATCH_SIZE = config.batchSize;
+    }
+  }
+
+  getConfig() {
+    return {
+      intervalMinutes: Math.round(this.CHECK_INTERVAL / 1000 / 60),
+      batchSize: this.BATCH_SIZE,
+    };
   }
 
   /**
@@ -79,11 +97,8 @@ export class LinkCheckerService {
    */
   start(): void {
     if (this.isRunning) {
-      console.log('Link Checker Service is already running');
       return;
     }
-
-    console.log('Starting Link Checker Service...');
     this.isRunning = true;
 
     // Run an initial check after 1 minute (to allow server to fully start)
@@ -96,9 +111,7 @@ export class LinkCheckerService {
       this.performPeriodicCheck();
     }, this.CHECK_INTERVAL);
 
-    console.log(
-      `Link Checker Service started with ${this.CHECK_INTERVAL / 1000 / 60} minute intervals`,
-    );
+    // started
   }
 
   /**
@@ -106,11 +119,8 @@ export class LinkCheckerService {
    */
   stop(): void {
     if (!this.isRunning) {
-      console.log('Link Checker Service is not running');
       return;
     }
-
-    console.log('Stopping Link Checker Service...');
     this.isRunning = false;
 
     if (this.intervalId) {
@@ -118,7 +128,7 @@ export class LinkCheckerService {
       this.intervalId = null;
     }
 
-    console.log('Link Checker Service stopped');
+    // stopped
   }
 
   /**
@@ -149,7 +159,7 @@ export class LinkCheckerService {
    */
   async triggerManualCheck(): Promise<{ message: string; results?: any }> {
     try {
-      console.log('Manual link check triggered');
+      // manual check
       const results = await this.performPeriodicCheck();
       return {
         message: 'Manual link check completed',
@@ -169,17 +179,17 @@ export class LinkCheckerService {
    */
   private async performPeriodicCheck(): Promise<any> {
     if (!this.isRunning) {
-      console.log('Link checker service is stopped, skipping check');
+      // service stopped; skip
       return { skipped: true, reason: 'Service not running' };
     }
 
     // Prevent overlapping runs
     if (this.isCheckInProgress) {
-      console.log('Link check already in progress, skipping this cycle');
+      // already in progress; skip
       return { skipped: true, reason: 'Check already in progress' };
     }
 
-    console.log('Starting periodic link check...');
+    // starting cycle
     this.isCheckInProgress = true;
     this.lastRunAt = new Date();
     const startTime = Date.now();
@@ -189,11 +199,11 @@ export class LinkCheckerService {
       const bookmarksToCheck = await storage.getBookmarksForLinkCheck(this.BATCH_SIZE);
 
       if (bookmarksToCheck.length === 0) {
-        console.log('No bookmarks need checking at this time');
+        // nothing to check
         return { checked: 0, message: 'No bookmarks need checking' };
       }
 
-      console.log(`Found ${bookmarksToCheck.length} bookmarks to check`);
+      // found bookmarks to check
 
       const results = {
         total: bookmarksToCheck.length,
@@ -236,9 +246,7 @@ export class LinkCheckerService {
                 break;
             }
 
-            console.log(
-              `✓ Checked bookmark ${bookmark.id}: ${result.linkStatus} (${result.httpStatus || 'N/A'})`,
-            );
+            // checked bookmark
           } catch (error) {
             console.error(`✗ Failed to check bookmark ${bookmark.id}:`, error);
             results.failed++;
@@ -266,12 +274,6 @@ export class LinkCheckerService {
           await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
         }
       }
-
-      const duration = Date.now() - startTime;
-      console.log(`Periodic link check completed in ${duration}ms`);
-      console.log(
-        `Results: ${results.checked} checked, ${results.ok} ok, ${results.broken} broken, ${results.timeout} timeout, ${results.failed} failed`,
-      );
 
       return results;
     } catch (error) {
@@ -390,7 +392,7 @@ export class LinkCheckerService {
   /**
    * Perform a single link check with comprehensive SSRF protection
    */
-  private async performSingleLinkCheck(
+  async performSingleLinkCheck(
     url: string,
   ): Promise<{ linkStatus: string; httpStatus?: number }> {
     try {

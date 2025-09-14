@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, text, varchar, boolean, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, varchar, boolean, timestamp, integer, json, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -19,9 +19,29 @@ export const userPreferences = pgTable('user_preferences', {
   userId: varchar('user_id').notNull(),
   theme: varchar('theme', { length: 10 }).notNull().default('light'),
   viewMode: varchar('view_mode', { length: 10 }).notNull().default('grid'),
+  defaultCategoryId: integer('default_category_id'),
+  sessionTimeoutMinutes: integer('session_timeout_minutes').default(30),
+  linkCheckEnabled: boolean('link_check_enabled').default(false),
+  linkCheckIntervalMinutes: integer('link_check_interval_minutes').default(30),
+  linkCheckBatchSize: integer('link_check_batch_size').default(25),
+  autoTagSuggestionsEnabled: boolean('auto_tag_suggestions_enabled').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Session table for express-session with connect-pg-simple
+// Including this in the schema prevents it from being dropped by migrations
+export const sessionTable = pgTable(
+  'session',
+  {
+    sid: varchar('sid').primaryKey(),
+    sess: json('sess').notNull(),
+    expire: timestamp('expire').notNull(),
+  },
+  (t) => ({
+    expireIdx: index('IDX_session_expire').on(t.expire),
+  }),
+);
 
 export const categories = pgTable('categories', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),

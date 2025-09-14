@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useLocation, useRoute } from 'wouter';
+import { slugify, categorySlug } from '@/lib/slug';
 import { ThemeProvider } from '@/components/theme-provider';
 import { useTheme } from '@/lib/theme';
 import { useAuth } from '@/hooks/use-auth';
@@ -33,6 +34,16 @@ import { BookmarkDetailsModal } from '@/components/bookmark-details-modal';
 import { BulkActionToolbar } from '@/components/bulk-action-toolbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
@@ -78,6 +89,7 @@ function BookmarksContent() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [bulkPasscodes, setBulkPasscodes] = useState<Record<string, string>>({});
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
+  const [isConfirmBulkCheckOpen, setIsConfirmBulkCheckOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { logoutMutation } = useAuth();
   const queryClient = useQueryClient();
@@ -103,7 +115,8 @@ function BookmarksContent() {
   });
 
   const [location] = useLocation();
-  const [match, params] = useRoute('/category/:id');
+  const [match, params] = useRoute('/category/:slug');
+  const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['/api/categories'] });
 
   // Initialize view mode from database preferences
   useEffect(() => {
@@ -112,10 +125,12 @@ function BookmarksContent() {
     }
   }, [preferences]);
 
-  // Extract category ID from URL and handle special routes
+  // Extract category slug from URL and handle special routes
   useEffect(() => {
-    if (match && params?.id) {
-      setSelectedCategory(params.id);
+    if (match && (params as any)?.slug) {
+      // Support old-style param name 'id' if present
+      const slugParam = ((params as any).slug || (params as any).id) as string;
+      setSelectedCategory(slugParam);
     } else {
       setSelectedCategory('');
     }
@@ -144,6 +159,17 @@ function BookmarksContent() {
     queryKey: ['/api/stats'],
   });
 
+  // Resolve selected category numeric ID from slug if applicable
+  const resolvedCategoryId = useMemo(() => {
+    if (!selectedCategory) return undefined;
+    if (selectedCategory === 'hidden') return undefined; // special filter
+    if (selectedCategory === 'uncategorized') return null; // special filter
+    const maybeId = parseInt(selectedCategory);
+    if (!Number.isNaN(maybeId)) return maybeId; // backward compatibility for id-based routes
+    const matchCat = categories.find((c) => categorySlug(c) === selectedCategory || slugify(c.name) === selectedCategory);
+    return matchCat?.id;
+  }, [selectedCategory, categories]);
+
   // Fetch bookmarks with lazy loading (infinite scroll)
   const PAGE_SIZE = 40;
   const {
@@ -161,10 +187,7 @@ function BookmarksContent() {
       {
         search: searchQuery || undefined,
         // Only pass numeric categoryId; special folders handled client-side
-        categoryId:
-          selectedCategory && !isNaN(parseInt(selectedCategory))
-            ? String(parseInt(selectedCategory))
-            : undefined,
+        categoryId: typeof resolvedCategoryId === 'number' ? String(resolvedCategoryId) : undefined,
         tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
         linkStatus: selectedLinkStatus || undefined,
         isFavorite: location === '/favorites' ? 'true' : undefined,
@@ -173,6 +196,7 @@ function BookmarksContent() {
         limit: PAGE_SIZE,
       },
     ],
+    initialPageParam: 0,
     queryFn: async ({ queryKey, pageParam = 0 }) => {
       const [, params] = queryKey as [string, Record<string, any>];
       const searchParams = new URLSearchParams();
@@ -193,24 +217,38 @@ function BookmarksContent() {
 
       return response.json();
     },
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      const totalFetched = allPages.reduce((sum, p) => sum + p.length, 0);
+      return totalFetched;
+    },
     refetchOnWindowFocus: false,
   });
 
   // Merge pages
-  const bookmarks = useMemo(
-    () => (bookmarksPages?.pages ? ([] as (Bookmark & { category?: Category; hasPasscode?: boolean })[]).concat(...bookmarksPages.pages) : []),
-    [bookmarksPages],
-  );
+  const bookmarks = useMemo(() => {
+    const flat = bookmarksPages?.pages
+      ? ([] as (Bookmark & { category?: Category; hasPasscode?: boolean })[]).concat(
+        ...bookmarksPages.pages,
+      )
+      : [];
+    // Dedupe by id to avoid duplicate keys when re-fetches shift pages
+    const seen = new Set<number>();
+    const deduped: (Bookmark & { category?: Category; hasPasscode?: boolean })[] = [];
+    for (const b of flat) {
+      if (!seen.has(b.id)) {
+        seen.add(b.id);
+        deduped.push(b);
+      }
+    }
+    return deduped;
+  }, [bookmarksPages]);
 
   const filteredBookmarks = useMemo(() => {
     const isUncategorized = selectedCategory === 'uncategorized';
     const isHidden = selectedCategory === 'hidden';
     const isRootAll = location === '/';
-    const numericCategoryId = !isNaN(parseInt(selectedCategory))
-      ? parseInt(selectedCategory)
-      : null;
+    const numericCategoryId = typeof resolvedCategoryId === 'number' ? resolvedCategoryId : null;
 
     return bookmarks.filter((bookmark) => {
       // Tags filter
@@ -244,7 +282,7 @@ function BookmarksContent() {
 
       return true;
     });
-  }, [bookmarks, selectedTags, selectedCategory, location]);
+  }, [bookmarks, selectedTags, selectedCategory, resolvedCategoryId, location]);
 
   // Infinite scroll sentinel
   const [sentinelRef, setSentinelRef] = useState<HTMLDivElement | null>(null);
@@ -713,13 +751,17 @@ function BookmarksContent() {
   };
 
   const handleBulkCheckLinks = () => {
-    if (selectedIds.length > 0) {
-      // Check only selected bookmarks
+    setIsConfirmBulkCheckOpen(true);
+  };
+
+  const confirmBulkCheckLinks = () => {
+    const isSelected = selectedIds.length > 0;
+    if (isSelected) {
       bulkCheckLinksMutation.mutate({ ids: selectedIds, passcodes: bulkPasscodes });
     } else {
-      // Check all bookmarks
-      bulkCheckLinksMutation.mutate({ ids: [] }); // Empty array means check all
+      bulkCheckLinksMutation.mutate({ ids: [] });
     }
+    setIsConfirmBulkCheckOpen(false);
   };
 
   // Helper function to get link status info for filtering
@@ -1284,6 +1326,31 @@ function BookmarksContent() {
         bookmark={selectedProtectedBookmark || undefined}
         onSuccess={handlePasscodeSuccess}
       />
+
+      {/* Confirm Bulk Check Links Dialog */}
+      <AlertDialog open={isConfirmBulkCheckOpen} onOpenChange={setIsConfirmBulkCheckOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Check Link Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedIds.length > 0
+                ? `This will check ${selectedIds.length} selected bookmark${selectedIds.length === 1 ? '' : 's'}.`
+                : 'This will check all bookmarks in the current view.'}
+              {' '}This operation can call external services and may hit rate limits.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkCheckLinksMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkCheckLinks}
+              disabled={bulkCheckLinksMutation.isPending}
+              data-testid="confirm-bulk-check-links"
+            >
+              {bulkCheckLinksMutation.isPending ? 'Checking…' : 'Proceed'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

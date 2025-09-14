@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ThemeContext, type Theme } from '@/lib/theme';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, getQueryFn } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -10,11 +11,15 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>('light');
   const queryClient = useQueryClient();
+  const [location] = useLocation();
 
   // Fetch preferences from database
-  const { data: preferences } = useQuery<{ theme?: Theme; viewMode?: 'grid' | 'list' }>({
+  const { data: preferences } = useQuery<{ theme?: Theme; viewMode?: 'grid' | 'list' } | null, Error>({
     queryKey: ['/api/preferences'],
+    queryFn: getQueryFn({ on401: 'returnNull' }),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    // Avoid calling preferences on /auth to prevent any 401s during sign-in
+    enabled: location !== '/auth',
   });
 
   // Update preferences mutation

@@ -76,6 +76,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
+  const { data: preferences } = useQuery<{ defaultCategoryId?: number | null; autoTagSuggestionsEnabled?: boolean }>({
+    queryKey: ['/api/preferences'],
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(createFormSchema()),
@@ -124,7 +127,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         name: '',
         description: '',
         url: '',
-        categoryId: undefined,
+        categoryId: (preferences?.defaultCategoryId as any) || undefined,
         isFavorite: false,
         tags: [],
         tagInput: '',
@@ -134,7 +137,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       setSuggestedTags([]);
       setAutoTagsGenerated(false);
     }
-  }, [editingBookmark, form]);
+  }, [editingBookmark, form, preferences?.defaultCategoryId]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertBookmark) => {
@@ -250,7 +253,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     if (editingBookmark) return;
     const timeoutId = setTimeout(() => {
       const currentUrl = watchedUrl;
-      if (currentUrl && !autoTagsGenerated) {
+      const allowAuto = preferences?.autoTagSuggestionsEnabled ?? true;
+      if (allowAuto && currentUrl && !autoTagsGenerated) {
         try {
           new URL(currentUrl); // Validate URL
           setIsGeneratingSuggestions(true);
@@ -263,7 +267,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       }
     }, 1500);
     return () => clearTimeout(timeoutId);
-  }, [watchedUrl, editingBookmark, autoTagsGenerated, generateAutoTagsMutation, isProtected, form]);
+  }, [watchedUrl, editingBookmark, autoTagsGenerated, generateAutoTagsMutation, isProtected, form, preferences?.autoTagSuggestionsEnabled]);
 
   // Reset loading state when mutation completes
   useEffect(() => {
@@ -507,24 +511,40 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
 
           <div className="space-y-2">
             <Label className="text-sm font-medium">Folder</Label>
-            <Select
-              value={form.watch('categoryId')?.toString() || 'none'}
-              onValueChange={(value) => {
-                form.setValue('categoryId', value === 'none' ? undefined : parseInt(value));
-              }}
-            >
-              <SelectTrigger data-testid="select-folder">
-                <SelectValue placeholder="No folder" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No folder</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 items-center">
+              <Select
+                value={form.watch('categoryId')?.toString() || 'none'}
+                onValueChange={(value) => {
+                  form.setValue('categoryId', value === 'none' ? undefined : parseInt(value));
+                }}
+              >
+                <SelectTrigger data-testid="select-folder">
+                  <SelectValue placeholder="No folder" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No folder</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                className="whitespace-nowrap"
+                onClick={async () => {
+                  const id = form.getValues('categoryId');
+                  await apiRequest('PATCH', '/api/preferences', { defaultCategoryId: id ?? null });
+                  queryClient.invalidateQueries({ queryKey: ['/api/preferences'] });
+                }}
+                disabled={form.getValues('categoryId') == null}
+                title="Set current category as default"
+              >
+                Set as default
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">

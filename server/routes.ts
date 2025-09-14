@@ -7,7 +7,7 @@ import {
   insertUserPreferencesSchema,
 } from '@shared/schema';
 import { requireAuth, setupAuth } from './auth';
-import { linkCheckerService } from './link-checker-service';
+import { userLinkCheckerService } from './user-link-checker-service';
 import { z } from 'zod';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
@@ -39,19 +39,6 @@ const linkCheckRateLimit = rateLimit({
   },
 });
 
-// Stricter rate limiting for manual link checker trigger (admin endpoint)
-const adminTriggerRateLimit = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Only 5 manual triggers per hour per admin
-  message: { message: 'Too many manual trigger requests, try again later' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req: any) => {
-    // Use user ID for admin requests
-    return req.isAuthenticated() ? `admin_trigger_${req.user.id}` : ipKeyGenerator(req);
-  },
-});
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first - this adds passport middleware and session support
   setupAuth(app);
@@ -60,6 +47,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const getUserId = (req: any): string => {
     return req.isAuthenticated() ? req.user.id : VENSERA_USER_ID;
   };
+
+  // Middleware: apply session timeout based on user preferences each request (rolling)
+  app.use(async (req: any, _res, next) => {
+    try {
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const prefs = await storage.getUserPreferences(req.user.id);
+        const minutes = Math.max(1, prefs?.sessionTimeoutMinutes ?? 30);
+        // Update cookie maxAge; express-session with rolling: true will refresh expiry
+        req.session.cookie.maxAge = minutes * 60 * 1000;
+        // Per-user link check scheduling
+        if (prefs?.linkCheckEnabled) {
+          userLinkCheckerService.setUserConfig(
+            req.user.id,
+            true,
+            Math.max(1, prefs.linkCheckIntervalMinutes ?? 30),
+            prefs.linkCheckBatchSize ?? 25,
+          );
+        } else {
+          userLinkCheckerService.setUserConfig(req.user.id, false, 30, 25);
+        }
+      }
+    } catch (e) {
+      // Non-fatal
+    }
+    next();
+  });
 
   // Helper function to verify passcode for protected bookmark operations
   const verifyProtectedBookmarkAccess = async (
@@ -163,6 +176,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching bookmarks:', error);
       res.status(500).json({ message: 'Failed to fetch bookmarks' });
+    }
+  });
+
+  // Export bookmarks (place before :id route to avoid param conflict)
+  app.get('/api/bookmarks/export', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const format = (req.query.format as string) || 'json';
+      // Optional category filter
+      const categoryIdParam = (req.query.categoryId as string | undefined)?.toLowerCase();
+      let categoryId: number | null | undefined = undefined;
+      if (
+        categoryIdParam === 'uncategorized' ||
+        categoryIdParam === 'unspecified' ||
+        categoryIdParam === 'none' ||
+        categoryIdParam === 'null'
+      ) {
+        categoryId = null;
+      } else if (categoryIdParam) {
+        const parsed = parseInt(categoryIdParam);
+        categoryId = isNaN(parsed) ? undefined : parsed;
+      }
+
+      const all = await storage.getBookmarks(userId, { categoryId });
+      if (format === 'csv') {
+        const header = ['name', 'url', 'description', 'tags', 'isFavorite', 'category'].join(',');
+        const rows = all.map((b) => {
+          const tags = (b.tags || []).join('|');
+          const cat = b.category?.name || '';
+          const esc = (v: string) => '"' + (v || '').replace(/"/g, '""') + '"';
+          return [esc(b.name), esc(b.url), esc(b.description || ''), esc(tags), b.isFavorite ? '1' : '0', esc(cat)].join(',');
+        });
+        const csv = [header, ...rows].join('\n');
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="bookmarks.csv"');
+        return res.send(csv);
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', 'attachment; filename="bookmarks.json"');
+        return res.json(
+          all.map((b) => ({
+            name: b.name,
+            url: b.url,
+            description: b.description,
+            tags: b.tags,
+            isFavorite: b.isFavorite,
+            category: b.category?.name || null,
+          })),
+        );
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      res.status(500).json({ message: 'Failed to export bookmarks' });
     }
   });
 
@@ -744,6 +810,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // (moved) Export bookmarks route defined earlier to avoid /:id conflict
+
+  // Import bookmarks (JSON array only)
+  app.post('/api/bookmarks/import', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const payload = req.body;
+      const categoryIdParam = (req.query.categoryId as string | undefined)?.toLowerCase();
+      let targetCategoryId: number | null | undefined = undefined;
+      if (
+        categoryIdParam === 'uncategorized' ||
+        categoryIdParam === 'unspecified' ||
+        categoryIdParam === 'none' ||
+        categoryIdParam === 'null'
+      ) {
+        targetCategoryId = null;
+      } else if (categoryIdParam) {
+        const parsed = parseInt(categoryIdParam);
+        targetCategoryId = isNaN(parsed) ? undefined : parsed;
+      }
+      if (!Array.isArray(payload)) {
+        return res.status(400).json({ message: 'Expected an array of bookmarks' });
+      }
+      let created = 0;
+      const existingCats = await storage.getCategories(userId);
+      for (const item of payload) {
+        if (!item || typeof item !== 'object') continue;
+        const name = (item.name || '').toString();
+        const url = (item.url || '').toString();
+        if (!name || !url) continue;
+        let categoryId: number | null | undefined = targetCategoryId;
+        if (item.category != null && item.category !== '') {
+          const found = existingCats.find(
+            (c) => c.name.toLowerCase() === String(item.category).toLowerCase(),
+          );
+          if (found) categoryId = found.id;
+          else if (categoryId === undefined) categoryId = undefined;
+        }
+        await storage.createBookmark(userId, {
+          name,
+          url,
+          description: item.description || null,
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          isFavorite: !!item.isFavorite,
+          categoryId: categoryId === null ? null : categoryId,
+          userId, // ignored by server but typed in schema
+        } as any);
+        created++;
+      }
+      res.json({ created });
+    } catch (error) {
+      console.error('Import failed:', error);
+      res.status(500).json({ message: 'Failed to import bookmarks' });
+    }
+  });
+
   // User Preferences routes
   app.get('/api/preferences', async (req, res) => {
     try {
@@ -757,8 +879,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       res.json(preferences);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching preferences:', error);
+      if (error?.code === '42703') {
+        // Column missing — return defaults so UI remains functional
+        return res.status(200).json({ theme: 'light', viewMode: 'grid', migrationRequired: true });
+      }
       res.status(500).json({ message: 'Failed to fetch preferences' });
     }
   });
@@ -768,12 +894,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user!.id; // Use authenticated user ID only
       const data = insertUserPreferencesSchema.partial().parse(req.body);
       const preferences = await storage.updateUserPreferences(userId, data);
+
+      // Apply session timeout immediately if provided
+      if (typeof (data as any).sessionTimeoutMinutes === 'number') {
+        const minutes = Math.max(1, (data as any).sessionTimeoutMinutes);
+        if (minutes > 0) {
+          req.session.cookie.maxAge = minutes * 60 * 1000;
+        }
+      }
+
+      // Apply per-user schedule with min 10 minutes
+      const enabled = (data as any).linkCheckEnabled;
+      const interval = Math.max(1, (data as any).linkCheckIntervalMinutes ?? preferences.linkCheckIntervalMinutes ?? 30);
+      const batch = (data as any).linkCheckBatchSize ?? preferences.linkCheckBatchSize ?? 25;
+      if (enabled !== undefined || (data as any).linkCheckIntervalMinutes !== undefined || (data as any).linkCheckBatchSize !== undefined) {
+        userLinkCheckerService.setUserConfig(userId, !!(enabled ?? preferences.linkCheckEnabled), interval, batch);
+      }
       res.json(preferences);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Invalid preferences data', errors: error.errors });
       }
       console.error('Error updating preferences:', error);
+      if (error?.code === '42703') {
+        return res.status(400).json({
+          message: 'Database schema out of date. Please run migrations (npm run db:push).',
+        });
+      }
       res.status(500).json({ message: 'Failed to update preferences' });
     }
   });
@@ -930,47 +1077,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Link checker service management endpoints
-  app.get('/api/link-checker/status', requireAuth, async (req, res) => {
+  // Per-user link checker status endpoint
+  app.get('/api/user/link-checker/status', requireAuth, async (req, res) => {
     try {
-      const status = linkCheckerService.getStatus();
-      res.json(status);
+      const userId = req.user!.id;
+      const prefs = await storage.getUserPreferences(userId);
+      const status = userLinkCheckerService.getUserStatus(userId);
+      res.json({
+        enabled: !!prefs?.linkCheckEnabled,
+        intervalMinutes: prefs?.linkCheckIntervalMinutes ?? 30,
+        batchSize: prefs?.linkCheckBatchSize ?? 25,
+        ...status,
+      });
     } catch (error) {
-      console.error('Error getting link checker status:', error);
-      res.status(500).json({ message: 'Failed to get link checker status' });
+      console.error('Error getting user link checker status:', error);
+      res.status(500).json({ message: 'Failed to get user link checker status' });
     }
   });
 
-  // Helper function to check admin privileges
-  const isAdminUser = (userId: string): boolean => {
-    // For now, only VENSERA_USER_ID has admin privileges
-    // In a production system, this would check against a roles table or admin user list
-    const adminUserIds = [
-      VENSERA_USER_ID,
-      // Add more admin user IDs here as needed
-    ];
-    return adminUserIds.includes(userId);
-  };
-
-  app.post('/api/link-checker/trigger', adminTriggerRateLimit, requireAuth, async (req, res) => {
+  // Trigger per-user run now
+  app.post('/api/user/link-checker/run-now', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-
-      // Enhanced admin authorization check
-      if (!isAdminUser(userId)) {
-        // Log unauthorized attempts for monitoring
-        console.warn(`Unauthorized manual trigger attempt from user ${userId} at IP ${req.ip}`);
-        return res.status(403).json({
-          message: 'Unauthorized: Admin privileges required to trigger manual link checks',
-        });
-      }
-
-      console.log(`Manual link check triggered by admin user: ${userId}`);
-      const result = await linkCheckerService.triggerManualCheck();
-      res.json(result);
+      const prefs = await storage.getUserPreferences(userId);
+      const batch = prefs?.linkCheckBatchSize ?? 25;
+      await userLinkCheckerService.runNow(userId, batch);
+      res.json({ ok: true });
     } catch (error) {
-      console.error('Error triggering manual link check:', error);
-      res.status(500).json({ message: 'Failed to trigger manual link check' });
+      console.error('Error running user link checker now:', error);
+      res.status(500).json({ message: 'Failed to run link checker' });
     }
   });
 
