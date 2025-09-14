@@ -258,6 +258,9 @@ npm run check        # Run TypeScript type checking
 - ✅ Public bookmark sharing
 - ✅ Mobile-responsive design
 - ✅ Dark/light theme support
+ - ✅ Settings page with preferences (theme, layout, default category, session timeout, per‑user link checker, export/import, auto‑tag toggle)
+ - ✅ Hidden folder for protected bookmarks
+ - ✅ Slug‑only category URLs
 
 ### Security Features
 
@@ -277,15 +280,17 @@ npm run check        # Run TypeScript type checking
 
 ### Database Migrations
 
-- Use `npm run db:push` for schema changes
-- Drizzle Kit manages migrations automatically
-- Schema defined in `shared/schema.ts`
+- Use `npm run db:push` to apply schema changes
+- Drizzle Kit manages migrations from `shared/schema.ts`
+- Session table is included in the schema to prevent accidental drops during pushes
+- Preferences fields include: `defaultCategoryId`, `sessionTimeoutMinutes`, `linkCheckEnabled`, `linkCheckIntervalMinutes`, `linkCheckBatchSize`, `autoTagSuggestionsEnabled`
 
 ### Environment Variables
 
 - `DATABASE_URL`: PostgreSQL connection string
 - `SESSION_SECRET`: Secret for session encryption
 - `NODE_ENV`: Development/production mode
+- `DB_SCHEMA` (optional): Schema name for session store (defaults to `public`)
 
 ### Hot Module Replacement
 
@@ -298,7 +303,7 @@ npm run check        # Run TypeScript type checking
 ### Common Issues
 
 1. **Database Connection**: Verify `DATABASE_URL` format and credentials
-2. **Port Conflicts**: Application uses port 5000 by default
+2. **Port Conflicts**: Application uses port 4001 by default
 3. **Node Version**: Ensure Node.js 18+ is installed
 4. **Dependencies**: Clear `node_modules` and reinstall if needed
 
@@ -309,4 +314,32 @@ npm run check        # Run TypeScript type checking
 - Optimize images and screenshots for faster loading
 - Consider connection pooling for production
 
-This setup provides a complete development environment for the bookmark manager application with all modern tooling and best practices included.
+## Feature Details
+
+### Settings & Preferences
+
+- Theme: light/dark toggle (persists)
+- Layout: list/grid segmented control (persists)
+- Default Category: used when creating new bookmarks
+- Session Timeout: 1 minute minimum; rolling sessions extend on activity
+- Link Check Schedule (per user): enable/disable, interval (min 1 minute), batch size; “Run now” for a one‑off check
+- Export/Import: JSON/CSV export; CSV import with column mapping and tags delimiter
+- Auto‑tag Suggestions: enable/disable automatic tag suggestions when adding bookmarks
+- Support: contact email `nt.apple.it@gmail.com`
+
+### Categories & Routing
+
+- Slug‑only category URLs: `/category/<slug-hash>`
+- Hidden folder lists protected bookmarks across categories
+- Uncategorized lists bookmarks without a category
+- All Bookmarks hides protected items; sidebar badge shows visible count (total − protected)
+
+### Export/Import Notes
+
+- CSV export columns: `name, url, description, tags, isFavorite, category`
+- CSV import mapping supports fields above; tags delimiter default `|`; accepted favorites: `1/true/yes/y`
+- Optional target category can be applied to all imported rows
+
+---
+
+This README documents setup, features, and workflows for efficient local development and testing.

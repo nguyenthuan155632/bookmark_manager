@@ -148,7 +148,8 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       {/* Sidebar */}
       <aside
         className={`
-        w-80 bg-card border-r border-border flex flex-col transition-transform duration-300 
+        w-80 border-r border-border flex flex-col transition-transform duration-300 
+        bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60
         -translate-x-full ${isOpen ? 'translate-x-0' : ''} 
         lg:translate-x-0 fixed lg:relative z-30 h-full
       `}

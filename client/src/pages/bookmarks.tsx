@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Menu,
   Search,
@@ -18,6 +18,7 @@ import {
   Link,
   AlertCircle,
   RefreshCw,
+  ArrowUp,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useLocation, useRoute } from 'wouter';
@@ -90,6 +91,9 @@ function BookmarksContent() {
   const [bulkPasscodes, setBulkPasscodes] = useState<Record<string, string>>({});
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
   const [isConfirmBulkCheckOpen, setIsConfirmBulkCheckOpen] = useState(false);
+  const [hideMobileBars, setHideMobileBars] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const { theme, setTheme } = useTheme();
   const { logoutMutation } = useAuth();
   const queryClient = useQueryClient();
@@ -288,6 +292,8 @@ function BookmarksContent() {
 
   // Infinite scroll sentinel
   const [sentinelRef, setSentinelRef] = useState<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const lastScrollTopRef = useRef(0);
   useEffect(() => {
     if (!sentinelRef) return;
     const observer = new IntersectionObserver(
@@ -302,6 +308,32 @@ function BookmarksContent() {
     observer.observe(sentinelRef);
     return () => observer.disconnect();
   }, [sentinelRef, hasNextPage, isFetchingNextPage, fetchNextPage, bookmarks, selectedCategory, searchQuery, selectedTags, selectedLinkStatus, sortBy, sortOrder, location]);
+
+  // Hide mobile search & filter bars on scroll down, show on scroll up
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const st = el.scrollTop;
+      const last = lastScrollTopRef.current;
+      const delta = st - last;
+      // At top => always show
+      if (st < 20) {
+        setHideMobileBars(false);
+      } else if (delta > 8) {
+        // Scrolling down
+        setHideMobileBars(true);
+      } else if (delta < -8) {
+        // Scrolling up
+        setHideMobileBars(false);
+      }
+      setIsScrolled(st > 2);
+      setShowScrollTop(st > 600);
+      lastScrollTopRef.current = st;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [scrollContainerRef.current]);
 
   // For special folders (hidden/uncategorized), auto-fetch more pages until we either
   // find items after filtering or exhaust pages, to avoid showing an empty state when
@@ -849,9 +881,13 @@ function BookmarksContent() {
         stats={stats}
       />
 
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main ref={scrollContainerRef} className="flex-1 flex flex-col overflow-auto">
         {/* Header */}
-        <header className="bg-card border-b border-border px-4 py-4" data-testid="header">
+        <header
+          className={`sticky top-0 z-20 bg-card/95 border-b border-border px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/75 transition-shadow ${isScrolled ? 'shadow-sm' : ''
+            }`}
+          data-testid="header"
+        >
           {/* Desktop Layout */}
           <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4 min-w-0">
@@ -925,9 +961,12 @@ function BookmarksContent() {
           </div>
 
           {/* Mobile Layout */}
-          <div className="sm:hidden space-y-3">
+          <div
+            className={`sm:hidden space-y-3 overflow-hidden transition-all duration-300 ease-out ${hideMobileBars ? 'max-h-0 opacity-0 -translate-y-2 pointer-events-none' : 'max-h-32 opacity-100 translate-y-0'
+              }`}
+          >
             {/* Top Row: Menu + Theme */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-betwee pl-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -937,7 +976,7 @@ function BookmarksContent() {
                 <Menu size={20} />
               </Button>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 ml-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -978,7 +1017,7 @@ function BookmarksContent() {
         </header>
 
         {/* Filter Bar */}
-        <div className="bg-card border-b border-border px-6 py-3" data-testid="filter-bar">
+        <div className="bg-card border-b border-border px-4 py-3" data-testid="filter-bar">
           {/* Desktop Layout - Single Line */}
           <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -1137,7 +1176,10 @@ function BookmarksContent() {
           </div>
 
           {/* Mobile Layout - Two Lines */}
-          <div className="sm:hidden space-y-2">
+          <div
+            className={`sm:hidden space-y-2 overflow-hidden transition-all duration-300 ease-out ${hideMobileBars ? 'max-h-0 opacity-0 -translate-y-2 pointer-events-none' : 'max-h-28 opacity-100 translate-y-0'
+              }`}
+          >
             {/* Line 1: Filters Label + Tag Input + Active Filter Tags */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
@@ -1202,7 +1244,8 @@ function BookmarksContent() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div ref={setSentinelRef as any} className="hidden" />
+        <div className="flex-1 p-4">
           {/* Bulk Action Toolbar */}
           {bulkMode && (
             <BulkActionToolbar
@@ -1310,11 +1353,25 @@ function BookmarksContent() {
         {/* Floating Action Button */}
         <Button
           onClick={() => setIsAddModalOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-md hover:scale-110 transition-all duration-300 ease-out z-50 p-0 flex items-center justify-center"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full border border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60 text-foreground shadow-lg hover:shadow-xl transition-all duration-300 ease-out z-50 p-0 flex items-center justify-center"
+          variant="outline"
           data-testid="button-add-bookmark-fab"
+          title="Add bookmark"
         >
-          <Plus size={24} />
+          <Plus size={22} />
         </Button>
+        {/* Scroll-to-top FAB */}
+      {showScrollTop && (
+        <Button
+          onClick={() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-24 right-6 h-12 w-12 rounded-full border border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60 text-foreground shadow-lg hover:shadow-xl transition-all z-40 p-0"
+          variant="outline"
+          aria-label="Scroll to top"
+          data-testid="button-scroll-top"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      )}
       </main>
 
       <AddBookmarkModal
