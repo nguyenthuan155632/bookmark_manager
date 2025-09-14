@@ -68,9 +68,6 @@ export function BookmarkCard({
   passcode,
   isShareLoading = false,
 }: BookmarkCardProps) {
-  // Default thumbnail when no screenshot is available
-  const DEFAULT_THUMBNAIL_URL =
-    'https://placehold.co/600x400/transparent/052450?text=No+Preview';
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [thumbnailRetryCount, setThumbnailRetryCount] = useState(0);

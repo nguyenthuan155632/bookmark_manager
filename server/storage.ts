@@ -1365,6 +1365,7 @@ export class DatabaseStorage implements IStorage {
           const res = await fetch(probeUrl, { method: 'GET', signal: controller.signal });
           clearTimeout(timeoutId);
           if (!res.ok) {
+            // eslint-disable-next-line no-useless-escape
             const safeUrl = probeUrl.replace(/(\/auth\/)([^\/]+)(\/)/, '$1*****$3');
             console.warn(`Screenshot probe failed: ${res.status} ${res.statusText} for ${safeUrl}`);
             return false;

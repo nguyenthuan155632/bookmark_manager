@@ -336,7 +336,7 @@ function BookmarksContent() {
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, [scrollContainerRef.current]);
+  });
 
   // For special folders (hidden/uncategorized), auto-fetch more pages until we either
   // find items after filtering or exhaust pages, to avoid showing an empty state when
@@ -1365,17 +1365,17 @@ function BookmarksContent() {
           <Plus size={22} />
         </Button>
         {/* Scroll-to-top FAB */}
-      {showScrollTop && (
-        <Button
-          onClick={() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-24 right-6 h-12 w-12 rounded-full border border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60 text-foreground shadow-lg hover:shadow-xl transition-all z-40 p-0"
-          variant="outline"
-          aria-label="Scroll to top"
-          data-testid="button-scroll-top"
-        >
-          <ArrowUp className="h-5 w-5" />
-        </Button>
-      )}
+        {showScrollTop && (
+          <Button
+            onClick={() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-24 right-6 h-12 w-12 rounded-full border border-border bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/60 text-foreground shadow-lg hover:shadow-xl transition-all z-40 p-0"
+            variant="outline"
+            aria-label="Scroll to top"
+            data-testid="button-scroll-top"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </Button>
+        )}
       </main>
 
       <AddBookmarkModal
