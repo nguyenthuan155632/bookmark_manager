@@ -15,6 +15,7 @@ import { Sidebar } from '@/components/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Grid as GridIcon, List as ListIcon, Moon as MoonIcon, Sun as SunIcon } from 'lucide-react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export default function SettingsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -244,6 +245,42 @@ export default function SettingsPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Defaults</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                <div className="sm:col-span-2">
+                  <div className="font-medium">Default Category</div>
+                  <div className="text-sm text-muted-foreground">Applied when creating new bookmarks</div>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  <Select
+                    value={defaultCategoryId != null ? String(defaultCategoryId) : 'none'}
+                    onValueChange={(val) =>
+                      updatePreferencesMutation.mutate({
+                        defaultCategoryId: val === 'none' ? null : Number(val),
+                      })
+                    }
+                  >
+                    <SelectTrigger className="w-52">
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Appearance</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -290,6 +327,34 @@ export default function SettingsPage() {
                       <GridIcon className="h-4 w-4 mr-1" /> Grid
                     </ToggleGroupItem>
                   </ToggleGroup>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Default Category</div>
+                  <div className="text-sm text-muted-foreground">Applied when creating new bookmarks</div>
+                </div>
+                <div className="flex gap-2">
+                  <select
+                    className="border rounded-md px-3 py-2 bg-background"
+                    value={defaultCategoryId ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      updatePreferencesMutation.mutate({
+                        defaultCategoryId: val === '' ? null : Number(val),
+                      });
+                    }}
+                  >
+                    <option value="">None</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </CardContent>
@@ -373,24 +438,24 @@ export default function SettingsPage() {
                     <div className="text-sm text-muted-foreground">Download your data</div>
                   </div>
                   <div className="flex flex-wrap gap-2 items-center sm:justify-end">
-                    <select
-                      className="border rounded-md px-3 py-2 bg-background"
-                      value={exportCategoryId}
-                      onChange={(e) => setExportCategoryId(e.target.value)}
-                      title="Scope"
-                    >
-                      <option value="">All</option>
-                      <option value="uncategorized">Uncategorized</option>
-                      {categories.map((c) => (
-                        <option key={c.id} value={String(c.id)}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={exportCategoryId || 'all'} onValueChange={setExportCategoryId}>
+                      <SelectTrigger className="w-56" title="Scope">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                        {categories.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       variant="outline"
                       onClick={async () => {
-                        const scope = exportCategoryId ? `&categoryId=${exportCategoryId}` : '';
+                        const scope = exportCategoryId && exportCategoryId !== 'all' ? `&categoryId=${exportCategoryId}` : '';
                         const res = await fetch(`/api/bookmarks/export?format=json${scope}`, { credentials: 'include' });
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
@@ -406,8 +471,8 @@ export default function SettingsPage() {
                     <Button
                       variant="outline"
                       onClick={async () => {
-                        const scope = exportCategoryId ? `&categoryId=${exportCategoryId}` : '';
-                        const res = await fetch(`/api/bookmarks/export?format=csv${scope}`, { credentials: 'include' });
+                        const scope = exportCategoryId && exportCategoryId !== 'all' ? `&categoryId=${exportCategoryId}` : '';
+                      const res = await fetch(`/api/bookmarks/export?format=csv${scope}`, { credentials: 'include' });
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
