@@ -139,7 +139,7 @@ export function SharedBookmark() {
           </div>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-0">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Globe size={18} />
                 Website Details
