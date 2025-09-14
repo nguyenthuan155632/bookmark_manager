@@ -1322,24 +1322,69 @@ export class DatabaseStorage implements IStorage {
         return;
       }
 
-      // Use Screenshot Machine API (free tier)
-      const screenshotUrl = `https://api.screenshotmachine.com?key=934e0f&url=${encodeURIComponent(url)}&dimension=1024x768&format=png`;
+      // Use Thum.io API (higher quality capture)
+      // See: https://www.thum.io/documentation/api/url
+      // Build option sets (some options may not be supported on free plans)
+      const thumWidth = Number.parseInt(process.env.THUMIO_WIDTH || '800', 10);
+      const thumVpW = Number.parseInt(process.env.THUMIO_VP_WIDTH || '1024', 10);
+      const thumVpH = Number.parseInt(process.env.THUMIO_VP_HEIGHT || '640', 10);
+      const fullOptions = [
+        'wait/10', // allow time for dynamic pages; keep modest to avoid 400s
+        `width/${thumWidth}`,
+        `viewportWidth/${thumVpW}`,
+        `viewportHeight/${thumVpH}`,
+        'noanimate',
+        'noscroll',
+      ].join('/');
+      const minimalOptions = [
+        `width/${thumWidth}`,
+        'noanimate',
+        'noscroll',
+      ].join('/');
 
-      // Test if the screenshot service is accessible with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4001); // 5 second timeout
+      const thumToken = '75165-bookmark';
 
-      const response = await fetch(screenshotUrl, {
-        method: 'HEAD', // Just check if the service responds
-        signal: controller.signal,
-      });
+      // Build candidate URLs in order of preference
+      const candidates: string[] = [];
+      if (thumToken) {
+        // Authenticated PNG request
+        candidates.push(`https://image.thum.io/get/auth/${thumToken}/png/${fullOptions}/${url}`);
+        candidates.push(`https://image.thum.io/get/auth/${thumToken}/png/${minimalOptions}/${url}`);
+      }
+      // Unauthenticated PNG requests (fallback if token missing/invalid)
+      candidates.push(`https://image.thum.io/get/png/${fullOptions}/${url}`);
+      candidates.push(`https://image.thum.io/get/png/${minimalOptions}/${url}`);
 
-      clearTimeout(timeoutId);
+      // Only Thum.io is used. No third‑party fallbacks.
 
-      if (response.ok) {
-        // Screenshot service is available, use the full URL
-        await this.updateScreenshotStatus(bookmarkId, 'ready', screenshotUrl);
-      } else {
+      // Try fetching the image (HEAD may be blocked by some CDNs)
+      const tryFetchImage = async (probeUrl: string, timeoutMs = 20000) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(probeUrl, { method: 'GET', signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!res.ok) {
+            const safeUrl = probeUrl.replace(/(\/auth\/)([^\/]+)(\/)/, '$1*****$3');
+            console.warn(`Screenshot probe failed: ${res.status} ${res.statusText} for ${safeUrl}`);
+            return false;
+          }
+          const ct = res.headers.get('content-type') || '';
+          if (!ct.toLowerCase().startsWith('image/')) return false;
+          await this.updateScreenshotStatus(bookmarkId, 'ready', probeUrl);
+          return true;
+        } catch (e) {
+          clearTimeout(timeoutId);
+          return false;
+        }
+      };
+
+      let ok = false;
+      for (const candidate of candidates) {
+        ok = await tryFetchImage(candidate, 20000);
+        if (ok) break;
+      }
+      if (!ok) {
         throw new Error('Screenshot service unavailable');
       }
     } catch (error) {

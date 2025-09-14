@@ -313,23 +313,26 @@ function BookmarksContent() {
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
+    let ticking = false;
     const onScroll = () => {
-      const st = el.scrollTop;
-      const last = lastScrollTopRef.current;
-      const delta = st - last;
-      // At top => always show
-      if (st < 20) {
-        setHideMobileBars(false);
-      } else if (delta > 8) {
-        // Scrolling down
-        setHideMobileBars(true);
-      } else if (delta < -8) {
-        // Scrolling up
-        setHideMobileBars(false);
-      }
-      setIsScrolled(st > 2);
-      setShowScrollTop(st > 600);
-      lastScrollTopRef.current = st;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const st = el.scrollTop;
+        const last = lastScrollTopRef.current;
+        const delta = st - last;
+        if (st < 20) {
+          setHideMobileBars(false);
+        } else if (delta > 8) {
+          setHideMobileBars(true);
+        } else if (delta < -8) {
+          setHideMobileBars(false);
+        }
+        setIsScrolled(st > 2);
+        setShowScrollTop(st > 600);
+        lastScrollTopRef.current = st;
+        ticking = false;
+      });
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -884,8 +887,7 @@ function BookmarksContent() {
       <main ref={scrollContainerRef} className="flex-1 flex flex-col overflow-auto">
         {/* Header */}
         <header
-          className={`sticky top-0 z-20 bg-card/95 border-b border-border px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/75 transition-shadow ${isScrolled ? 'shadow-sm' : ''
-            }`}
+          className={`sticky top-0 z-20 bg-card/95 border-b border-border px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/75 transition-shadow ${isScrolled ? 'shadow-sm' : ''}`}
           data-testid="header"
         >
           {/* Desktop Layout */}
@@ -1015,6 +1017,8 @@ function BookmarksContent() {
             </div>
           </div>
         </header>
+        {/* Header bottom gradient fade */}
+        <div className={`pointer-events-none h-2 w-full ${isScrolled ? 'bg-gradient-to-b from-border/40 to-transparent' : ''}`} />
 
         {/* Filter Bar */}
         <div className="bg-card border-b border-border px-4 py-3" data-testid="filter-bar">

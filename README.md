@@ -291,6 +291,10 @@ npm run check        # Run TypeScript type checking
 - `SESSION_SECRET`: Secret for session encryption
 - `NODE_ENV`: Development/production mode
 - `DB_SCHEMA` (optional): Schema name for session store (defaults to `public`)
+- `THUMIO_TOKEN` (optional): Thum.io auth token for screenshot capture. If not set, the app uses unauthenticated Thum.io requests and may fall back to a placeholder.
+ - `THUMIO_WIDTH` (optional): Output image width used for Thum.io screenshots. Default `800`.
+ - `THUMIO_VP_WIDTH` (optional): Page viewport width for Thum.io rendering. Default `1024`.
+ - `THUMIO_VP_HEIGHT` (optional): Page viewport height for Thum.io rendering. Default `640`.
 
 ### Hot Module Replacement
 
@@ -313,6 +317,13 @@ npm run check        # Run TypeScript type checking
 - Enable database indexing for search queries
 - Optimize images and screenshots for faster loading
 - Consider connection pooling for production
+
+### Screenshots
+
+- Thum.io is used to generate thumbnails. When `THUMIO_TOKEN` is set, authenticated PNG requests are used: `https://image.thum.io/get/auth/<token>/png/<options>/<url>`.
+- If no token is configured, unauthenticated PNG requests are attempted; if they fail, a placeholder is applied.
+- If you encounter 400 responses from Thum.io, verify the token value and try simplifying options. The server already retries with both a full and a minimal option set.
+ - Defaults favor smaller images for faster loading: width `800`, viewport `1024x640`. Override with `THUMIO_WIDTH`, `THUMIO_VP_WIDTH`, `THUMIO_VP_HEIGHT`.
 
 ## Feature Details
 

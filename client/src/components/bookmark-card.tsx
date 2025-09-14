@@ -18,6 +18,7 @@ import {
   Link,
   RotateCcw,
   Files,
+  ImageIcon,
 } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
@@ -484,10 +485,10 @@ export function BookmarkCard({
         case 'failed':
         case 'idle':
         default: {
-          // Show a default large image with option to generate on click
+          // Lovely glassy gradient placeholder with icon and CTA
           return (
             <div
-              className="relative w-full h-32 bg-muted/20 rounded-md overflow-hidden group/thumb cursor-pointer justify-items-center"
+              className="relative w-full h-32 rounded-md overflow-hidden group/thumb cursor-pointer"
               onClick={handleGenerateScreenshot}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -500,12 +501,24 @@ export function BookmarkCard({
               aria-label="Generate screenshot preview"
               data-testid={`thumbnail-default-${bookmark.id}`}
             >
-              <img
-                src={DEFAULT_THUMBNAIL_URL}
-                alt={`Default preview for ${bookmark.name}`}
-                className="w-full h-full object-cover max-w-[60%]"
-                loading="lazy"
-              />
+              {/* Background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-rose-200/70 via-violet-200/70 to-sky-200/70 dark:from-rose-900/30 dark:via-violet-900/30 dark:to-sky-900/30" />
+              {/* Soft blobs */}
+              <div className="absolute -top-6 -left-6 w-24 h-24 bg-pink-400/30 dark:bg-pink-700/20 rounded-full blur-2xl" />
+              <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-indigo-400/30 dark:bg-indigo-700/20 rounded-full blur-2xl" />
+              <div className="absolute top-4 right-1/3 w-16 h-16 bg-emerald-400/30 dark:bg-emerald-700/20 rounded-full blur-xl" />
+              {/* Center content */}
+              <div className="relative z-10 h-full w-full flex flex-col items-center justify-center text-foreground/80">
+                <ImageIcon size={22} className="mb-1 opacity-90" />
+                <span className="text-xs">No preview</span>
+                <span className="mt-1 inline-block text-[10px] px-2 py-0.5 rounded-full bg-background/60 border border-border transition-transform duration-200 group-hover/thumb:scale-105">
+                  Tap to generate
+                </span>
+              </div>
+              {/* Shimmer sweep */}
+              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-md">
+                <div className="absolute -inset-y-1 -left-1 w-1/3 bg-white/20 dark:bg-white/10 blur-md skew-x-[-12deg] translate-x-[-100%] group-hover/thumb:animate-[sweep_1.2s_ease-in-out]" />
+              </div>
             </div>
           );
         }
