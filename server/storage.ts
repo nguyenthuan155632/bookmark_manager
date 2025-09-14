@@ -1258,6 +1258,25 @@ export class DatabaseStorage implements IStorage {
       // Start screenshot generation asynchronously
       this.generateScreenshotAsync(bookmarkId, bookmark.url);
 
+      // Failsafe: ensure we don't stay pending forever
+      const pendingTimeoutMs = Number.parseInt(
+        process.env.SCREENSHOT_PENDING_TIMEOUT_MS || '30000',
+        10,
+      );
+      setTimeout(async () => {
+        try {
+          const [row] = await db
+            .select({ status: bookmarks.screenshotStatus, at: bookmarks.screenshotUpdatedAt })
+            .from(bookmarks)
+            .where(eq(bookmarks.id, bookmarkId));
+          if (row?.status === 'pending') {
+            await this.updateScreenshotStatus(bookmarkId, 'idle');
+          }
+        } catch (e) {
+          console.warn('Pending screenshot failsafe check failed:', e);
+        }
+      }, Math.max(5000, pendingTimeoutMs));
+
       return { status: 'pending', message: 'Screenshot generation started' };
     } catch (error) {
       console.error('Error triggering screenshot:', error);

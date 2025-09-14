@@ -294,7 +294,9 @@ npm run check        # Run TypeScript type checking
 - `THUMIO_TOKEN` (optional): Thum.io auth token for screenshot capture. If not set, the app uses unauthenticated Thum.io requests and may fall back to a placeholder.
  - `THUMIO_WIDTH` (optional): Output image width used for Thum.io screenshots. Default `800`.
  - `THUMIO_VP_WIDTH` (optional): Page viewport width for Thum.io rendering. Default `1024`.
- - `THUMIO_VP_HEIGHT` (optional): Page viewport height for Thum.io rendering. Default `640`.
+- `THUMIO_VP_HEIGHT` (optional): Page viewport height for Thum.io rendering. Default `640`.
+ - `THUMIO_TIMEOUT_MS` (optional): Timeout for Thum.io probes in milliseconds. Default `8000`.
+ - `SCREENSHOT_PENDING_TIMEOUT_MS` (optional): Failsafe timeout to auto-fail screenshots stuck in pending. Default `30000`.
 
 ### Hot Module Replacement
 

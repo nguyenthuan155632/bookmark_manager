@@ -91,7 +91,7 @@ function BookmarksContent() {
   const [bulkPasscodes, setBulkPasscodes] = useState<Record<string, string>>({});
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
   const [isConfirmBulkCheckOpen, setIsConfirmBulkCheckOpen] = useState(false);
-  const [hideMobileBars, setHideMobileBars] = useState(false);
+  // We manage hide/show of mobile bars via direct DOM styles for performance.
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -292,8 +292,15 @@ function BookmarksContent() {
 
   // Infinite scroll sentinel
   const [sentinelRef, setSentinelRef] = useState<HTMLDivElement | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | HTMLDivElement | null>(null);
+  const [scrollerEl, setScrollerEl] = useState<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
   const lastScrollTopRef = useRef(0);
+  const headerHiddenRef = useRef(false);
+  // Directional hysteresis to avoid flicker
+  const upAccumRef = useRef(0);
+  const downAccumRef = useRef(0);
+  const lastDirRef = useRef<'up' | 'down' | 'none'>('none');
   useEffect(() => {
     if (!sentinelRef) return;
     const observer = new IntersectionObserver(
@@ -309,11 +316,31 @@ function BookmarksContent() {
     return () => observer.disconnect();
   }, [sentinelRef, hasNextPage, isFetchingNextPage, fetchNextPage, bookmarks, selectedCategory, searchQuery, selectedTags, selectedLinkStatus, sortBy, sortOrder, location]);
 
-  // Hide mobile search & filter bars on scroll down, show on scroll up
+  // Hide/show sticky header on scroll using transform (smooth & cheap)
   useEffect(() => {
-    const el = scrollContainerRef.current;
+    const el = scrollerEl;
     if (!el) return;
     let ticking = false;
+    const applyHeaderHidden = (nextHidden: boolean) => {
+      if (nextHidden === headerHiddenRef.current) return;
+      headerHiddenRef.current = nextHidden;
+      const hdr = headerRef.current;
+      if (!hdr) return;
+      hdr.style.willChange = 'transform, opacity';
+      hdr.style.transition = 'transform 180ms ease, opacity 180ms ease';
+      if (nextHidden) {
+        hdr.style.transform = 'translateY(-100%)';
+        hdr.style.opacity = '0';
+        hdr.style.pointerEvents = 'none';
+      } else {
+        hdr.style.transform = 'translateY(0)';
+        hdr.style.opacity = '1';
+        hdr.style.pointerEvents = '';
+      }
+    };
+
+    const HIDE_THRESHOLD = 40; // px accumulated downward
+    const SHOW_THRESHOLD = 40; // px accumulated upward
     const onScroll = () => {
       if (ticking) return;
       ticking = true;
@@ -321,13 +348,36 @@ function BookmarksContent() {
         const st = el.scrollTop;
         const last = lastScrollTopRef.current;
         const delta = st - last;
-        if (st < 20) {
-          setHideMobileBars(false);
-        } else if (delta > 8) {
-          setHideMobileBars(true);
-        } else if (delta < -8) {
-          setHideMobileBars(false);
+        let nextHidden = headerHiddenRef.current;
+        // Determine direction and accumulate movement
+        const dir: 'up' | 'down' | 'none' = delta > 0 ? 'down' : delta < 0 ? 'up' : 'none';
+        if (dir !== lastDirRef.current && dir !== 'none') {
+          upAccumRef.current = 0;
+          downAccumRef.current = 0;
+          lastDirRef.current = dir;
         }
+        if (dir === 'down') {
+          downAccumRef.current += delta;
+        } else if (dir === 'up') {
+          upAccumRef.current += -delta;
+        }
+
+        if (st < 20) {
+          nextHidden = false;
+          upAccumRef.current = 0;
+          downAccumRef.current = 0;
+        } else if (downAccumRef.current > HIDE_THRESHOLD) {
+          nextHidden = true;
+          downAccumRef.current = 0; // require further scroll to hide again
+        } else if (upAccumRef.current > SHOW_THRESHOLD) {
+          nextHidden = false;
+          upAccumRef.current = 0; // require further scroll to show again
+        }
+
+        if (nextHidden !== headerHiddenRef.current) {
+          applyHeaderHidden(nextHidden);
+        }
+
         setIsScrolled(st > 2);
         setShowScrollTop(st > 600);
         lastScrollTopRef.current = st;
@@ -335,8 +385,18 @@ function BookmarksContent() {
       });
     };
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+    };
+  }, [scrollerEl]);
+
+  // Initialize header transform styles
+  useEffect(() => {
+    const hdr = headerRef.current;
+    if (!hdr) return;
+    hdr.style.willChange = 'transform, opacity';
+    hdr.style.transition = 'transform 180ms ease, opacity 180ms ease';
+  }, []);
 
   // For special folders (hidden/uncategorized), auto-fetch more pages until we either
   // find items after filtering or exhaust pages, to avoid showing an empty state when
@@ -884,9 +944,16 @@ function BookmarksContent() {
         stats={stats}
       />
 
-      <main ref={scrollContainerRef} className="flex-1 flex flex-col overflow-auto">
+      <main
+        ref={(el) => {
+          scrollContainerRef.current = el as HTMLDivElement;
+          setScrollerEl(el as HTMLDivElement);
+        }}
+        className="flex-1 flex flex-col overflow-auto"
+      >
         {/* Header */}
         <header
+          ref={headerRef}
           className={`sticky top-0 z-20 bg-card/95 border-b border-border px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/75 transition-shadow ${isScrolled ? 'shadow-sm' : ''}`}
           data-testid="header"
         >
@@ -963,10 +1030,7 @@ function BookmarksContent() {
           </div>
 
           {/* Mobile Layout */}
-          <div
-            className={`sm:hidden space-y-3 overflow-hidden transition-all duration-300 ease-out ${hideMobileBars ? 'max-h-0 opacity-0 -translate-y-2 pointer-events-none' : 'max-h-32 opacity-100 translate-y-0'
-              }`}
-          >
+          <div className="sm:hidden space-y-3">
             {/* Top Row: Menu + Theme */}
             <div className="flex items-center justify-betwee pl-0">
               <Button
@@ -1180,10 +1244,7 @@ function BookmarksContent() {
           </div>
 
           {/* Mobile Layout - Two Lines */}
-          <div
-            className={`sm:hidden space-y-2 overflow-hidden transition-all duration-300 ease-out ${hideMobileBars ? 'max-h-0 opacity-0 -translate-y-2 pointer-events-none' : 'max-h-28 opacity-100 translate-y-0'
-              }`}
-          >
+          <div className="sm:hidden space-y-2">
             {/* Line 1: Filters Label + Tag Input + Active Filter Tags */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
