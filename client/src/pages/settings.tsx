@@ -329,34 +329,6 @@ export default function SettingsPage() {
                   </ToggleGroup>
                 </div>
               </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium">Default Category</div>
-                  <div className="text-sm text-muted-foreground">Applied when creating new bookmarks</div>
-                </div>
-                <div className="flex gap-2">
-                  <select
-                    className="border rounded-md px-3 py-2 bg-background"
-                    value={defaultCategoryId ?? ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      updatePreferencesMutation.mutate({
-                        defaultCategoryId: val === '' ? null : Number(val),
-                      });
-                    }}
-                  >
-                    <option value="">None</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -472,7 +444,7 @@ export default function SettingsPage() {
                       variant="outline"
                       onClick={async () => {
                         const scope = exportCategoryId && exportCategoryId !== 'all' ? `&categoryId=${exportCategoryId}` : '';
-                      const res = await fetch(`/api/bookmarks/export?format=csv${scope}`, { credentials: 'include' });
+                        const res = await fetch(`/api/bookmarks/export?format=csv${scope}`, { credentials: 'include' });
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
