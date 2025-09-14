@@ -14,7 +14,8 @@ import type { Category } from '@shared/schema';
 import { Sidebar } from '@/components/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Grid as GridIcon, List as ListIcon, Moon as MoonIcon, Sun as SunIcon } from 'lucide-react';
+import { Grid as GridIcon, List as ListIcon, Moon as MoonIcon, Sun as SunIcon, ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export default function SettingsPage() {
@@ -198,13 +199,21 @@ export default function SettingsPage() {
         onCreateFolder={() => { }}
         stats={stats}
       />
-      <main className="flex-1 flex flex-col overflow-auto">
+      <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
         <div className="px-6 py-4 border-b flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Settings</h1>
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="px-2">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="ml-1 hidden sm:inline">Home</span>
+              </Button>
+            </Link>
+            <h1 className="text-xl font-semibold truncate">Settings</h1>
+          </div>
           <div className="text-sm text-muted-foreground">Signed in as {user?.username}</div>
         </div>
 
-        <div className="p-6 space-y-6 max-w-3xl">
+        <div className="w-full p-6 space-y-6 overflow-x-hidden">
           <Card>
             <CardHeader>
               <CardTitle>Support</CardTitle>

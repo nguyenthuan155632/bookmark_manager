@@ -188,6 +188,8 @@ function BookmarksContent() {
         search: searchQuery || undefined,
         // Only pass numeric categoryId; special folders handled client-side
         categoryId: typeof resolvedCategoryId === 'number' ? String(resolvedCategoryId) : undefined,
+        // Distinguish special folders in cache to avoid stale views
+        special: selectedCategory === 'hidden' || selectedCategory === 'uncategorized' ? selectedCategory : undefined,
         tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
         linkStatus: selectedLinkStatus || undefined,
         isFavorite: location === '/favorites' ? 'true' : undefined,
@@ -300,6 +302,18 @@ function BookmarksContent() {
     observer.observe(sentinelRef);
     return () => observer.disconnect();
   }, [sentinelRef, hasNextPage, isFetchingNextPage, fetchNextPage, bookmarks, selectedCategory, searchQuery, selectedTags, selectedLinkStatus, sortBy, sortOrder, location]);
+
+  // For special folders (hidden/uncategorized), auto-fetch more pages until we either
+  // find items after filtering or exhaust pages, to avoid showing an empty state when
+  // the first page doesn't include any matches.
+  useEffect(() => {
+    const isSpecial = selectedCategory === 'hidden' || selectedCategory === 'uncategorized';
+    if (!isSpecial) return;
+    if (isLoading) return;
+    if (filteredBookmarks.length === 0 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [selectedCategory, filteredBookmarks.length, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
   const handleEdit = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
     setEditingBookmark(bookmark);

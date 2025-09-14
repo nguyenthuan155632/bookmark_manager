@@ -55,6 +55,8 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     queryKey: ['/api/bookmarks'],
   });
   const hiddenCount = allBookmarks.filter((b) => b?.hasPasscode).length;
+  // In the All view we hide protected items; reflect that in the badge count
+  const visibleTotal = Math.max(0, (stats.total || 0) - hiddenCount);
 
   const deleteMutation = useMutation({
     mutationFn: async (params: { id: number; strategy?: 'unlink' | 'delete'; name?: string }) => {
@@ -118,7 +120,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       path: '/',
       icon: Home,
       label: 'All Bookmarks',
-      count: stats.total,
+      count: visibleTotal,
       active: isActive('/'),
     },
     {
