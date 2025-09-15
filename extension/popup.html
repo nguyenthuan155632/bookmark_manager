@@ -147,7 +147,11 @@
     <div class="row"><label class="checkbox"><input id="autoTags" type="checkbox" /> Auto-generate tags</label></div>
     <div class="row"><label class="checkbox"><input id="autoDesc" type="checkbox" /> Auto-generate description</label>
     </div>
-    <div class="row"><label for="passcode">Passcode (optional)</label><input id="passcode" type="password" /></div>
+    <div class="row">
+      <label for="passcode">Passcode (optional)</label>
+      <input id="passcode" type="password" />
+      <div class="muted">Owner can unlock protected items with this passcode or the account password (when logged in).</div>
+    </div>
     <div class="actions">
       <button id="logoutBtn" class="secondary">Sign out</button>
       <button id="createBtn">Create</button>

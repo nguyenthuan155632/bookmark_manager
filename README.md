@@ -266,7 +266,7 @@ npm run check        # Run TypeScript type checking
  - ✅ AI-powered auto-description
 - ✅ Automatic screenshot thumbnails
 - ✅ Broken link monitoring
-- ✅ Protected bookmarks with passcode
+- ✅ Protected bookmarks with passcode (owner can also unlock using account password when logged in)
 - ✅ Public bookmark sharing
 - ✅ Mobile-responsive design
 - ✅ Dark/light theme support
@@ -276,7 +276,7 @@ npm run check        # Run TypeScript type checking
 
 ### Security Features
 
-- ✅ Passcode protection for sensitive bookmarks
+- ✅ Passcode protection for sensitive bookmarks (owner’s account password accepted when authenticated)
 - ✅ Rate limiting on API endpoints
 - ✅ SSRF protection for external requests
 - ✅ Session-based authentication

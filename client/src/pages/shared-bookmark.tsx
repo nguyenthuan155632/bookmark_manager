@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRoute } from 'wouter';
-import { ExternalLink, Calendar, Tag, Folder, Globe, ArrowLeft } from 'lucide-react';
+import { ExternalLink, Calendar, Tag, Folder, Globe, ArrowLeft, Lock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,15 @@ import { SEO } from '@/lib/seo';
 
 export function SharedBookmark() {
   const [, params] = useRoute('/shared/:shareId');
-  const [bookmark, setBookmark] = useState<(Bookmark & { category?: Category }) | null>(null);
+  const [bookmark, setBookmark] = useState<
+    (Partial<Bookmark> & { category?: Category | { name: string } | null; hasPasscode?: boolean }) | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUnlockOpen, setIsUnlockOpen] = useState(false);
+  const [unlockPasscode, setUnlockPasscode] = useState('');
+  const [unlockError, setUnlockError] = useState('');
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   useEffect(() => {
     if (!params?.shareId) {
@@ -41,6 +47,9 @@ export function SharedBookmark() {
 
         const data = await response.json();
         setBookmark(data);
+        if (data?.hasPasscode) {
+          setIsUnlockOpen(true);
+        }
       } catch (err) {
         console.error('Error fetching shared bookmark:', err);
         setError('Failed to load bookmark');
@@ -62,7 +71,8 @@ export function SharedBookmark() {
 
   const handleVisit = () => {
     if (bookmark) {
-      window.open(bookmark.url, '_blank', 'noopener,noreferrer');
+      if (!bookmark.url) return;
+      window.open(bookmark.url as string, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -109,16 +119,18 @@ export function SharedBookmark() {
     );
   }
 
-  const timeAgo = formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true });
+  const timeAgo = bookmark?.createdAt ? formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true }) : '';
 
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title={bookmark.name}
+        title={bookmark.name || 'Protected Bookmark'}
         description={
           bookmark.description
             ? bookmark.description.slice(0, 160)
-            : `${bookmark.name} — ${bookmark.url}`
+            : bookmark.url
+              ? `${bookmark.name || 'Protected Bookmark'} — ${bookmark.url}`
+              : 'This shared bookmark is protected with a passcode.'
         }
         canonicalPath={`/shared/${params?.shareId}`}
         ogImage={bookmark.screenshotUrl || undefined}
@@ -132,7 +144,7 @@ export function SharedBookmark() {
                 className="text-3xl font-bold text-foreground"
                 data-testid="shared-bookmark-title"
               >
-                {bookmark.name}
+                {bookmark.name || 'Protected Bookmark'}
               </h1>
               <p className="text-sm text-muted-foreground">Shared bookmark • {timeAgo}</p>
             </div>
@@ -142,6 +154,7 @@ export function SharedBookmark() {
               title="Visit Website"
               variant="ghost"
               className="flex items-center justify-center gap-2 h-12 w-12 p-0 sm:h-11 sm:w-auto sm:px-4"
+              disabled={!bookmark.url}
               data-testid="button-visit-shared-bookmark"
             >
               <span className="hidden sm:inline">Visit Website</span>
@@ -167,13 +180,13 @@ export function SharedBookmark() {
                         className="text-sm font-mono break-all text-foreground"
                         data-testid="shared-bookmark-url"
                       >
-                        {bookmark.url}
+                        {bookmark.url || '••••••••'}
                       </p>
                       <p
                         className="text-xs text-muted-foreground mt-2"
                         data-testid="shared-bookmark-domain"
                       >
-                        {getDomain(bookmark.url)}
+                        {bookmark.url ? getDomain(bookmark.url as string) : ''}
                       </p>
                     </div>
                   </div>
@@ -264,6 +277,11 @@ export function SharedBookmark() {
                   <p>
                     <span className="font-medium">Shared:</span> {timeAgo}
                   </p>
+                  {bookmark?.hasPasscode && (
+                    <p className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                      <Lock size={14} /> Protected — enter passcode to view details
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -278,6 +296,65 @@ export function SharedBookmark() {
           </div>
         </div>
       </div>
+      {/* Unlock modal */}
+      {isUnlockOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-md shadow-xl w-full max-w-sm p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Lock size={18} className="text-muted-foreground" />
+              <h3 className="font-medium">Protected Share</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Enter the bookmark passcode to view this shared content.
+            </p>
+            <input
+              type="password"
+              className="w-full border rounded px-3 py-2 mb-2 bg-background"
+              placeholder="Passcode"
+              value={unlockPasscode}
+              onChange={(e) => {
+                setUnlockPasscode(e.target.value);
+                setUnlockError('');
+              }}
+              disabled={isUnlocking}
+            />
+            {unlockError && <div className="text-sm text-destructive mb-2">{unlockError}</div>}
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsUnlockOpen(false)} disabled={isUnlocking}>
+                Close
+              </Button>
+              <Button
+                onClick={async () => {
+                  setIsUnlocking(true);
+                  setUnlockError('');
+                  try {
+                    const res = await fetch(`/api/shared/${params?.shareId}/verify-passcode`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ passcode: unlockPasscode }),
+                    });
+                    const json = await res.json();
+                    if (!res.ok || !json.valid) {
+                      setUnlockError('Incorrect passcode. Please try again.');
+                    } else {
+                      setBookmark(json.bookmark);
+                      setIsUnlockOpen(false);
+                      setUnlockPasscode('');
+                    }
+                  } catch (e) {
+                    setUnlockError('Failed to verify passcode');
+                  } finally {
+                    setIsUnlocking(false);
+                  }
+                }}
+                disabled={isUnlocking || !unlockPasscode}
+              >
+                {isUnlocking ? 'Verifying…' : 'Unlock'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

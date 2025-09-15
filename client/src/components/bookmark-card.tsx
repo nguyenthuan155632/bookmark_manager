@@ -6,6 +6,7 @@ import {
   Trash2,
   ExternalLink,
   Lock,
+  Unlock as UnlockIcon,
   Eye,
   Share2,
   Copy,
@@ -162,48 +163,32 @@ export function BookmarkCard({
     },
   });
 
-  // Duplicate bookmark mutation (non-protected only)
+  // Remove protection mutation (requires bookmark to be unlocked so we have a passcode/password)
+  const removeProtectionMutation = useMutation({
+    mutationFn: async () => {
+      if (!passcode) {
+        throw new Error('Unlock this bookmark first to remove protection');
+      }
+      return await apiRequest('PATCH', `/api/bookmarks/${bookmark.id}`, {
+        passcode: null,
+        verifyPasscode: passcode,
+      });
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+      toast({ description: 'Protection removed' });
+    },
+    onError: (error: any) => {
+      toast({ variant: 'destructive', description: error?.message || 'Failed to remove protection' });
+    },
+  });
+
+  // Duplicate bookmark mutation (supports unlocked protected items)
   const duplicateBookmarkMutation = useMutation({
     mutationFn: async () => {
-      // Determine next incrementing suffix within the same category
-      const queries = queryClient.getQueriesData<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>(
-        { queryKey: ['/api/bookmarks'] },
-      );
-      const all = queries
-        .map(([, data]) => data || [])
-        .flat()
-        .filter((b) => (b.categoryId ?? null) === (bookmark.categoryId ?? null));
-
-      const stripSuffix = (name: string) => {
-        const m = name.match(/^(.*)\s*\((\d+)\)\s*$/);
-        return m ? m[1] : name;
-      };
-      const base = stripSuffix(bookmark.name).trim();
-      let maxN = 1;
-      for (const b of all) {
-        const n = (() => {
-          const m = b.name.match(/^\s*"?\s*(.*)\s*\((\d+)\)\s*"?\s*$/) || b.name.match(/^(.+?)\s*\((\d+)\)$/);
-          if (m && stripSuffix(b.name).trim() === base) {
-            return parseInt(m[2], 10) || 1;
-          }
-          if (b.name.trim() === base) return 1;
-          return 0;
-        })();
-        if (n > maxN) maxN = n;
-      }
-      const nextName = `${base} (${Math.max(2, maxN + 1)})`;
-
-      const body = {
-        name: nextName,
-        description: bookmark.description || undefined,
-        url: bookmark.url,
-        tags: bookmark.tags || [],
-        isFavorite: bookmark.isFavorite || false,
-        categoryId: bookmark.categoryId ?? undefined,
-        // Never duplicate sharing/protection/screenshot/link meta
-        isShared: false,
-      } as const;
-      return await apiRequest('POST', '/api/bookmarks', body);
+      const body = bookmark.hasPasscode && passcode ? { passcode } : undefined;
+      return await apiRequest('POST', `/api/bookmarks/${bookmark.id}/duplicate`, body);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'], exact: false });
@@ -686,7 +671,7 @@ export function BookmarkCard({
         {/* Action Buttons - Bottom of Card, Flex Wrap */}
         <div className="mb-3">
           <div className="flex flex-wrap items-center justify-center gap-1">
-            {!isProtected && !bookmark.hasPasscode && (
+            {!isProtected && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -748,14 +733,8 @@ export function BookmarkCard({
                 e.stopPropagation();
                 onShare?.(bookmark);
               }}
-              disabled={isProtected || bookmark.hasPasscode || isShareLoading}
-              title={
-                bookmark.hasPasscode
-                  ? 'Protected bookmarks cannot be shared'
-                  : bookmark.isShared
-                    ? 'Stop sharing'
-                    : 'Share bookmark'
-              }
+              disabled={isProtected || isShareLoading}
+              title={bookmark.isShared ? 'Stop sharing' : 'Share bookmark'}
               data-testid={`button-share-${bookmark.id}`}
             >
               {isShareLoading ? (
@@ -849,7 +828,7 @@ export function BookmarkCard({
               <Eye size={16} />
             </Button>
 
-            {bookmark.isShared && bookmark.shareId && !isProtected && !bookmark.hasPasscode && (
+            {bookmark.isShared && bookmark.shareId && !isProtected && (
               <Button
                 size="sm"
                 variant="ghost"
@@ -877,6 +856,30 @@ export function BookmarkCard({
                 data-testid={`button-lock-${bookmark.id}`}
               >
                 <Lock size={16} />
+              </Button>
+            )}
+
+            {bookmark.hasPasscode && !isProtected && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (removeProtectionMutation.isPending) return;
+                  if (!passcode) {
+                    toast({ description: 'Unlock this bookmark first to remove protection' });
+                    return;
+                  }
+                  if (confirm('Remove protection from this bookmark?')) {
+                    removeProtectionMutation.mutate();
+                  }
+                }}
+                disabled={removeProtectionMutation.isPending}
+                data-testid={`button-remove-protection-${bookmark.id}`}
+                title="Remove protection"
+              >
+                <UnlockIcon size={16} />
               </Button>
             )}
           </div>

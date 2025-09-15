@@ -19,6 +19,7 @@ import {
   AlertCircle,
   RefreshCw,
   ArrowUp,
+  Unlock,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useLocation, useRoute } from 'wouter';
@@ -45,6 +46,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -92,6 +100,9 @@ function BookmarksContent() {
   const [bulkPasscodes, setBulkPasscodes] = useState<Record<string, string>>({});
   const [isBulkOperationLoading, setIsBulkOperationLoading] = useState(false);
   const [isConfirmBulkCheckOpen, setIsConfirmBulkCheckOpen] = useState(false);
+  const [isUnlockAllOpen, setIsUnlockAllOpen] = useState(false);
+  const [unlockAllPassword, setUnlockAllPassword] = useState('');
+  const [isUnlockAllPending, setIsUnlockAllPending] = useState(false);
   // We manage hide/show of mobile bars via direct DOM styles for performance.
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -291,6 +302,14 @@ function BookmarksContent() {
     });
   }, [bookmarks, selectedTags, selectedCategory, resolvedCategoryId, location]);
 
+  const lockedProtectedInView = useMemo(() => {
+    return filteredBookmarks.filter((b) => b.hasPasscode && !unlockedBookmarks.has(b.id));
+  }, [filteredBookmarks, unlockedBookmarks]);
+
+  const unlockedProtectedInView = useMemo(() => {
+    return filteredBookmarks.filter((b) => b.hasPasscode && unlockedBookmarks.has(b.id));
+  }, [filteredBookmarks, unlockedBookmarks]);
+
   // Infinite scroll sentinel
   const [sentinelRef, setSentinelRef] = useState<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | HTMLDivElement | null>(null);
@@ -412,7 +431,8 @@ function BookmarksContent() {
   }, [selectedCategory, filteredBookmarks.length, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
 
   const handleEdit = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
-    setEditingBookmark(bookmark);
+    const pass = unlockedPasscodes[bookmark.id];
+    setEditingBookmark(pass ? ({ ...(bookmark as any), __passcode: pass }) : bookmark);
     setIsAddModalOpen(true);
   };
 
@@ -584,12 +604,15 @@ function BookmarksContent() {
   });
 
   const handleShare = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
-    // Toggle sharing status
     const newSharingStatus = !bookmark.isShared;
-    shareBookmarkMutation.mutate({
-      bookmarkId: bookmark.id,
-      isShared: newSharingStatus,
-    });
+    if (newSharingStatus && bookmark.hasPasscode) {
+      // Warn user: passcode-only, not account password
+      const proceed = confirm(
+        'You are about to share a protected bookmark. Viewers must enter the bookmark\'s passcode (NOT your account password) to see its content.\n\nOnly share if the passcode is unique and not your account password. Continue?',
+      );
+      if (!proceed) return;
+    }
+    shareBookmarkMutation.mutate({ bookmarkId: bookmark.id, isShared: newSharingStatus });
   };
 
   // Copy share link for already shared bookmarks
@@ -786,6 +809,17 @@ function BookmarksContent() {
     confirmBulkDelete();
   };
 
+  // Helper: build passcode map for selected IDs merging provided bulk passcodes and any
+  // passcodes from items previously unlocked in this session
+  const buildPasscodeMap = (ids: number[]): Record<string, string> | undefined => {
+    const map: Record<string, string> = { ...bulkPasscodes };
+    ids.forEach((id) => {
+      const pwd = unlockedPasscodes[id];
+      if (pwd && !map[id.toString()]) map[id.toString()] = pwd;
+    });
+    return Object.keys(map).length > 0 ? map : undefined;
+  };
+
   const confirmBulkDelete = () => {
     if (selectedIds.length === 0) return;
 
@@ -793,7 +827,7 @@ function BookmarksContent() {
     bulkDeleteMutation.mutate(
       {
         ids: selectedIds,
-        passcodes: Object.keys(bulkPasscodes).length > 0 ? bulkPasscodes : undefined,
+        passcodes: buildPasscodeMap(selectedIds),
       },
       {
         onSettled: () => {
@@ -811,7 +845,7 @@ function BookmarksContent() {
       {
         ids: selectedIds,
         categoryId,
-        passcodes: Object.keys(bulkPasscodes).length > 0 ? bulkPasscodes : undefined,
+        passcodes: buildPasscodeMap(selectedIds),
       },
       {
         onSettled: () => {
@@ -867,7 +901,7 @@ function BookmarksContent() {
   const confirmBulkCheckLinks = () => {
     const isSelected = selectedIds.length > 0;
     if (isSelected) {
-      bulkCheckLinksMutation.mutate({ ids: selectedIds, passcodes: bulkPasscodes });
+      bulkCheckLinksMutation.mutate({ ids: selectedIds, passcodes: buildPasscodeMap(selectedIds) });
     } else {
       bulkCheckLinksMutation.mutate({ ids: [] });
     }
@@ -1220,6 +1254,50 @@ function BookmarksContent() {
                 <span>{selectedIds.length > 0 ? `Check ${selectedIds.length}` : 'Check All'}</span>
               </Button>
 
+              {selectedCategory === 'hidden' && lockedProtectedInView.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsUnlockAllOpen(true)}
+                  className="flex items-center space-x-2"
+                  data-testid="button-unlock-all"
+                  title="Unlock all protected items in this view"
+                >
+                  <Unlock size={14} />
+                  <span>Unlock All</span>
+                </Button>
+              )}
+
+              {selectedCategory === 'hidden' && unlockedProtectedInView.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const ids = unlockedProtectedInView.map((b) => b.id);
+                    if (ids.length === 0) return;
+                    setUnlockedBookmarks((prev) => {
+                      const next = new Set(prev);
+                      ids.forEach((id) => next.delete(id));
+                      return next;
+                    });
+                    setUnlockedPasscodes((prev) => {
+                      const next = { ...prev } as Record<number, string>;
+                      ids.forEach((id) => {
+                        delete next[id];
+                      });
+                      return next;
+                    });
+                    toast({ description: `Locked ${ids.length} item${ids.length === 1 ? '' : 's'}` });
+                  }}
+                  className="flex items-center space-x-2"
+                  data-testid="button-lock-all"
+                  title="Re-lock all unlocked items in this view"
+                >
+                  <X size={14} />
+                  <span>Lock All</span>
+                </Button>
+              )}
+
               <Select
                 value={`${sortBy}-${sortOrder}`}
                 onValueChange={(value) => {
@@ -1320,6 +1398,52 @@ function BookmarksContent() {
                 </SelectContent>
               </Select>
             </div>
+
+            {selectedCategory === 'hidden' && lockedProtectedInView.length > 0 && (
+              <div className="flex items-center justify-end mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsUnlockAllOpen(true)}
+                  className="flex items-center space-x-2"
+                  data-testid="button-unlock-all-mobile"
+                >
+                  <Unlock size={14} />
+                  <span>Unlock All</span>
+                </Button>
+              </div>
+            )}
+
+            {selectedCategory === 'hidden' && unlockedProtectedInView.length > 0 && (
+              <div className="flex items-center justify-end mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const ids = unlockedProtectedInView.map((b) => b.id);
+                    if (ids.length === 0) return;
+                    setUnlockedBookmarks((prev) => {
+                      const next = new Set(prev);
+                      ids.forEach((id) => next.delete(id));
+                      return next;
+                    });
+                    setUnlockedPasscodes((prev) => {
+                      const next = { ...prev } as Record<number, string>;
+                      ids.forEach((id) => {
+                        delete next[id];
+                      });
+                      return next;
+                    });
+                    toast({ description: `Locked ${ids.length} item${ids.length === 1 ? '' : 's'}` });
+                  }}
+                  className="flex items-center space-x-2"
+                  data-testid="button-lock-all-mobile"
+                >
+                  <X size={14} />
+                  <span>Lock All</span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1477,6 +1601,114 @@ function BookmarksContent() {
         bookmark={selectedProtectedBookmark || undefined}
         onSuccess={handlePasscodeSuccess}
       />
+
+      {/* Unlock All Modal */}
+      <Dialog
+        open={isUnlockAllOpen}
+        onOpenChange={(v) => {
+          if (!isUnlockAllPending) {
+            setIsUnlockAllOpen(v);
+            if (!v) setUnlockAllPassword('');
+          }
+        }}
+      >
+        <DialogContent className="max-w-md" data-testid="modal-unlock-all">
+          <DialogHeader>
+            <DialogTitle>Unlock All Protected Bookmarks</DialogTitle>
+            <DialogDescription>
+              Enter your account password to unlock all protected items currently in view.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              type="password"
+              placeholder="Account password"
+              value={unlockAllPassword}
+              onChange={(e) => setUnlockAllPassword(e.target.value)}
+              disabled={isUnlockAllPending}
+              data-testid="input-unlock-all-password"
+            />
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!isUnlockAllPending) {
+                    setIsUnlockAllOpen(false);
+                    setUnlockAllPassword('');
+                  }
+                }}
+                disabled={isUnlockAllPending}
+                data-testid="button-cancel-unlock-all"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!unlockAllPassword) return;
+                  setIsUnlockAllPending(true);
+                  try {
+                    const targets = lockedProtectedInView.map((b) => b.id);
+                    const results = await Promise.allSettled(
+                      targets.map(async (id) => {
+                        const res = await apiRequest('POST', `/api/bookmarks/${id}/verify-passcode`, {
+                          passcode: unlockAllPassword,
+                        });
+                        const json = await res.json();
+                        return { id, valid: json.valid as boolean };
+                      }),
+                    );
+                    let unlocked = 0;
+                    const newlyUnlocked: number[] = [];
+                    results.forEach((r) => {
+                      if (r.status === 'fulfilled' && r.value.valid) {
+                        unlocked += 1;
+                        newlyUnlocked.push(r.value.id);
+                      }
+                    });
+
+                    if (unlocked > 0) {
+                      setUnlockedBookmarks((prev) =>
+                        new Set([...Array.from(prev), ...newlyUnlocked]),
+                      );
+                      setUnlockedPasscodes((prev) => {
+                        const next = { ...prev } as Record<number, string>;
+                        newlyUnlocked.forEach((id) => {
+                          next[id] = unlockAllPassword;
+                        });
+                        return next;
+                      });
+                    }
+
+                    const failed = targets.length - unlocked;
+                    if (failed === 0) {
+                      toast({
+                        description: `Unlocked ${unlocked} protected item${unlocked === 1 ? '' : 's'}`,
+                      });
+                    } else if (unlocked > 0) {
+                      toast({ description: `Unlocked ${unlocked} of ${targets.length} items` });
+                    } else {
+                      toast({
+                        variant: 'destructive',
+                        description: 'Failed to unlock any items. Check your password.',
+                      });
+                    }
+                    setIsUnlockAllOpen(false);
+                    setUnlockAllPassword('');
+                  } catch (e) {
+                    toast({ variant: 'destructive', description: 'Failed to unlock items' });
+                  } finally {
+                    setIsUnlockAllPending(false);
+                  }
+                }}
+                disabled={isUnlockAllPending || !unlockAllPassword}
+                data-testid="button-confirm-unlock-all"
+              >
+                {isUnlockAllPending ? 'Unlocking…' : `Unlock All (${lockedProtectedInView.length})`}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm Bulk Check Links Dialog */}
       <AlertDialog open={isConfirmBulkCheckOpen} onOpenChange={setIsConfirmBulkCheckOpen}>

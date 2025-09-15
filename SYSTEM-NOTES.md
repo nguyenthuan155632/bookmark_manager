@@ -19,8 +19,8 @@
 
 ## Protected Bookmarks
 - For update/delete/check-link/screenshot/auto-tags on protected items:
-  - Require `passcode` in body; 400 on bad format; 401 on missing/invalid.
-- Verify endpoint: `POST /api/bookmarks/:id/verify-passcode` → `{ valid }`.
+  - Require `passcode` in body. The provided secret may be either the bookmark's passcode or the owner's account password (only when the owner is authenticated). 400 on bad format; 401 on missing/invalid.
+- Verify endpoint: `POST /api/bookmarks/:id/verify-passcode` → `{ valid }`. Accepts passcode or owner's account password when authenticated.
 
 ## Sharing
 - `PATCH /api/bookmarks/:id/share` { isShared }: generates/clears `shareId`.

@@ -88,7 +88,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     queryKey: ['/api/preferences'],
   });
 
-  const form = useForm<FormData>({
+  const form = useForm<FormData & { removeVerify?: string }>({
     resolver: zodResolver(createFormSchema()),
     defaultValues: {
       name: '',
@@ -99,7 +99,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       tags: [],
       tagInput: '',
       passcode: '',
-    },
+      removeVerify: '',
+      },
   });
 
   // Clear passcode errors when protection state changes
@@ -318,7 +319,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     try {
       new URL(currentUrl); // Validate URL
       setIsGeneratingSuggestions(true);
-      const passcode = isProtected ? form.getValues('passcode') || undefined : undefined;
+      const passcode = isProtected
+        ? (form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined)
+        : undefined;
       generateAutoTagsMutation.mutate({
         bookmarkId: editingBookmark?.id,
         passcode,
@@ -379,8 +382,10 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   // Handle accepting individual suggested tags
   const handleAcceptSuggestedTag = (tagToAccept: string) => {
     if (editingBookmark) {
-      // For existing bookmarks, use the API
-      const passcode = isProtected ? form.getValues('passcode') || undefined : undefined;
+      // For existing bookmarks, use the API. If protected, prefer form passcode; fall back to unlocked passcode from parent.
+      const passcode = isProtected
+        ? (form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined)
+        : undefined;
       acceptSuggestedTagsMutation.mutate({
         bookmarkId: editingBookmark.id,
         tags: [tagToAccept],
@@ -402,8 +407,10 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     if (suggestedTags.length === 0) return;
 
     if (editingBookmark) {
-      // For existing bookmarks, use the API
-      const passcode = isProtected ? form.getValues('passcode') || undefined : undefined;
+      // For existing bookmarks, use the API. If protected, prefer form passcode; fall back to unlocked passcode from parent.
+      const passcode = isProtected
+        ? (form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined)
+        : undefined;
       acceptSuggestedTagsMutation.mutate({
         bookmarkId: editingBookmark.id,
         tags: suggestedTags,
@@ -491,7 +498,24 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       bookmarkData.passcode = null;
     }
 
-    createMutation.mutate(bookmarkData);
+    // Build payload with optional verification secret when removing protection
+    let payload: any = bookmarkData;
+    if (editingBookmark) {
+      const wasProtected = editingBookmark.hasPasscode || false;
+      if (wasProtected && !isProtected) {
+        const verify = (form.getValues('removeVerify') || '').trim();
+        if (!verify) {
+          toast({
+            variant: 'destructive',
+            description: 'Please enter your current passcode or account password to remove protection',
+          });
+          return;
+        }
+        payload = { ...bookmarkData, verifyPasscode: verify };
+      }
+    }
+
+    createMutation.mutate(payload);
   };
 
   return (
@@ -820,9 +844,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                 checked={isProtected}
                 onCheckedChange={(checked) => {
                   setIsProtected(checked);
-                  if (!checked) {
-                    form.setValue('passcode', '');
-                  }
+                  // Do not clear passcode here; if user is disabling protection,
+                  // we will ask for current passcode/password in a verification field.
                   // Clear all form errors when toggling protection
                   form.clearErrors();
                 }}
@@ -855,6 +878,27 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                   {editingBookmark
                     ? 'Must be 4-64 characters long. Leave empty to keep current passcode.'
                     : 'Must be 4-64 characters long. Required for protection.'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  You (the owner) can unlock protected items using either this passcode or your account password when logged in.
+                </p>
+              </div>
+            )}
+
+            {!isProtected && editingBookmark?.hasPasscode && (
+              <div className="space-y-2">
+                <Label htmlFor="removeVerify" className="text-sm font-medium">
+                  Current passcode or account password
+                </Label>
+                <Input
+                  id="removeVerify"
+                  type="password"
+                  placeholder="Enter to confirm removal of protection"
+                  {...form.register('removeVerify')}
+                  data-testid="input-remove-verify"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Required to remove protection from this bookmark.
                 </p>
               </div>
             )}

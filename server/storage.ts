@@ -130,14 +130,19 @@ export interface IStorage {
   // Bookmark sharing methods
   generateShareId(): string;
   setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
-  getSharedBookmark(shareId: string): Promise<
+  getSharedBookmark(
+    shareId: string,
+    options?: { full?: boolean },
+  ): Promise<
     | {
       name: string;
       description: string | null;
-      url: string;
+      url: string | null;
       tags: string[] | null;
+      screenshotUrl?: string | null;
       createdAt: Date;
       category?: { name: string } | null;
+      hasPasscode?: boolean;
     }
     | undefined
   >;
@@ -530,6 +535,80 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBookmark(userId: string, id: number): Promise<void> {
     await db.delete(bookmarks).where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
+  }
+
+  async duplicateBookmark(
+    userId: string,
+    id: number,
+  ): Promise<Bookmark & { hasPasscode?: boolean }> {
+    const [orig] = await db
+      .select()
+      .from(bookmarks)
+      .where(and(eq(bookmarks.id, id), eq(bookmarks.userId, userId)));
+
+    if (!orig) {
+      throw new Error('Bookmark not found');
+    }
+
+    // Determine next unique name within the same category using (n) suffix pattern
+    const namesInCategory = await db
+      .select({ name: bookmarks.name })
+      .from(bookmarks)
+      .where(
+        and(
+          eq(bookmarks.userId, userId),
+          orig.categoryId == null ? isNull(bookmarks.categoryId) : eq(bookmarks.categoryId, orig.categoryId!),
+        ),
+      );
+
+    const stripSuffix = (name: string) => {
+      const m = name.match(/^(.*)\s*\((\d+)\)\s*$/);
+      return m ? m[1] : name;
+    };
+    const base = stripSuffix(orig.name).trim();
+    let maxN = 1;
+    for (const row of namesInCategory) {
+      const n = (() => {
+        const m =
+          row.name.match(/^\s*"?\s*(.*)\s*\((\d+)\)\s*"?\s*$/) ||
+          row.name.match(/^(.+?)\s*\((\d+)\)$/);
+        if (m && stripSuffix(row.name).trim() === base) {
+          return parseInt(m[2], 10) || 1;
+        }
+        if (row.name.trim() === base) return 1;
+        return 0;
+      })();
+      if (n > maxN) maxN = n;
+    }
+    const nextName = `${base} (${Math.max(2, maxN + 1)})`;
+
+    // Insert a new bookmark copying most attributes. Do not carry over shareId to avoid uniqueness issues.
+    const [created] = await db
+      .insert(bookmarks)
+      .values({
+        name: nextName,
+        description: orig.description,
+        url: orig.url,
+        tags: orig.tags,
+        suggestedTags: orig.suggestedTags,
+        isFavorite: orig.isFavorite,
+        categoryId: orig.categoryId,
+        userId: orig.userId,
+        passcodeHash: orig.passcodeHash,
+        isShared: false,
+        shareId: null,
+        screenshotUrl: orig.screenshotUrl,
+        screenshotStatus: orig.screenshotStatus,
+        screenshotUpdatedAt: orig.screenshotUpdatedAt,
+        linkStatus: orig.linkStatus,
+        httpStatus: orig.httpStatus,
+        lastLinkCheckAt: orig.lastLinkCheckAt,
+        linkFailCount: orig.linkFailCount,
+      })
+      .returning();
+
+    const { passcodeHash, ...rest } = created;
+    return { ...rest, hasPasscode: !!passcodeHash } as Bookmark & { hasPasscode?: boolean };
   }
 
   async verifyBookmarkPasscode(userId: string, id: number, passcode: string): Promise<boolean> {
@@ -953,15 +1032,19 @@ export class DatabaseStorage implements IStorage {
     return bookmarkResponse as Bookmark;
   }
 
-  async getSharedBookmark(shareId: string): Promise<
+  async getSharedBookmark(
+    shareId: string,
+    options?: { full?: boolean },
+  ): Promise<
     | {
       name: string;
       description: string | null;
-      url: string;
+      url: string | null;
       tags: string[] | null;
       screenshotUrl?: string | null;
       createdAt: Date;
       category?: { name: string } | null;
+      hasPasscode?: boolean;
     }
     | undefined
   > {
@@ -974,12 +1057,30 @@ export class DatabaseStorage implements IStorage {
         screenshotUrl: bookmarks.screenshotUrl,
         createdAt: bookmarks.createdAt,
         categoryName: categories.name,
+        passcodeHash: bookmarks.passcodeHash,
       })
       .from(bookmarks)
       .leftJoin(categories, eq(bookmarks.categoryId, categories.id))
       .where(and(eq(bookmarks.shareId, shareId), eq(bookmarks.isShared, true)));
 
     if (!result) return undefined;
+
+    const hasPass = !!result.passcodeHash;
+    const full = options?.full === true;
+
+    if (hasPass && !full) {
+      // Censor content until passcode verified
+      return {
+        name: '',
+        description: null,
+        url: '',
+        tags: [],
+        screenshotUrl: null,
+        createdAt: result.createdAt,
+        category: result.categoryName ? { name: result.categoryName } : undefined,
+        hasPasscode: true,
+      };
+    }
 
     return {
       name: result.name,
@@ -989,7 +1090,17 @@ export class DatabaseStorage implements IStorage {
       screenshotUrl: result.screenshotUrl,
       createdAt: result.createdAt,
       category: result.categoryName ? { name: result.categoryName } : undefined,
+      hasPasscode: hasPass,
     };
+  }
+
+  async verifySharedPasscode(shareId: string, passcode: string): Promise<boolean> {
+    const [row] = await db
+      .select({ passcodeHash: bookmarks.passcodeHash })
+      .from(bookmarks)
+      .where(and(eq(bookmarks.shareId, shareId), eq(bookmarks.isShared, true)));
+    if (!row?.passcodeHash) return false;
+    return await bcrypt.compare(passcode, row.passcodeHash);
   }
 
   // Auto-tagging methods

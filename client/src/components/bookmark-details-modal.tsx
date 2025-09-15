@@ -171,7 +171,7 @@ export function BookmarkDetailsModal({ isOpen, onClose, bookmark }: BookmarkDeta
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="outline" className="text-xs">
                       <Lock size={10} className="mr-1" />
-                      Protected with passcode
+                      Protected
                     </Badge>
                   </div>
                 </div>

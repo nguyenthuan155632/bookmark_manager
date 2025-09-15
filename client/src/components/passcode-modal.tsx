@@ -96,7 +96,7 @@ export function PasscodeModal({ isOpen, onClose, bookmark, onSuccess }: Passcode
         onSuccess(passcode);
         handleClose();
       } else {
-        setSubmitError('Incorrect passcode. Please try again.');
+        setSubmitError('Incorrect passcode or password. Please try again.');
         form.setFocus('passcode');
       }
     },
@@ -156,19 +156,19 @@ export function PasscodeModal({ isOpen, onClose, bookmark, onSuccess }: Passcode
             Protected Bookmark
           </DialogTitle>
           <DialogDescription data-testid="modal-description-passcode">
-            Enter the passcode to access "{bookmark.name}"
+            Enter the passcode or your account password to access
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="passcode-input" className="text-sm font-medium">
-              Passcode
+              Passcode or account password
             </Label>
             <Input
               id="passcode-input"
               type="password"
-              placeholder="Enter passcode"
+              placeholder="Enter passcode or account password"
               {...form.register('passcode')}
               onKeyDown={handleKeyDown}
               disabled={verifyPasscodeMutation.isPending}

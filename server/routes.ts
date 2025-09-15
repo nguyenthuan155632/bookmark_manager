@@ -272,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return { success: true };
     }
 
-    // If bookmark is protected, require passcode
+    // If bookmark is protected, require passcode or owner's account password
     if (!providedPasscode || typeof providedPasscode !== 'string') {
       return {
         success: false,
@@ -294,8 +294,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
     }
 
-    // Verify the passcode
-    const isValid = await storage.verifyBookmarkPasscode(userId, bookmarkId, providedPasscode);
+    // Verify the passcode (bookmark-specific)
+    const isValidPasscode = await storage.verifyBookmarkPasscode(
+      userId,
+      bookmarkId,
+      providedPasscode,
+    );
+
+    // If passcode did not match, allow owner's account password as an alternative
+    let isValid = isValidPasscode;
+    if (!isValidPasscode && req.isAuthenticated && req.isAuthenticated()) {
+      try {
+        // Only the owner reaches this code path since getBookmark used userId scoping
+        const ok = await comparePasswords(providedPasscode, (req.user as any).password);
+        if (ok) isValid = true;
+      } catch {
+        // ignore
+      }
+    }
 
     // Log failed attempts for monitoring
     if (!isValid) {
@@ -444,6 +460,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Duplicate a bookmark, preserving attributes (except share link); passcode or password may be required
+  app.post('/api/bookmarks/:id/duplicate', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid bookmark ID' });
+      }
+
+      // Validate body
+      const schema = z.object({ passcode: z.string().optional() });
+      const { passcode } = schema.parse(req.body || {});
+
+      // Verify access to protected bookmark
+      const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
+      if (!accessResult.success) {
+        return res
+          .status(accessResult.error!.status)
+          .json({ message: accessResult.error!.message });
+      }
+
+      const duplicated = await storage.duplicateBookmark(userId, id);
+      res.status(201).json(duplicated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
+      }
+      console.error('Error duplicating bookmark:', error);
+      res.status(500).json({ message: 'Failed to duplicate bookmark' });
+    }
+  });
+
   app.patch('/api/bookmarks/:id', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
@@ -463,10 +511,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!onlyFavoriteToggle) {
         // Extract passcode from request body for security verification
-        const { passcode } = req.body;
+        // Allow a separate verifyPasscode field when removing passcode (passcode: null)
+        const providedPasscode = (req.body as any)?.verifyPasscode ?? (req.body as any)?.passcode;
 
         // Verify access for protected bookmarks for other fields
-        const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
+        const accessResult = await verifyProtectedBookmarkAccess(
+          userId,
+          id,
+          providedPasscode,
+          req,
+        );
         if (!accessResult.success) {
           return res
             .status(accessResult.error!.status)
@@ -544,7 +598,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Bookmark not found' });
       }
 
-      const isValid = await storage.verifyBookmarkPasscode(userId, id, passcode);
+      // First check bookmark-specific passcode
+      let isValid = await storage.verifyBookmarkPasscode(userId, id, passcode);
+
+      // If that fails, allow owner's account password when authenticated
+      if (!isValid && req.isAuthenticated && req.isAuthenticated()) {
+        try {
+          const ok = await comparePasswords(passcode, (req.user as any).password);
+          if (ok) isValid = true;
+        } catch {
+          //
+        }
+      }
 
       // Log failed attempts for monitoring
       if (!isValid) {
@@ -880,15 +945,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { isShared } = shareSchema.parse(req.body);
 
-      // Get the bookmark first to check if it's protected
+      // Get the bookmark first to check if it exists
       const bookmark = await storage.getBookmark(userId, id);
       if (!bookmark) {
         return res.status(404).json({ message: 'Bookmark not found' });
-      }
-
-      // Prevent sharing of protected bookmarks
-      if (bookmark.hasPasscode && isShared) {
-        return res.status(403).json({ message: 'Protected bookmarks cannot be shared' });
       }
 
       // Update bookmark sharing status
@@ -925,6 +985,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Verify passcode for shared bookmark and return full details if valid
+  app.post('/api/shared/:shareId/verify-passcode', async (req, res) => {
+    try {
+      const { shareId } = req.params as any;
+      const schema = z.object({ passcode: z.string().min(4).max(64) });
+      const { passcode } = schema.parse(req.body || {});
+
+      const isValid = await storage.verifySharedPasscode(shareId, passcode);
+      if (!isValid) {
+        return res.status(401).json({ valid: false });
+      }
+
+      const full = await storage.getSharedBookmark(shareId, { full: true });
+      if (!full) return res.status(404).json({ message: 'Shared bookmark not found' });
+      return res.json({ valid: true, bookmark: full });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid data', errors: error.errors });
+      }
+      console.error('Error verifying shared passcode:', error);
+      res.status(500).json({ message: 'Failed to verify passcode' });
+    }
+  });
+
   // Bulk operations for bookmarks
   app.post('/api/bookmarks/bulk/delete', requireAuth, async (req, res) => {
     try {
@@ -933,11 +1017,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate request body
       const { ids, passcodes } = bulkDeleteSchema.parse(req.body);
 
-      // Perform bulk deletion
-      const result = await storage.bulkDeleteBookmarks(userId, ids, passcodes);
+      // If a provided secret equals the owner's password, treat it as authorized and delete directly
+      const remainingIds: number[] = [];
+      const remainingPasscodes: Record<string, string> = { ...(passcodes || {}) };
+      const directDeleteIds: number[] = [];
 
-      // Return results
-      res.json(result);
+      if (passcodes && Object.keys(passcodes).length > 0) {
+        for (const id of ids) {
+          const provided = passcodes[id.toString()];
+          if (!provided) {
+            remainingIds.push(id);
+            continue;
+          }
+          try {
+            const ok = await comparePasswords(provided, (req.user as any).password);
+            if (ok) {
+              directDeleteIds.push(id);
+              delete remainingPasscodes[id.toString()];
+            } else {
+              remainingIds.push(id);
+            }
+          } catch {
+            remainingIds.push(id);
+          }
+        }
+      } else {
+        remainingIds.push(...ids);
+      }
+
+      const deletedIds: number[] = [];
+      const failed: { id: number; reason: string }[] = [];
+
+      // Perform direct deletes for those validated via account password
+      for (const id of directDeleteIds) {
+        try {
+          await storage.deleteBookmark(userId, id);
+          deletedIds.push(id);
+        } catch (e) {
+          failed.push({ id, reason: 'Failed to delete bookmark' });
+        }
+      }
+
+      // Use existing bulk path for the rest (supports real passcodes and unprotected items)
+      if (remainingIds.length > 0) {
+        const result = await storage.bulkDeleteBookmarks(userId, remainingIds, remainingPasscodes);
+        deletedIds.push(...result.deletedIds);
+        failed.push(...result.failed);
+      }
+
+      res.json({ deletedIds, failed });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
@@ -957,11 +1085,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate request body
       const { ids, categoryId, passcodes } = bulkMoveSchema.parse(req.body);
 
-      // Perform bulk move
-      const result = await storage.bulkMoveBookmarks(userId, ids, categoryId, passcodes);
+      // If a provided secret equals the owner's password, treat it as authorized and move directly
+      const remainingIds: number[] = [];
+      const remainingPasscodes: Record<string, string> = { ...(passcodes || {}) };
+      const directMoveIds: number[] = [];
 
-      // Return results
-      res.json(result);
+      if (passcodes && Object.keys(passcodes).length > 0) {
+        for (const id of ids) {
+          const provided = passcodes[id.toString()];
+          if (!provided) {
+            remainingIds.push(id);
+            continue;
+          }
+          try {
+            const ok = await comparePasswords(provided, (req.user as any).password);
+            if (ok) {
+              directMoveIds.push(id);
+              delete remainingPasscodes[id.toString()];
+            } else {
+              remainingIds.push(id);
+            }
+          } catch {
+            remainingIds.push(id);
+          }
+        }
+      } else {
+        remainingIds.push(...ids);
+      }
+
+      const movedIds: number[] = [];
+      const failed: { id: number; reason: string }[] = [];
+
+      // Perform direct moves for those validated via account password
+      for (const id of directMoveIds) {
+        try {
+          await storage.updateBookmark(userId, id, { categoryId } as any);
+          movedIds.push(id);
+        } catch (e) {
+          failed.push({ id, reason: 'Failed to move bookmark' });
+        }
+      }
+
+      // Use existing bulk path for the rest (supports real passcodes and unprotected items)
+      if (remainingIds.length > 0) {
+        const result = await storage.bulkMoveBookmarks(userId, remainingIds, categoryId, remainingPasscodes);
+        movedIds.push(...result.movedIds);
+        failed.push(...result.failed);
+      }
+
+      res.json({ movedIds, failed });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
