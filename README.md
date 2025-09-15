@@ -310,14 +310,13 @@ npm run check        # Run TypeScript type checking
 - `THUMIO_TIMEOUT_MS` (optional): Timeout for Thum.io probes in milliseconds. Default `8000`.
 - `SCREENSHOT_PENDING_TIMEOUT_MS` (optional): Failsafe timeout to auto-fail screenshots stuck in pending. Default `30000`.
 - `VITE_PUBLIC_BASE_URL` (optional): Absolute base URL for the site (e.g., `https://yourdomain.com`). Used for canonical URLs and structured data in the SEO helper.
- - `OPENAI_API_KEY` (optional): Enables AI-assisted features. Server uses moderation via `omni-moderation-latest`. If OpenRouter is not configured, OpenAI is used for chat generation.
- - `OPENAI_TAG_MODEL` (optional): OpenAI model for tag generation. Default `gpt-5-nano` in code unless overridden.
- - `OPENAI_DESC_MODEL` (optional): OpenAI model for description generation. Defaults to `OPENAI_TAG_MODEL` or `gpt-5-nano`.
- - `OPENAI_TAGS_MAX` (optional): Max number of tags to return. Default `8`.
- - `OPENAI_TIMEOUT_MS` (optional): Timeout for AI requests in milliseconds. Default `6000`.
- - `OPENROUTER_API_KEY` (optional): When set, uses OpenRouter for chat completions.
- - `OPENROUTER_TAG_MODEL` (optional): OpenRouter model for tag generation. Default `deepseek/deepseek-chat-v3.1:free`.
- - `OPENROUTER_DESC_MODEL` (optional): OpenRouter model for description generation. Default `deepseek/deepseek-chat-v3.1:free`.
+ - AI (OpenRouter)
+   - `OPENROUTER_API_KEY` (optional): Enables AI-assisted tag and description generation via OpenRouter.
+   - `OPENROUTER_TAG_MODEL` (optional): OpenRouter model for tag generation. Default `deepseek/deepseek-chat-v3.1:free`.
+   - `OPENROUTER_DESC_MODEL` (optional): OpenRouter model for description generation. Default `deepseek/deepseek-chat-v3.1:free`.
+   - `OPENROUTER_SITE_URL` (optional): Public site URL used as Referer header for OpenRouter.
+   - `OPENROUTER_SITE_TITLE` (optional): Site/app name sent to OpenRouter.
+ - Deprecated: OpenAI variables (`OPENAI_*`) are no longer used.
  - `AI_DESC_MAX_CHARS` (optional): Max characters for generated descriptions (120–500). Default `300`.
  - `AI_DESC_MIN_CHARS` (optional): Minimum target length; if first draft is shorter, the server retries once to expand. Default `180`.
 
@@ -368,8 +367,8 @@ npm run check        # Run TypeScript type checking
 - Link Check Schedule (per user): enable/disable, interval (min 1 minute), batch size; “Run now” for a one‑off check
 - Export/Import: JSON/CSV export; CSV import with column mapping and tags delimiter
 - Auto‑tag Suggestions: enable/disable automatic tag suggestions when adding bookmarks
-  - When `OPENAI_API_KEY` is configured, AI is used to refine tags; otherwise, a heuristic fallback is used.
- - Auto‑description: when description is blank, the server will attempt to generate a concise description in the background (OpenRouter preferred when `OPENROUTER_API_KEY` is set; otherwise OpenAI if available). Preview and per‑bookmark endpoints are also available.
+  - When `OPENROUTER_API_KEY` is configured, AI is used to refine tags; otherwise, a heuristic fallback is used.
+ - Auto‑description: when description is blank, the server will attempt to generate a concise description in the background (uses OpenRouter when `OPENROUTER_API_KEY` is set). Preview and per‑bookmark endpoints are also available.
 
 ### API Endpoints (AI)
 

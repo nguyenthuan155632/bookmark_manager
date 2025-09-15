@@ -157,22 +157,41 @@ export function SharedBookmark() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* URL Section */}
-              <div className="space-y-2">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p
-                    className="text-sm font-mono break-all text-foreground"
-                    data-testid="shared-bookmark-url"
-                  >
-                    {bookmark.url}
-                  </p>
-                  <p
-                    className="text-xs text-muted-foreground mt-2"
-                    data-testid="shared-bookmark-domain"
-                  >
-                    {getDomain(bookmark.url)}
-                  </p>
+              {/* URL + Thumbnail row (thumbnail on the right, above the first separator) */}
+              <div className="md:flex md:items-start md:gap-6">
+                {/* URL Section */}
+                <div className="flex-1">
+                  <div className="space-y-2">
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p
+                        className="text-sm font-mono break-all text-foreground"
+                        data-testid="shared-bookmark-url"
+                      >
+                        {bookmark.url}
+                      </p>
+                      <p
+                        className="text-xs text-muted-foreground mt-2"
+                        data-testid="shared-bookmark-domain"
+                      >
+                        {getDomain(bookmark.url)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+                {bookmark.screenshotUrl && (
+                  <div className="mt-3 md:mt-0 w-full md:w-40 lg:w-56 xl:w-64 md:shrink-0">
+                    <div className="rounded-md border bg-muted/20 overflow-hidden">
+                      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                      <img
+                        src={bookmark.screenshotUrl}
+                        alt={bookmark.name}
+                        className="w-full h-auto object-cover"
+                        loading="lazy"
+                        data-testid="shared-bookmark-screenshot"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Description Section */}

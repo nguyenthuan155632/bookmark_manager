@@ -959,6 +959,7 @@ export class DatabaseStorage implements IStorage {
       description: string | null;
       url: string;
       tags: string[] | null;
+      screenshotUrl?: string | null;
       createdAt: Date;
       category?: { name: string } | null;
     }
@@ -970,6 +971,7 @@ export class DatabaseStorage implements IStorage {
         description: bookmarks.description,
         url: bookmarks.url,
         tags: bookmarks.tags,
+        screenshotUrl: bookmarks.screenshotUrl,
         createdAt: bookmarks.createdAt,
         categoryName: categories.name,
       })
@@ -984,6 +986,7 @@ export class DatabaseStorage implements IStorage {
       description: result.description,
       url: result.url,
       tags: result.tags,
+      screenshotUrl: result.screenshotUrl,
       createdAt: result.createdAt,
       category: result.categoryName ? { name: result.categoryName } : undefined,
     };
