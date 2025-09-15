@@ -175,7 +175,7 @@ The application will be available at `http://localhost:4001`
 
 ## Chrome Extension (optional)
 
-An optional Chrome extension is provided in `extension/` to save the current tab to your Vensera server.
+An optional Chrome extension is provided in `extension/` to save the current tab to your Memorize server.
 
 - API endpoints for extensions:
   - `POST /api/ext/login` with `{ username, password }` → `{ token }`

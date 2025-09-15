@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Memorize Bookmark",
+  "name": "Memorize Bookmark (Dev)",
   "version": "0.1.0",
-  "description": "Quickly bookmark the current page to your Memorize app.",
+  "description": "Dev build: bookmark current page to your Memorize app.",
   "action": {
     "default_title": "Save to Memorize",
     "default_popup": "popup.html",
@@ -17,6 +17,9 @@
   ],
   "host_permissions": [
     "https://vensera.up.railway.app/*"
+  ],
+  "optional_host_permissions": [
+    "http://localhost:4001/*"
   ],
   "icons": {
     "16": "icon-16.png",

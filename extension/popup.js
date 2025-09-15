@@ -50,27 +50,43 @@ async function getInstallType() {
 }
 
 async function loadState() {
-  const stored = await chrome.storage.local.get(['venseraBaseUrl', 'venseraToken']);
+  const stored = await chrome.storage.local.get([
+    'memorizeBaseUrl',
+    'memorizeToken',
+    // migration from previous keys
+    'venseraBaseUrl',
+    'venseraToken',
+  ]);
   const installType = await getInstallType();
   const isDev = installType === 'development';
 
   // Decide default base URL by install type
-  let base = stored.venseraBaseUrl;
+  // Migrate old keys to new keys if present
+  if (!stored.memorizeBaseUrl && stored.venseraBaseUrl) {
+    await chrome.storage.local.set({ memorizeBaseUrl: stored.venseraBaseUrl });
+    await chrome.storage.local.remove('venseraBaseUrl');
+  }
+  if (!stored.memorizeToken && stored.venseraToken) {
+    await chrome.storage.local.set({ memorizeToken: stored.venseraToken });
+    await chrome.storage.local.remove('venseraToken');
+  }
+
+  let base = stored.memorizeBaseUrl;
   if (!base) {
     base = isDev ? 'http://localhost:4001' : 'https://vensera.up.railway.app';
-    await chrome.storage.local.set({ venseraBaseUrl: base });
+    await chrome.storage.local.set({ memorizeBaseUrl: base });
   }
   els.baseUrl.value = base;
 
   // Show row in dev, or if no URL is set yet; otherwise hide/lock in packed installs
-  const shouldShow = isDev || !stored.venseraBaseUrl;
+  const shouldShow = isDev || !stored.memorizeBaseUrl;
   const lock = !shouldShow;
 
   els.baseUrl.readOnly = lock;
   els.baseUrl.disabled = lock;
   if (els.baseUrlRow) show(els.baseUrlRow, shouldShow);
 
-  const token = stored.venseraToken || '';
+  const token = stored.memorizeToken || '';
   show(els.loginView, !token);
   show(els.createView, !!token);
   if (token) {
@@ -81,7 +97,7 @@ async function loadState() {
 }
 
 els.baseUrl.addEventListener('change', async () => {
-  await chrome.storage.local.set({ venseraBaseUrl: els.baseUrl.value.trim() });
+  await chrome.storage.local.set({ memorizeBaseUrl: els.baseUrl.value.trim() });
 });
 
 els.loginBtn.addEventListener('click', async () => {
@@ -104,7 +120,7 @@ els.loginBtn.addEventListener('click', async () => {
     if (!res.ok) {
       throw new Error(j.message || 'Login failed');
     }
-    await chrome.storage.local.set({ venseraToken: j.token, venseraBaseUrl: base });
+    await chrome.storage.local.set({ memorizeToken: j.token, memorizeBaseUrl: base });
     els.password.value = '';
     await loadState();
   } catch (e) {
@@ -114,13 +130,13 @@ els.loginBtn.addEventListener('click', async () => {
 });
 
 els.logoutBtn.addEventListener('click', async () => {
-  await chrome.storage.local.remove('venseraToken');
+  await chrome.storage.local.remove('memorizeToken');
   await loadState();
 });
 
 els.createBtn.addEventListener('click', async () => {
   const base = (els.baseUrl.value || '').trim();
-  const token = (await chrome.storage.local.get('venseraToken')).venseraToken;
+  const token = (await chrome.storage.local.get('memorizeToken')).memorizeToken;
   const payload = {
     url: (els.url.value || '').trim(),
     name: (els.name.value || '').trim(),
@@ -153,13 +169,7 @@ els.createBtn.addEventListener('click', async () => {
     }
     els.createMsg.textContent = 'Bookmark created!';
     show(els.createMsg, true);
-    try {
-      await chrome.notifications.create({
-        type: 'basic',
-        title: 'Vensera',
-        message: 'Bookmark created'
-      });
-    } catch { }
+    // notifications disabled per policy preferences; inline success is shown
     // Close the popup shortly after success
     setTimeout(() => {
       try { window.close(); } catch { }
@@ -169,13 +179,7 @@ els.createBtn.addEventListener('click', async () => {
   } catch (e) {
     els.createError.textContent = e.message || 'Failed to create bookmark';
     show(els.createError, true);
-    try {
-      await chrome.notifications.create({
-        type: 'basic',
-        title: 'Vensera',
-        message: els.createError.textContent
-      });
-    } catch { }
+    // notifications disabled; inline error is shown
   }
 });
 

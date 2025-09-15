@@ -43,6 +43,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first - this adds passport middleware and session support
   setupAuth(app);
 
+  // CORS for extension endpoints only (no credentials; allows Authorization + JSON)
+  app.use('/api/ext', (req: any, res, next) => {
+    const origin = req.headers.origin as string | undefined;
+    if (origin) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Vary', 'Origin');
+    } else {
+      res.header('Access-Control-Allow-Origin', '*');
+    }
+    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+  });
+
   // Helper function to get userId from request or fallback to vensera
   const getUserId = (req: any): string => {
     return req.isAuthenticated() ? req.user.id : VENSERA_USER_ID;
