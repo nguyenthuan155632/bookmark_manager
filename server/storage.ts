@@ -880,6 +880,7 @@ export class DatabaseStorage implements IStorage {
           userId,
           theme: preferences.theme || 'light',
           viewMode: preferences.viewMode || 'grid',
+          aiUsageLimit: preferences.aiUsageLimit ?? 50,
         })
         .returning();
       return newPreferences;
@@ -1255,7 +1256,7 @@ export class DatabaseStorage implements IStorage {
             // Note: autoTagSuggestionsEnabled is primarily a client-side toggle for auto-run; we also honor it here.
             if (prefs.autoTagSuggestionsEnabled === false) useAI = false;
           }
-        } catch { }
+        } catch (_e) { void _e; }
       }
       const maxTags = Math.max(1, Math.min(12, parseInt(process.env.OPENAI_TAGS_MAX || '8', 10)));
       const aiTimeout = Math.max(3000, parseInt(process.env.OPENAI_TIMEOUT_MS || '6000', 10));
@@ -1338,7 +1339,7 @@ export class DatabaseStorage implements IStorage {
                       if (typeof t === 'string' && t.trim()) tags.add(t.trim().toLowerCase());
                     }
                   }
-                } catch { }
+                } catch (_e) { void _e; }
               }
             }
           } catch (chatErr) {
@@ -1380,7 +1381,7 @@ export class DatabaseStorage implements IStorage {
           if (prefs) {
             if (prefs.aiDescriptionEnabled === false) useAI = false;
           }
-        } catch { }
+        } catch (_e) { void _e; }
       }
 
       const maxChars = Math.max(120, parseInt(process.env.AI_DESC_MAX_CHARS || '300', 10));
@@ -1408,7 +1409,7 @@ export class DatabaseStorage implements IStorage {
           const md2 = html.match(/<meta[^>]*property=['"][og:]*description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
           metaDesc = (md1?.[1] || md2?.[1] || '').trim();
         }
-      } catch { }
+      } catch (_e) { void _e; }
 
       // If we have a meta description and no AI, return it
       if (!useAI && metaDesc) return metaDesc;
@@ -1516,7 +1517,7 @@ Write a clear, specific multi-sentence summary of a web page:
               });
               logAI('OR response (desc)', data2?.choices?.[0]?.message?.content?.slice?.(0, 180));
               content = data2?.choices?.[0]?.message?.content?.trim?.() || content;
-              content = content.replace(/^\"|\"$/g, '').replace(/^'+|'+$/g, '').trim();
+              content = content.replace(/^"|"$/g, '').replace(/^'+|'+$/g, '').trim();
             }
             return content;
           } catch {

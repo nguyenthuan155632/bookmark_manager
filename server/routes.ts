@@ -48,6 +48,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return req.isAuthenticated() ? req.user.id : VENSERA_USER_ID;
   };
 
+  // Helper: consume one AI credit and return remaining; returns error if exhausted
+  const tryConsumeAiUsage = async (
+    userId: string,
+  ): Promise<{ ok: true; remaining: number | null } | { ok: false; remaining: number | null }> => {
+    try {
+      const prefs = await storage.getUserPreferences(userId);
+      // If unlimited (null) or missing record, allow without decrement
+      if (!prefs || prefs.aiUsageLimit == null) {
+        return { ok: true, remaining: null };
+      }
+      const current = prefs.aiUsageLimit;
+      if (current <= 0) {
+        return { ok: false, remaining: 0 };
+      }
+      await storage.updateUserPreferences(userId, { aiUsageLimit: current - 1 });
+      return { ok: true, remaining: current - 1 };
+    } catch {
+      // If preferences table not ready or other error, don't block; treat as allowed without decrement
+      return { ok: true, remaining: null };
+    }
+  };
+
+  // Helper: determine if AI should be charged based on prefs and type
+  const getAiChargeDecision = async (
+    userId: string,
+    type: 'tags' | 'desc',
+  ): Promise<{ shouldCharge: boolean; remaining: number | null }> => {
+    try {
+      const prefs = await storage.getUserPreferences(userId);
+      const hasKey = !!process.env.OPENROUTER_API_KEY?.trim();
+      if (!hasKey) return { shouldCharge: false, remaining: prefs?.aiUsageLimit ?? null };
+      if (type === 'tags') {
+        const enabled = prefs?.aiTaggingEnabled === true;
+        return { shouldCharge: enabled, remaining: prefs?.aiUsageLimit ?? null };
+      } else {
+        const enabled = prefs?.aiDescriptionEnabled === true;
+        return { shouldCharge: enabled, remaining: prefs?.aiUsageLimit ?? null };
+      }
+    } catch {
+      return { shouldCharge: false, remaining: null };
+    }
+  };
+
   // Middleware: apply session timeout based on user preferences each request (rolling)
   app.use(async (req: any, _res, next) => {
     try {
@@ -274,21 +317,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Invalid bookmark ID' });
       }
 
-      // Parse and validate the data first
+      // Determine intent from raw body to avoid schema side-effects
+      const rawKeys = Object.keys(req.body || {}).filter((k) => (req.body as any)[k] !== undefined);
+      const onlyFavoriteToggle = rawKeys.length === 1 && rawKeys[0] === 'isFavorite';
+
+      // Parse and validate the data after the passcode decision
       const data = insertBookmarkSchema.partial().parse(req.body);
 
-      // Extract passcode from request body for security verification
-      const { passcode } = req.body;
+      if (!onlyFavoriteToggle) {
+        // Extract passcode from request body for security verification
+        const { passcode } = req.body;
 
-      // Verify access for protected bookmarks
-      const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
-      if (!accessResult.success) {
-        return res
-          .status(accessResult.error!.status)
-          .json({ message: accessResult.error!.message });
+        // Verify access for protected bookmarks for other fields
+        const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
+        if (!accessResult.success) {
+          return res
+            .status(accessResult.error!.status)
+            .json({ message: accessResult.error!.message });
+        }
       }
 
-      // Proceed with update if access is granted
+      // Proceed with update
       const bookmark = await storage.updateBookmark(userId, id, data);
       res.json(bookmark);
     } catch (error) {
@@ -382,14 +431,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: z.string().optional(),
       });
       const { url, name, description } = previewSchema.parse(req.body);
+      const userId = getUserId(req);
+      const decision = await getAiChargeDecision(userId, 'desc');
+      let usageRemaining: number | null = decision.remaining;
+      if (decision.shouldCharge) {
+        const usage = await tryConsumeAiUsage(userId);
+        if (!usage.ok) {
+          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+        }
+        usageRemaining = usage.remaining;
+      }
+
       const suggestedDescription = await storage.generateAutoDescription(
         url,
         name || '',
         description || undefined,
-        { userId: getUserId(req) },
+        { userId },
       );
-      console.log(suggestedDescription)
-      res.json({ suggestedDescription });
+      res.json({ suggestedDescription, remainingAiUsage: usageRemaining });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
@@ -424,6 +483,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Bookmark not found' });
       }
 
+      const decision = await getAiChargeDecision(userId, 'desc');
+      let usageRemaining: number | null = decision.remaining;
+      if (decision.shouldCharge) {
+        const usage = await tryConsumeAiUsage(userId);
+        if (!usage.ok) {
+          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+        }
+        usageRemaining = usage.remaining;
+      }
+
       const suggestedDescription = await storage.generateAutoDescription(
         bookmark.url,
         bookmark.name,
@@ -438,11 +507,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update only if currently empty or overwrite requested
       if (!bookmark.description || overwrite === true) {
         const updated = await storage.updateBookmark(userId, id, { description: suggestedDescription });
-        return res.json({ description: updated.description, generated: true, updated: true });
+        return res.json({ description: updated.description, generated: true, updated: true, remainingAiUsage: usageRemaining });
       }
 
       // Don't overwrite existing description by default
-      return res.json({ description: suggestedDescription, generated: true, updated: false });
+      return res.json({ description: suggestedDescription, generated: true, updated: false, remainingAiUsage: usageRemaining });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
@@ -463,13 +532,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const { url, name, description } = previewSchema.parse(req.body);
+      const userId = getUserId(req);
+      const decision = await getAiChargeDecision(userId, 'tags');
+      let usageRemaining: number | null = decision.remaining;
+      if (decision.shouldCharge) {
+        const usage = await tryConsumeAiUsage(userId);
+        if (!usage.ok) {
+          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+        }
+        usageRemaining = usage.remaining;
+      }
 
       // Generate suggested tags without saving to database
       const suggestedTags = await storage.generateAutoTags(url, name || '', description || undefined, {
-        userId: getUserId(req),
+        userId,
       });
 
-      res.json({ suggestedTags });
+      res.json({ suggestedTags, remainingAiUsage: usageRemaining });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
@@ -509,13 +588,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Bookmark not found' });
       }
 
-      // Generate suggested tags based on URL, name, and description
+      // Conditionally consume usage and generate suggested tags based on URL, name, and description
+      const decision = await getAiChargeDecision(userId, 'tags');
+      let usageRemaining: number | null = decision.remaining;
+      if (decision.shouldCharge) {
+        const usage = await tryConsumeAiUsage(userId);
+        if (!usage.ok) {
+          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+        }
+        usageRemaining = usage.remaining;
+      }
       const suggestedTags = await storage.generateAutoTags(bookmark.url, bookmark.name, bookmark.description || undefined, { userId });
 
       // Update the bookmark with suggested tags
       await storage.updateBookmarkSuggestedTags(userId, id, suggestedTags);
 
-      res.json({ suggestedTags });
+      res.json({ suggestedTags, remainingAiUsage: usageRemaining });
     } catch (error) {
       console.error('Error generating auto tags:', error);
       res.status(500).json({ message: 'Failed to generate auto tags' });
@@ -946,6 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({
           theme: 'light',
           viewMode: 'grid',
+          aiUsageLimit: 50,
         });
       }
       res.json(preferences);

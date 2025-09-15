@@ -89,6 +89,14 @@ export function setupAuth(app: Express) {
         password: await hashPassword(req.body.password),
       });
 
+      // Initialize default user preferences on first sign-up
+      try {
+        await storage.updateUserPreferences(user.id, {});
+      } catch (e) {
+        // Non-fatal: preferences endpoint and middleware handle missing prefs with defaults
+        console.warn('Failed to initialize user preferences for new user', e);
+      }
+
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(201).json(user);

@@ -37,6 +37,7 @@ export default function SettingsPage() {
     aiTaggingEnabled?: boolean;
     autoDescriptionEnabled?: boolean;
     aiDescriptionEnabled?: boolean;
+    aiUsageLimit?: number | null;
   }>({ queryKey: ['/api/preferences'] });
 
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['/api/categories'] });
@@ -225,6 +226,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="w-full p-6 space-y-6 overflow-x-hidden">
+
           <Card>
             <CardHeader>
               <CardTitle>Support</CardTitle>
@@ -471,7 +473,7 @@ export default function SettingsPage() {
               <CardTitle>Advanced</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                   <div className="sm:col-span-2">
                     <div className="font-medium">Export Bookmarks</div>
@@ -749,6 +751,43 @@ export default function SettingsPage() {
                     <span className="text-sm text-muted-foreground">batch</span>
                   </div>
                 </div> */}
+
+                <Separator className="my-2" />
+
+                {/* AI Usage */}
+                <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                  <div className="sm:col-span-2">
+                    <div className="font-medium">AI Usage</div>
+                    <div className="text-sm text-muted-foreground">
+                      Remaining credits: {preferences?.aiUsageLimit == null ? 'Unlimited' : preferences?.aiUsageLimit}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      If you run out of credits, contact nt.apple.it@gmail.com to buy more.
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 items-center sm:justify-end">
+                    <a
+                      href="mailto:nt.apple.it@gmail.com?subject=Buy%20AI%20credits"
+                      className="underline text-primary"
+                      title="Contact to buy more credits"
+                    >
+                      nt.apple.it@gmail.com
+                    </a>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText('nt.apple.it@gmail.com');
+                          toast({ description: 'Email copied to clipboard' });
+                        } catch {
+                          toast({ variant: 'destructive', description: 'Failed to copy email' });
+                        }
+                      }}
+                    >
+                      Copy Email
+                    </Button>
+                  </div>
+                </div>
 
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                   <div className="sm:col-span-2">

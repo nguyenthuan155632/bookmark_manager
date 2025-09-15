@@ -72,6 +72,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const [autoTagsGenerated, setAutoTagsGenerated] = useState(false);
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [suggestedDescription, setSuggestedDescription] = useState<string>('');
+  const [remainingAiUsage, setRemainingAiUsage] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -82,6 +83,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     defaultCategoryId?: number | null;
     autoTagSuggestionsEnabled?: boolean;
     autoDescriptionEnabled?: boolean;
+    aiUsageLimit?: number | null;
   }>({
     queryKey: ['/api/preferences'],
   });
@@ -145,6 +147,15 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     }
   }, [editingBookmark, form, preferences?.defaultCategoryId]);
 
+  // Initialize remaining AI credits from preferences when modal opens, and reset on close
+  useEffect(() => {
+    if (isOpen) {
+      setRemainingAiUsage(preferences?.aiUsageLimit ?? null);
+    } else {
+      setRemainingAiUsage(null);
+    }
+  }, [isOpen, preferences?.aiUsageLimit]);
+
   const createMutation = useMutation({
     mutationFn: async (data: InsertBookmark) => {
       const url = editingBookmark ? `/api/bookmarks/${editingBookmark.id}` : '/api/bookmarks';
@@ -189,29 +200,25 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
 
         // Call generateAutoTags directly from storage (we'll simulate with the existing endpoint)
         // For now, we'll create a temporary bookmark to get suggestions
-        const response = await fetch('/api/bookmarks/preview-auto-tags', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: currentUrl,
-            name: currentName || '',
-            description: currentDescription || '',
-          }),
+        const res = await apiRequest('POST', '/api/bookmarks/preview-auto-tags', {
+          url: currentUrl,
+          name: currentName || '',
+          description: currentDescription || '',
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to generate tag suggestions');
-        }
-
-        return await response.json();
+        return await res.json();
       }
     },
     onSuccess: (data: any) => {
       const suggestions = data.suggestedTags || [];
       setSuggestedTags(suggestions);
       setAutoTagsGenerated(true);
+      if (data.remainingAiUsage !== undefined) {
+        setRemainingAiUsage(
+          data.remainingAiUsage === null || data.remainingAiUsage === undefined
+            ? null
+            : Number(data.remainingAiUsage),
+        );
+      }
       toast({
         description: `Generated ${suggestions.length} tag suggestions${suggestions.length === 0 ? ' (none found)' : ''}`,
       });
@@ -262,46 +269,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     },
   });
 
-  // Watch URL changes for auto-tagging (debounced)
-  const watchedUrl = form.watch('url');
-  useEffect(() => {
-    if (editingBookmark) return;
-
-    const currentUrl = watchedUrl;
-    const allowAuto = preferences?.autoTagSuggestionsEnabled ?? true;
-
-    // Guard: don't schedule if conditions aren't met or a request is in-flight
-    if (!allowAuto || !currentUrl || autoTagsGenerated || generateAutoTagsMutation.isPending) {
-      return;
-    }
-
-    let cancelled = false;
-    const timeoutId = setTimeout(() => {
-      if (cancelled) return;
-      try {
-        new URL(currentUrl); // Validate URL
-        setIsGeneratingSuggestions(true);
-        generateAutoTagsMutation.mutate({
-          passcode: isProtected ? form.getValues('passcode') || undefined : undefined,
-        });
-      } catch {
-        // Invalid URL, no-op
-      }
-    }, 1500);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timeoutId);
-    };
-  }, [
-    watchedUrl,
-    editingBookmark,
-    autoTagsGenerated,
-    isProtected,
-    form,
-    preferences?.autoTagSuggestionsEnabled,
-    generateAutoTagsMutation.isPending,
-  ]);
+  // Removed automatic tag generation on URL changes; generation is user-triggered only.
 
   // Reset loading state when mutation completes
   useEffect(() => {
@@ -393,6 +361,13 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         toast({ description: 'Generated a suggested description' });
       } else {
         toast({ description: 'No description suggestion available', variant: 'destructive' });
+      }
+      if (data.remainingAiUsage !== undefined) {
+        setRemainingAiUsage(
+          data.remainingAiUsage === null || data.remainingAiUsage === undefined
+            ? null
+            : Number(data.remainingAiUsage),
+        );
       }
     } catch (error: any) {
       toast({ variant: 'destructive', description: error?.message || 'Failed to generate description' });
@@ -600,6 +575,12 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                 </Button>
               </div>
 
+              {remainingAiUsage !== undefined && (
+                <div className="text-[11px] text-muted-foreground mt-1">
+                  AI credits: {remainingAiUsage == null ? 'Unlimited' : remainingAiUsage}
+                </div>
+              )}
+
               {(isGeneratingDescription || suggestedDescription) && (
                 <div className="border border-border rounded-md p-3 bg-muted/20 mt-2">
                   <div className="flex items-center justify-between mb-2">
@@ -631,7 +612,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                           className="text-xs"
                           data-testid="button-apply-suggested-description"
                         >
-                          {Boolean((form.getValues('description') || '').trim()) ? 'Replace' : 'Apply'}
+                          {(form.getValues('description') || '').trim() ? 'Replace' : 'Apply'}
                         </Button>
                       </div>
                     )}
@@ -749,6 +730,10 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                       Accept All
                     </Button>
                   )}
+                </div>
+
+                <div className="text-[11px] text-muted-foreground mb-2">
+                  AI credits: {remainingAiUsage == null ? 'Unlimited' : remainingAiUsage}
                 </div>
 
                 {isGeneratingSuggestions ? (

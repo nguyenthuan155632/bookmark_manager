@@ -117,7 +117,7 @@ export function SEO({ title, description, canonicalPath, noindex, ogImage, struc
         : [structuredData]
       : defaults;
     upsertJsonLd('ld-json-structured-data', data);
-  }, [title, description, canonicalPath, noindex, ogImage]);
+  }, [title, description, canonicalPath, noindex, ogImage, structuredData]);
 
   return null;
 }

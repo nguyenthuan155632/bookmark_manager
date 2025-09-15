@@ -218,7 +218,8 @@ export function BookmarkCard({
   // Screenshot generation mutation
   const generateScreenshotMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('POST', `/api/bookmarks/${bookmark.id}/screenshot`);
+      const body = bookmark.hasPasscode && passcode ? { passcode } : undefined;
+      return await apiRequest('POST', `/api/bookmarks/${bookmark.id}/screenshot`, body);
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
@@ -246,7 +247,8 @@ export function BookmarkCard({
   // Link checking mutation
   const checkLinkMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('POST', `/api/bookmarks/${bookmark.id}/check-link`);
+      const body = bookmark.hasPasscode && passcode ? { passcode } : undefined;
+      return await apiRequest('POST', `/api/bookmarks/${bookmark.id}/check-link`, body);
     },
     onSuccess: () => {
       // Invalidate all bookmark queries regardless of parameters
@@ -714,12 +716,12 @@ export function BookmarkCard({
                 e.stopPropagation();
                 toggleFavoriteMutation.mutate();
               }}
-              disabled={toggleFavoriteMutation.isPending || isProtected}
+              disabled={toggleFavoriteMutation.isPending}
               data-testid={`button-favorite-${bookmark.id}`}
             >
               <Star
                 size={16}
-                className={isProtected ? '' : bookmark.isFavorite ? 'fill-current text-accent' : ''}
+                className={bookmark.isFavorite ? 'fill-current text-accent' : ''}
               />
             </Button>
 

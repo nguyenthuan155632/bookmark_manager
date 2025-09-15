@@ -28,6 +28,7 @@ export const userPreferences = pgTable('user_preferences', {
   aiTaggingEnabled: boolean('ai_tagging_enabled').default(false),
   autoDescriptionEnabled: boolean('auto_description_enabled').default(true),
   aiDescriptionEnabled: boolean('ai_description_enabled').default(false),
+  aiUsageLimit: integer('ai_usage_limit').default(50),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
