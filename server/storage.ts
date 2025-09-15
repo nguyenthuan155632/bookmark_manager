@@ -12,6 +12,7 @@ import {
   type InsertUser,
   type UserPreferences,
   type InsertUserPreferences,
+  apiTokens,
 } from '@shared/schema';
 import { db, pool } from './db';
 import { eq, ilike, or, desc, asc, and, isNull, sql, inArray } from 'drizzle-orm';
@@ -45,6 +46,11 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserUsername(userId: string, username: string): Promise<User>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<User>;
+
+  // API token methods (for extensions)
+  createApiToken(userId: string): Promise<{ token: string; id: number }>; // returns raw token
+  getUserByApiToken(token: string): Promise<User | undefined>;
+  touchApiToken(token: string): Promise<void>;
 
   // Bookmark methods
   getBookmarks(
@@ -234,6 +240,34 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return updated;
+  }
+
+  // API token methods
+  async createApiToken(userId: string): Promise<{ token: string; id: number }> {
+    // Generate a 64-char hex token
+    const token = crypto.randomBytes(32).toString('hex');
+    const [row] = await db
+      .insert(apiTokens)
+      .values({ userId, token })
+      .returning();
+    return { token, id: row.id };
+  }
+
+  async getUserByApiToken(token: string): Promise<User | undefined> {
+    const [row] = await db
+      .select({ userId: apiTokens.userId })
+      .from(apiTokens)
+      .where(eq(apiTokens.token, token));
+    if (!row) return undefined;
+    const [user] = await db.select().from(users).where(eq(users.id, row.userId));
+    return user || undefined;
+  }
+
+  async touchApiToken(token: string): Promise<void> {
+    await db
+      .update(apiTokens)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiTokens.token, token));
   }
 
   // Bookmark methods

@@ -33,6 +33,15 @@ export const userPreferences = pgTable('user_preferences', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// API tokens for non-cookie auth (e.g., browser extensions)
+export const apiTokens = pgTable('api_tokens', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  userId: varchar('user_id').notNull(),
+  token: text('token').notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastUsedAt: timestamp('last_used_at').defaultNow().notNull(),
+});
+
 // Session table for express-session with connect-pg-simple
 // Including this in the schema prevents it from being dropped by migrations
 export const sessionTable = pgTable(
@@ -111,6 +120,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [userPreferences.userId],
   }),
+  // tokens: many(apiTokens) // optional relation not used directly
 }));
 
 export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({

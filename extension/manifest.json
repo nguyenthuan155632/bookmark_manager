@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark & Memorize AI",
+  "version": "0.1.0",
+  "description": "Quickly bookmark the current page to your Memorize app.",
+  "action": {
+    "default_title": "Save to Memorize",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon-16.png",
+      "32": "icon-32.png"
+    }
+  },
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://localhost:4001/*",
+    "https://*/*",
+    "http://*/*"
+  ]
+}
