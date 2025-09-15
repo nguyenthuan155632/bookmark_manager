@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { useLocation } from 'wouter';
 import { Bookmark, Shield, Users, Search, Eye, EyeOff, Lock } from 'lucide-react';
+import { SEO } from '@/lib/seo';
 
 // Removed the old 4-digit passcode UI in favor of standard password field
 
@@ -95,6 +96,15 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted flex">
+      <SEO
+        title={isRegisterMode ? 'Create Account' : 'Sign In'}
+        description={
+          isRegisterMode
+            ? 'Create your Memorize account to save and organize bookmarks across devices.'
+            : 'Sign in to access your Memorize bookmark collection.'
+        }
+        noindex
+      />
       {/* Left Column - Auth Form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <Card className="w-full max-w-md">

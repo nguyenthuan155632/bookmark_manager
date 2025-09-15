@@ -17,6 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Grid as GridIcon, List as ListIcon, Moon as MoonIcon, Sun as SunIcon, ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { SEO } from '@/lib/seo';
 
 export default function SettingsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -193,6 +194,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <SEO title="Settings" description="Adjust theme, layout, defaults, export/import, and support options for your Memorize account." />
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -246,6 +248,54 @@ export default function SettingsPage() {
                     }}
                   >
                     Copy
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                <div className="sm:col-span-2 min-w-0">
+                  <div className="font-medium">Donate</div>
+                  <div className="text-sm text-muted-foreground">
+                    I work independently as a freelancer, building free applications for the
+                    community. Your kind donation helps me continue improving and keeping these
+                    tools free for all. Thank you!
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 items-center sm:justify-end">
+                  <a
+                    href="https://paypal.me/vensera2022"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Button>
+                      <span className="mr-2 inline-flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="M9 2h6a5 5 0 0 1 0 10H12l-1 6H7L9 2z" fill="#003087" />
+                          <path d="M13.5 4H18a4 4 0 1 1 0 8h-3.5l-1 6H9.5L11.5 4z" fill="#0070BA" />
+                        </svg>
+                      </span>
+                      Donate via PayPal
+                    </Button>
+                  </a>
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText('https://paypal.me/vensera2022');
+                        toast({ description: 'Link copied to clipboard' });
+                      } catch {
+                        toast({ variant: 'destructive', description: 'Failed to copy link' });
+                      }
+                    }}
+                  >
+                    Copy Link
                   </Button>
                 </div>
               </div>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <g fill="#ffffff" opacity="0.07">
+    <circle cx="150" cy="120" r="80"/>
+    <circle cx="1050" cy="520" r="120"/>
+    <circle cx="900" cy="160" r="60"/>
+  </g>
+  <g font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <text x="80" y="260" font-size="72" fill="#ffffff" font-weight="700">Memorize</text>
+    <text x="80" y="330" font-size="36" fill="#e5e7eb">Fast, Simple Bookmark Manager</text>
+    <text x="80" y="390" font-size="28" fill="#cbd5e1">Link checks • Thumbnails • Mobile friendly</text>
+  </g>
+</svg>
+

@@ -292,11 +292,12 @@ npm run check        # Run TypeScript type checking
 - `NODE_ENV`: Development/production mode
 - `DB_SCHEMA` (optional): Schema name for session store (defaults to `public`)
 - `THUMIO_TOKEN` (optional): Thum.io auth token for screenshot capture. If not set, the app uses unauthenticated Thum.io requests and may fall back to a placeholder.
- - `THUMIO_WIDTH` (optional): Output image width used for Thum.io screenshots. Default `800`.
- - `THUMIO_VP_WIDTH` (optional): Page viewport width for Thum.io rendering. Default `1024`.
+- `THUMIO_WIDTH` (optional): Output image width used for Thum.io screenshots. Default `800`.
+- `THUMIO_VP_WIDTH` (optional): Page viewport width for Thum.io rendering. Default `1024`.
 - `THUMIO_VP_HEIGHT` (optional): Page viewport height for Thum.io rendering. Default `640`.
- - `THUMIO_TIMEOUT_MS` (optional): Timeout for Thum.io probes in milliseconds. Default `8000`.
- - `SCREENSHOT_PENDING_TIMEOUT_MS` (optional): Failsafe timeout to auto-fail screenshots stuck in pending. Default `30000`.
+- `THUMIO_TIMEOUT_MS` (optional): Timeout for Thum.io probes in milliseconds. Default `8000`.
+- `SCREENSHOT_PENDING_TIMEOUT_MS` (optional): Failsafe timeout to auto-fail screenshots stuck in pending. Default `30000`.
+ - `VITE_PUBLIC_BASE_URL` (optional): Absolute base URL for the site (e.g., `https://yourdomain.com`). Used for canonical URLs and structured data in the SEO helper.
 
 ### Hot Module Replacement
 
@@ -328,6 +329,13 @@ npm run check        # Run TypeScript type checking
  - Defaults favor smaller images for faster loading: width `800`, viewport `1024x640`. Override with `THUMIO_WIDTH`, `THUMIO_VP_WIDTH`, `THUMIO_VP_HEIGHT`.
 
 ## Feature Details
+
+### SEO
+
+- Base meta tags are defined in `client/index.html` (title, description, Open Graph, Twitter).
+- Dynamic meta on SPA routes is handled by `SEO` helper in `client/src/lib/seo.tsx`.
+- Robots and sitemap are provided in `client/public/robots.txt` and `client/public/sitemap.xml`.
+- Set `VITE_PUBLIC_BASE_URL` in production to generate canonical URLs and JSON‑LD structured data.
 
 ### Settings & Preferences
 

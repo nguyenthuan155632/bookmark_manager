@@ -58,6 +58,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { Bookmark, Category } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { SEO } from '@/lib/seo';
 
 function BookmarksContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -937,6 +938,20 @@ function BookmarksContent() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <SEO
+        title={(() => {
+          if (!selectedCategory) return 'Bookmarks';
+          // If slug is a special view
+          if (selectedCategory === 'hidden') return 'Hidden Bookmarks';
+          if (selectedCategory === 'uncategorized') return 'Uncategorized Bookmarks';
+          // Try to find a matching category by slug or name
+          const bySlug = categories.find((c) => categorySlug({ name: c.name, id: c.id }) === selectedCategory);
+          const byName = categories.find((c) => slugify(c.name) === selectedCategory);
+          const name = bySlug?.name || byName?.name || 'Bookmarks';
+          return `${name}`;
+        })()}
+        description="Browse, search, and manage your bookmarks. Filter by tags and status, with thumbnails and link health checks."
+      />
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Bookmark, Category } from '@shared/schema';
 import { formatDistanceToNow } from 'date-fns';
+import { SEO } from '@/lib/seo';
 
 export function SharedBookmark() {
   const [, params] = useRoute('/shared/:shareId');
@@ -112,6 +113,16 @@ export function SharedBookmark() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={bookmark.name}
+        description={
+          bookmark.description
+            ? bookmark.description.slice(0, 160)
+            : `${bookmark.name} — ${bookmark.url}`
+        }
+        canonicalPath={`/shared/${params?.shareId}`}
+        ogImage={bookmark.screenshotUrl || undefined}
+      />
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <div className="space-y-6">
           {/* Header */}
