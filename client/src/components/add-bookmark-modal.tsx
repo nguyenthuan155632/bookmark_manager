@@ -78,7 +78,11 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
   });
-  const { data: preferences } = useQuery<{ defaultCategoryId?: number | null; autoTagSuggestionsEnabled?: boolean }>({
+  const { data: preferences } = useQuery<{
+    defaultCategoryId?: number | null;
+    autoTagSuggestionsEnabled?: boolean;
+    autoDescriptionEnabled?: boolean;
+  }>({
     queryKey: ['/api/preferences'],
   });
 
@@ -171,7 +175,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     mutationFn: async ({ bookmarkId, passcode }: { bookmarkId?: number; passcode?: string }) => {
       if (bookmarkId) {
         // For existing bookmarks
-        return await apiRequest('POST', `/api/bookmarks/${bookmarkId}/auto-tags`, { passcode });
+        const res = await apiRequest('POST', `/api/bookmarks/${bookmarkId}/auto-tags`, { passcode });
+        return await res.json();
       } else {
         // For new bookmarks, use the URL, name and description directly
         const currentUrl = form.getValues('url');
@@ -229,23 +234,31 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       tags: string[];
       passcode?: string;
     }) => {
-      return await apiRequest('PATCH', `/api/bookmarks/${bookmarkId}/tags/accept`, {
+      const res = await apiRequest('PATCH', `/api/bookmarks/${bookmarkId}/tags/accept`, {
         tags,
         passcode,
       });
+      return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data: any, variables) => {
+      // Merge accepted tags into local state so UI updates immediately
+      if (editingBookmark && Array.isArray(variables?.tags)) {
+        const accepted = variables.tags;
+        setTags((prev) => {
+          const set = new Set(prev);
+          accepted.forEach((t) => set.add(t));
+          return Array.from(set);
+        });
+        // Remove accepted from suggestions if still present
+        setSuggestedTags((prev) => prev.filter((t) => !accepted.includes(t)));
+      }
+
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
-      toast({
-        description: 'Tags accepted successfully!',
-      });
+      toast({ description: 'Tags accepted successfully!' });
     },
     onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        description: error.message || 'Failed to accept suggested tags',
-      });
+      toast({ variant: 'destructive', description: error.message || 'Failed to accept suggested tags' });
     },
   });
 
@@ -253,23 +266,42 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const watchedUrl = form.watch('url');
   useEffect(() => {
     if (editingBookmark) return;
+
+    const currentUrl = watchedUrl;
+    const allowAuto = preferences?.autoTagSuggestionsEnabled ?? true;
+
+    // Guard: don't schedule if conditions aren't met or a request is in-flight
+    if (!allowAuto || !currentUrl || autoTagsGenerated || generateAutoTagsMutation.isPending) {
+      return;
+    }
+
+    let cancelled = false;
     const timeoutId = setTimeout(() => {
-      const currentUrl = watchedUrl;
-      const allowAuto = preferences?.autoTagSuggestionsEnabled ?? true;
-      if (allowAuto && currentUrl && !autoTagsGenerated) {
-        try {
-          new URL(currentUrl); // Validate URL
-          setIsGeneratingSuggestions(true);
-          generateAutoTagsMutation.mutate({
-            passcode: isProtected ? form.getValues('passcode') || undefined : undefined,
-          });
-        } catch {
-          // Invalid URL, no-op
-        }
+      if (cancelled) return;
+      try {
+        new URL(currentUrl); // Validate URL
+        setIsGeneratingSuggestions(true);
+        generateAutoTagsMutation.mutate({
+          passcode: isProtected ? form.getValues('passcode') || undefined : undefined,
+        });
+      } catch {
+        // Invalid URL, no-op
       }
     }, 1500);
-    return () => clearTimeout(timeoutId);
-  }, [watchedUrl, editingBookmark, autoTagsGenerated, generateAutoTagsMutation, isProtected, form, preferences?.autoTagSuggestionsEnabled]);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [
+    watchedUrl,
+    editingBookmark,
+    autoTagsGenerated,
+    isProtected,
+    form,
+    preferences?.autoTagSuggestionsEnabled,
+    generateAutoTagsMutation.isPending,
+  ]);
 
   // Reset loading state when mutation completes
   useEffect(() => {
@@ -490,7 +522,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl max-h-[90vh] overflow-y-auto border border-border bg-card/85 backdrop-blur supports-[backdrop-filter]:bg-card/70"
+        className="max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-5xl max-h-[90vh] overflow-y-auto border border-border bg-card shadow-2xl"
         data-testid="modal-add-bookmark"
       >
         <DialogHeader>
@@ -550,72 +582,76 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
           />
 
           {/* Description AI actions */}
-          <div className="flex items-center justify-between -mt-1">
-            <div className="text-xs text-muted-foreground">Let AI suggest a concise description</div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleGenerateDescription}
-              disabled={isGeneratingDescription}
-              data-testid="button-suggest-description"
-              className="flex items-center space-x-1"
-            >
-              <Sparkles size={14} className={isGeneratingDescription ? 'animate-spin' : ''} />
-              <span>{isGeneratingDescription ? 'Generating...' : 'Suggest Description'}</span>
-            </Button>
-          </div>
-
-          {(isGeneratingDescription || suggestedDescription) && (
-            <div className="border border-border rounded-md p-3 bg-muted/20 mt-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Sparkles size={14} className="text-muted-foreground" />
-                  <Label className="text-sm font-medium text-muted-foreground">
-                    {isGeneratingDescription ? 'Generating description...' : 'Suggested Description'}
-                  </Label>
-                </div>
-                {!isGeneratingDescription && suggestedDescription && (
-                  <div className="flex items-center gap-2">
-                    {Boolean((form.getValues('description') || '').trim()) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => form.setValue('description', (form.getValues('description') || '').trim() + (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') + suggestedDescription)}
-                        className="text-xs"
-                        data-testid="button-append-suggested-description"
-                      >
-                        Append
-                      </Button>
-                    )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => form.setValue('description', suggestedDescription)}
-                      className="text-xs"
-                      data-testid="button-apply-suggested-description"
-                    >
-                      {Boolean((form.getValues('description') || '').trim()) ? 'Replace' : 'Apply'}
-                    </Button>
-                  </div>
-                )}
+          {(preferences?.autoDescriptionEnabled ?? true) && (
+            <>
+              <div className="flex items-center justify-between -mt-1">
+                <div className="text-xs text-muted-foreground">Let AI suggest a concise description</div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateDescription}
+                  disabled={isGeneratingDescription}
+                  data-testid="button-suggest-description"
+                  className="flex items-center space-x-1"
+                >
+                  <Sparkles size={14} className={isGeneratingDescription ? 'animate-spin' : ''} />
+                  <span>{isGeneratingDescription ? 'Generating...' : 'Suggest Description'}</span>
+                </Button>
               </div>
 
-              {isGeneratingDescription ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Sparkles size={16} className="animate-spin" />
-                    <span>Analyzing content...</span>
+              {(isGeneratingDescription || suggestedDescription) && (
+                <div className="border border-border rounded-md p-3 bg-muted/20 mt-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Sparkles size={14} className="text-muted-foreground" />
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        {isGeneratingDescription ? 'Generating description...' : 'Suggested Description'}
+                      </Label>
+                    </div>
+                    {!isGeneratingDescription && suggestedDescription && (
+                      <div className="flex items-center gap-2">
+                        {Boolean((form.getValues('description') || '').trim()) && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => form.setValue('description', (form.getValues('description') || '').trim() + (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') + suggestedDescription)}
+                            className="text-xs"
+                            data-testid="button-append-suggested-description"
+                          >
+                            Append
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => form.setValue('description', suggestedDescription)}
+                          className="text-xs"
+                          data-testid="button-apply-suggested-description"
+                        >
+                          {Boolean((form.getValues('description') || '').trim()) ? 'Replace' : 'Apply'}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div className="text-sm whitespace-pre-wrap text-muted-foreground">
-                  {suggestedDescription || 'No suggestion'}
+
+                  {isGeneratingDescription ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <Sparkles size={16} className="animate-spin" />
+                        <span>Analyzing content...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm whitespace-pre-wrap text-muted-foreground">
+                      {suggestedDescription || 'No suggestion'}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
 
           <div className="space-y-2">
@@ -659,24 +695,26 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Tags</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleGenerateSuggestions}
-                disabled={isGeneratingSuggestions || generateAutoTagsMutation.isPending}
-                data-testid="button-suggest-tags"
-                className="flex items-center space-x-1"
-              >
-                <Sparkles size={14} className={isGeneratingSuggestions ? 'animate-spin' : ''} />
-                <span>
-                  {isGeneratingSuggestions
-                    ? 'Generating...'
-                    : autoTagsGenerated
-                      ? 'Regenerate Tags'
-                      : 'Suggest Tags'}
-                </span>
-              </Button>
+              {(preferences?.autoTagSuggestionsEnabled ?? true) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateSuggestions}
+                  disabled={isGeneratingSuggestions || generateAutoTagsMutation.isPending}
+                  data-testid="button-suggest-tags"
+                  className="flex items-center space-x-1"
+                >
+                  <Sparkles size={14} className={isGeneratingSuggestions ? 'animate-spin' : ''} />
+                  <span>
+                    {isGeneratingSuggestions
+                      ? 'Generating...'
+                      : autoTagsGenerated
+                        ? 'Regenerate Tags'
+                        : 'Suggest Tags'}
+                  </span>
+                </Button>
+              )}
             </div>
             <Input
               placeholder="Add tags (press Enter to add)"
@@ -687,7 +725,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             />
 
             {/* Suggested Tags Section */}
-            {(suggestedTags.length > 0 || isGeneratingSuggestions) && (
+            {(preferences?.autoTagSuggestionsEnabled ?? true) && (suggestedTags.length > 0 || isGeneratingSuggestions) && (
               <div className="border border-border rounded-md p-3 bg-muted/20">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">

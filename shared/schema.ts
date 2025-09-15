@@ -26,6 +26,8 @@ export const userPreferences = pgTable('user_preferences', {
   linkCheckBatchSize: integer('link_check_batch_size').default(25),
   autoTagSuggestionsEnabled: boolean('auto_tag_suggestions_enabled').default(true),
   aiTaggingEnabled: boolean('ai_tagging_enabled').default(false),
+  autoDescriptionEnabled: boolean('auto_description_enabled').default(true),
+  aiDescriptionEnabled: boolean('ai_description_enabled').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

@@ -284,7 +284,7 @@ npm run check        # Run TypeScript type checking
 - Use `npm run db:push` to apply schema changes
 - Drizzle Kit manages migrations from `shared/schema.ts`
 - Session table is included in the schema to prevent accidental drops during pushes
-- Preferences fields include: `defaultCategoryId`, `sessionTimeoutMinutes`, `linkCheckEnabled`, `linkCheckIntervalMinutes`, `linkCheckBatchSize`, `autoTagSuggestionsEnabled`
+ - Preferences fields include: `defaultCategoryId`, `sessionTimeoutMinutes`, `linkCheckEnabled`, `linkCheckIntervalMinutes`, `linkCheckBatchSize`, `autoTagSuggestionsEnabled`, `aiTaggingEnabled`, `autoDescriptionEnabled`, `aiDescriptionEnabled`
 
 ### Environment Variables
 
@@ -307,7 +307,8 @@ npm run check        # Run TypeScript type checking
  - `OPENROUTER_API_KEY` (optional): When set, uses OpenRouter for chat completions.
  - `OPENROUTER_TAG_MODEL` (optional): OpenRouter model for tag generation. Default `deepseek/deepseek-chat-v3.1:free`.
  - `OPENROUTER_DESC_MODEL` (optional): OpenRouter model for description generation. Default `deepseek/deepseek-chat-v3.1:free`.
- - `AI_DESC_MAX_CHARS` (optional): Max characters for generated descriptions (60–300). Default `220`.
+ - `AI_DESC_MAX_CHARS` (optional): Max characters for generated descriptions (120–500). Default `300`.
+ - `AI_DESC_MIN_CHARS` (optional): Minimum target length; if first draft is shorter, the server retries once to expand. Default `180`.
 
 ### Hot Module Replacement
 
