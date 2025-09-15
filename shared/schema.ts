@@ -155,6 +155,15 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks)
     linkFailCount: true, // Server-managed failure counter
   })
   .extend({
+    // Enforce non-empty name and valid URL
+    name: z
+      .string({ required_error: 'Name is required' })
+      .trim()
+      .min(1, 'Name is required'),
+    url: z
+      .string({ required_error: 'URL is required' })
+      .trim()
+      .url('Please provide a valid URL'),
     // Add client-facing passcode field with validation
     passcode: z
       .string()
