@@ -70,6 +70,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const [autoTagsGenerated, setAutoTagsGenerated] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+  const [suggestedDescription, setSuggestedDescription] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -329,6 +331,44 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     }
   };
 
+  // Handle description suggestion preview
+  const handleGenerateDescription = async () => {
+    const currentUrl = form.getValues('url');
+    if (!currentUrl) {
+      toast({ variant: 'destructive', description: 'Please enter a URL first to generate a description' });
+      return;
+    }
+    try {
+      new URL(currentUrl);
+    } catch {
+      toast({ variant: 'destructive', description: 'Please enter a valid URL to generate a description' });
+      return;
+    }
+
+    try {
+      setIsGeneratingDescription(true);
+      setSuggestedDescription('');
+      const body = {
+        url: currentUrl,
+        name: form.getValues('name') || '',
+        description: form.getValues('description') || '',
+      };
+      const res = await apiRequest('POST', '/api/bookmarks/preview-auto-description', body);
+      const data = await res.json();
+      const desc = (data?.suggestedDescription || '').trim();
+      if (desc) {
+        setSuggestedDescription(desc);
+        toast({ description: 'Generated a suggested description' });
+      } else {
+        toast({ description: 'No description suggestion available', variant: 'destructive' });
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', description: error?.message || 'Failed to generate description' });
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
+
   // Handle accepting individual suggested tags
   const handleAcceptSuggestedTag = (tagToAccept: string) => {
     if (editingBookmark) {
@@ -508,6 +548,75 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             error={form.formState.errors.description?.message}
             data-testid="input-description"
           />
+
+          {/* Description AI actions */}
+          <div className="flex items-center justify-between -mt-1">
+            <div className="text-xs text-muted-foreground">Let AI suggest a concise description</div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleGenerateDescription}
+              disabled={isGeneratingDescription}
+              data-testid="button-suggest-description"
+              className="flex items-center space-x-1"
+            >
+              <Sparkles size={14} className={isGeneratingDescription ? 'animate-spin' : ''} />
+              <span>{isGeneratingDescription ? 'Generating...' : 'Suggest Description'}</span>
+            </Button>
+          </div>
+
+          {(isGeneratingDescription || suggestedDescription) && (
+            <div className="border border-border rounded-md p-3 bg-muted/20 mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <Sparkles size={14} className="text-muted-foreground" />
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    {isGeneratingDescription ? 'Generating description...' : 'Suggested Description'}
+                  </Label>
+                </div>
+                {!isGeneratingDescription && suggestedDescription && (
+                  <div className="flex items-center gap-2">
+                    {Boolean((form.getValues('description') || '').trim()) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => form.setValue('description', (form.getValues('description') || '').trim() + (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') + suggestedDescription)}
+                        className="text-xs"
+                        data-testid="button-append-suggested-description"
+                      >
+                        Append
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => form.setValue('description', suggestedDescription)}
+                      className="text-xs"
+                      data-testid="button-apply-suggested-description"
+                    >
+                      {Boolean((form.getValues('description') || '').trim()) ? 'Replace' : 'Apply'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {isGeneratingDescription ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <Sparkles size={16} className="animate-spin" />
+                    <span>Analyzing content...</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm whitespace-pre-wrap text-muted-foreground">
+                  {suggestedDescription || 'No suggestion'}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label className="text-sm font-medium">Folder</Label>

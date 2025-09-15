@@ -373,6 +373,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-tagging endpoints
+  // Auto-description endpoints
+  app.post('/api/bookmarks/preview-auto-description', async (req, res) => {
+    try {
+      const previewSchema = z.object({
+        url: z.string().url('Please provide a valid URL'),
+        name: z.string().optional(),
+        description: z.string().optional(),
+      });
+      const { url, name, description } = previewSchema.parse(req.body);
+      const suggestedDescription = await storage.generateAutoDescription(
+        url,
+        name || '',
+        description || undefined,
+        { userId: getUserId(req) },
+      );
+      console.log(suggestedDescription)
+      res.json({ suggestedDescription });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
+      }
+      console.error('Error generating preview auto description:', error);
+      res.status(500).json({ message: 'Failed to generate description' });
+    }
+  });
+
+  app.post('/api/bookmarks/:id/auto-description', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid bookmark ID' });
+      }
+      const schema = z.object({
+        passcode: z.string().optional(),
+        overwrite: z.boolean().optional(),
+      });
+      const { passcode, overwrite } = schema.parse(req.body);
+
+      const accessResult = await verifyProtectedBookmarkAccess(userId, id, passcode, req);
+      if (!accessResult.success) {
+        return res
+          .status(accessResult.error!.status)
+          .json({ message: accessResult.error!.message });
+      }
+
+      const bookmark = await storage.getBookmark(userId, id);
+      if (!bookmark) {
+        return res.status(404).json({ message: 'Bookmark not found' });
+      }
+
+      const suggestedDescription = await storage.generateAutoDescription(
+        bookmark.url,
+        bookmark.name,
+        bookmark.description || undefined,
+        { userId },
+      );
+
+      if (!suggestedDescription) {
+        return res.status(200).json({ description: bookmark.description || null, generated: false });
+      }
+
+      // Update only if currently empty or overwrite requested
+      if (!bookmark.description || overwrite === true) {
+        const updated = await storage.updateBookmark(userId, id, { description: suggestedDescription });
+        return res.json({ description: updated.description, generated: true, updated: true });
+      }
+
+      // Don't overwrite existing description by default
+      return res.json({ description: suggestedDescription, generated: true, updated: false });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
+      }
+      console.error('Error generating auto description:', error);
+      res.status(500).json({ message: 'Failed to generate description' });
+    }
+  });
+
+  // Auto-tagging endpoints
   app.post('/api/bookmarks/preview-auto-tags', async (req, res) => {
     try {
       // Validate request body
@@ -385,11 +465,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { url, name, description } = previewSchema.parse(req.body);
 
       // Generate suggested tags without saving to database
-      const suggestedTags = await storage.generateAutoTags(
-        url,
-        name || '',
-        description || undefined,
-      );
+      const suggestedTags = await storage.generateAutoTags(url, name || '', description || undefined, {
+        userId: getUserId(req),
+      });
 
       res.json({ suggestedTags });
     } catch (error) {
@@ -432,11 +510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generate suggested tags based on URL, name, and description
-      const suggestedTags = await storage.generateAutoTags(
-        bookmark.url,
-        bookmark.name,
-        bookmark.description || undefined,
-      );
+      const suggestedTags = await storage.generateAutoTags(bookmark.url, bookmark.name, bookmark.description || undefined, { userId });
 
       // Update the bookmark with suggested tags
       await storage.updateBookmarkSuggestedTags(userId, id, suggestedTags);
@@ -490,11 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           // Generate suggested tags based on URL, name, and description
-          const suggestedTags = await storage.generateAutoTags(
-            bookmark.url,
-            bookmark.name,
-            bookmark.description || undefined,
-          );
+          const suggestedTags = await storage.generateAutoTags(bookmark.url, bookmark.name, bookmark.description || undefined, { userId });
 
           // Update the bookmark with suggested tags
           await storage.updateBookmarkSuggestedTags(userId, id, suggestedTags);

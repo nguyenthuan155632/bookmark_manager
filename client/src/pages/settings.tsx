@@ -34,6 +34,7 @@ export default function SettingsPage() {
     linkCheckIntervalMinutes?: number;
     linkCheckBatchSize?: number;
     autoTagSuggestionsEnabled?: boolean;
+    aiTaggingEnabled?: boolean;
   }>({ queryKey: ['/api/preferences'] });
 
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['/api/categories'] });
@@ -46,6 +47,7 @@ export default function SettingsPage() {
     linkCheckIntervalMinutes?: number;
     linkCheckBatchSize?: number;
     autoTagSuggestionsEnabled?: boolean;
+    aiTaggingEnabled?: boolean;
   };
 
   const updatePreferencesMutation = useMutation({
@@ -106,6 +108,7 @@ export default function SettingsPage() {
   // const linkInterval = preferences?.linkCheckIntervalMinutes ?? 30;
   // const linkBatch = preferences?.linkCheckBatchSize ?? 25;
   const autoTagEnabled = preferences?.autoTagSuggestionsEnabled ?? true;
+  const aiTaggingEnabled = preferences?.aiTaggingEnabled ?? false;
   // const linkEnabled = preferences?.linkCheckEnabled ?? false;
   // const { data: linkStatus } = useQuery<{
   //   enabled: boolean;
@@ -741,26 +744,48 @@ export default function SettingsPage() {
                   </div>
                 </div> */}
 
-                <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
-                  <div className="sm:col-span-2">
-                    <div className="font-medium">Auto-tag Suggestions</div>
-                    <div className="text-sm text-muted-foreground">Suggest tags when adding new bookmarks</div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 items-center sm:justify-end">
-                    <Button
-                      variant={autoTagEnabled ? 'default' : 'outline'}
-                      onClick={() => updatePreferencesMutation.mutate({ autoTagSuggestionsEnabled: true })}
-                    >
-                      On
-                    </Button>
-                    <Button
-                      variant={!autoTagEnabled ? 'default' : 'outline'}
-                      onClick={() => updatePreferencesMutation.mutate({ autoTagSuggestionsEnabled: false })}
-                    >
-                      Off
-                    </Button>
+              <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                <div className="sm:col-span-2">
+                  <div className="font-medium">Auto-tag Suggestions</div>
+                  <div className="text-sm text-muted-foreground">Suggest tags when adding new bookmarks</div>
+                </div>
+                <div className="flex flex-wrap gap-2 items-center sm:justify-end">
+                  <Button
+                    variant={autoTagEnabled ? 'default' : 'outline'}
+                    onClick={() => updatePreferencesMutation.mutate({ autoTagSuggestionsEnabled: true })}
+                  >
+                    On
+                  </Button>
+                  <Button
+                    variant={!autoTagEnabled ? 'default' : 'outline'}
+                    onClick={() => updatePreferencesMutation.mutate({ autoTagSuggestionsEnabled: false })}
+                  >
+                    Off
+                  </Button>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                <div className="sm:col-span-2">
+                  <div className="font-medium">Use AI for Tagging</div>
+                  <div className="text-sm text-muted-foreground">
+                    Generate smarter tags using OpenAI. Requires server to be configured with an API key.
                   </div>
                 </div>
+                <div className="flex flex-wrap gap-2 items-center sm:justify-end">
+                  <Button
+                    variant={aiTaggingEnabled ? 'default' : 'outline'}
+                    onClick={() => updatePreferencesMutation.mutate({ aiTaggingEnabled: true })}
+                  >
+                    On
+                  </Button>
+                  <Button
+                    variant={!aiTaggingEnabled ? 'default' : 'outline'}
+                    onClick={() => updatePreferencesMutation.mutate({ aiTaggingEnabled: false })}
+                  >
+                    Off
+                  </Button>
+                </div>
+              </div>
               </div>
             </CardContent>
           </Card>

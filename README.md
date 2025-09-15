@@ -251,7 +251,8 @@ npm run check        # Run TypeScript type checking
 ### Advanced Features
 
 - ✅ Bulk operations (select, delete, move)
-- ✅ AI-powered auto-tagging
+ - ✅ AI-powered auto-tagging
+ - ✅ AI-powered auto-description
 - ✅ Automatic screenshot thumbnails
 - ✅ Broken link monitoring
 - ✅ Protected bookmarks with passcode
@@ -297,7 +298,16 @@ npm run check        # Run TypeScript type checking
 - `THUMIO_VP_HEIGHT` (optional): Page viewport height for Thum.io rendering. Default `640`.
 - `THUMIO_TIMEOUT_MS` (optional): Timeout for Thum.io probes in milliseconds. Default `8000`.
 - `SCREENSHOT_PENDING_TIMEOUT_MS` (optional): Failsafe timeout to auto-fail screenshots stuck in pending. Default `30000`.
- - `VITE_PUBLIC_BASE_URL` (optional): Absolute base URL for the site (e.g., `https://yourdomain.com`). Used for canonical URLs and structured data in the SEO helper.
+- `VITE_PUBLIC_BASE_URL` (optional): Absolute base URL for the site (e.g., `https://yourdomain.com`). Used for canonical URLs and structured data in the SEO helper.
+ - `OPENAI_API_KEY` (optional): Enables AI-assisted features. Server uses moderation via `omni-moderation-latest`. If OpenRouter is not configured, OpenAI is used for chat generation.
+ - `OPENAI_TAG_MODEL` (optional): OpenAI model for tag generation. Default `gpt-5-nano` in code unless overridden.
+ - `OPENAI_DESC_MODEL` (optional): OpenAI model for description generation. Defaults to `OPENAI_TAG_MODEL` or `gpt-5-nano`.
+ - `OPENAI_TAGS_MAX` (optional): Max number of tags to return. Default `8`.
+ - `OPENAI_TIMEOUT_MS` (optional): Timeout for AI requests in milliseconds. Default `6000`.
+ - `OPENROUTER_API_KEY` (optional): When set, uses OpenRouter for chat completions.
+ - `OPENROUTER_TAG_MODEL` (optional): OpenRouter model for tag generation. Default `deepseek/deepseek-chat-v3.1:free`.
+ - `OPENROUTER_DESC_MODEL` (optional): OpenRouter model for description generation. Default `deepseek/deepseek-chat-v3.1:free`.
+ - `AI_DESC_MAX_CHARS` (optional): Max characters for generated descriptions (60–300). Default `220`.
 
 ### Hot Module Replacement
 
@@ -346,6 +356,29 @@ npm run check        # Run TypeScript type checking
 - Link Check Schedule (per user): enable/disable, interval (min 1 minute), batch size; “Run now” for a one‑off check
 - Export/Import: JSON/CSV export; CSV import with column mapping and tags delimiter
 - Auto‑tag Suggestions: enable/disable automatic tag suggestions when adding bookmarks
+  - When `OPENAI_API_KEY` is configured, AI is used to refine tags; otherwise, a heuristic fallback is used.
+ - Auto‑description: when description is blank, the server will attempt to generate a concise description in the background (OpenRouter preferred when `OPENROUTER_API_KEY` is set; otherwise OpenAI if available). Preview and per‑bookmark endpoints are also available.
+
+### API Endpoints (AI)
+
+- POST `/api/bookmarks/preview-auto-tags`
+  - Body: `{ url: string; name?: string; description?: string }`
+  - Response: `{ suggestedTags: string[] }`
+
+- POST `/api/bookmarks/:id/auto-tags`
+  - Body: `{ passcode?: string }`
+  - Response: `{ suggestedTags: string[] }`
+
+- POST `/api/bookmarks/preview-auto-description`
+  - Body: `{ url: string; name?: string; description?: string }`
+  - Response: `{ suggestedDescription: string | undefined }`
+
+- POST `/api/bookmarks/:id/auto-description`
+  - Body: `{ passcode?: string; overwrite?: boolean }`
+  - Response: `{ description: string | null | undefined; generated: boolean; updated: boolean }`
+
+Behavior
+- On create/update, if a bookmark’s description is blank, the server triggers background generation and updates the record when ready. This avoids blocking the request.
 - Support: contact email `nt.apple.it@gmail.com`
 
 ### Categories & Routing

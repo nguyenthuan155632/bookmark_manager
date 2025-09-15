@@ -22,6 +22,9 @@ import crypto from 'crypto';
 
 const PgSession = ConnectPgSimple(session);
 
+// In-memory guard for OpenAI rate limiting to avoid hammering on 429s
+let OPENAI_COOLDOWN_UNTIL = 0; // epoch ms; when > now, skip AI calls
+
 export interface IStorage {
   // Session store for authentication
   sessionStore: any;
@@ -135,6 +138,12 @@ export interface IStorage {
     tagsToAccept: string[],
   ): Promise<Bookmark & { hasPasscode?: boolean }>;
   generateAutoTags(url: string, name?: string, description?: string): Promise<string[]>;
+  generateAutoDescription(
+    url: string,
+    name?: string,
+    description?: string,
+    opts?: { userId?: string },
+  ): Promise<string | undefined>;
 
   // Screenshot methods
   triggerScreenshot(
@@ -434,6 +443,31 @@ export class DatabaseStorage implements IStorage {
 
     // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = newBookmark;
+    // Fire-and-forget: auto-generate description if blank
+    try {
+      const desc = (newBookmark.description || '').trim();
+      if (!desc) {
+        // Run asynchronously to avoid blocking creation latency
+        (async () => {
+          try {
+            const generated = await this.generateAutoDescription(
+              newBookmark.url,
+              newBookmark.name,
+              undefined,
+              { userId },
+            );
+            if (generated && generated.trim()) {
+              await db
+                .update(bookmarks)
+                .set({ description: generated.trim(), updatedAt: new Date() })
+                .where(eq(bookmarks.id, newBookmark.id));
+            }
+          } catch (e) {
+            console.warn('Auto-description generation (create) failed:', e);
+          }
+        })();
+      }
+    } catch {}
     return {
       ...bookmarkResponse,
       hasPasscode: !!passcodeHash,
@@ -469,6 +503,30 @@ export class DatabaseStorage implements IStorage {
 
     // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = updatedBookmark;
+    // Fire-and-forget: auto-generate description if blank after update
+    try {
+      const desc = (updatedBookmark.description || '').trim();
+      if (!desc) {
+        (async () => {
+          try {
+            const generated = await this.generateAutoDescription(
+              updatedBookmark.url,
+              updatedBookmark.name,
+              undefined,
+              { userId },
+            );
+            if (generated && generated.trim()) {
+              await db
+                .update(bookmarks)
+                .set({ description: generated.trim(), updatedAt: new Date() })
+                .where(eq(bookmarks.id, updatedBookmark.id));
+            }
+          } catch (e) {
+            console.warn('Auto-description generation (update) failed:', e);
+          }
+        })();
+      }
+    } catch {}
     return {
       ...bookmarkResponse,
       hasPasscode: !!passcodeHash,
@@ -1004,7 +1062,12 @@ export class DatabaseStorage implements IStorage {
     } as Bookmark & { hasPasscode?: boolean };
   }
 
-  async generateAutoTags(url: string, name?: string, description?: string): Promise<string[]> {
+  async generateAutoTags(
+    url: string,
+    name?: string,
+    description?: string,
+    opts?: { userId?: string },
+  ): Promise<string[]> {
     const tags: Set<string> = new Set();
 
     try {
@@ -1217,15 +1280,342 @@ export class DatabaseStorage implements IStorage {
         );
       }
 
-      // Convert set to array and limit to reasonable number
-      const tagArray = Array.from(tags);
+      // AI-assisted tags (OpenRouter or OpenAI)
+      const apiKey = process.env.OPENAI_API_KEY?.trim();
+      const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+      let useAI = !!(apiKey || openRouterKey);
+      // Global cooldown after 429s
+      if (useAI && Date.now() < OPENAI_COOLDOWN_UNTIL) {
+        useAI = false;
+      }
+      // Respect per-user preference when available
+      if (useAI && opts?.userId) {
+        try {
+          const prefs = await this.getUserPreferences(opts.userId);
+          if (prefs && prefs.aiTaggingEnabled === false) {
+            useAI = false;
+          }
+        } catch { }
+      }
+      const maxTags = Math.max(1, Math.min(12, parseInt(process.env.OPENAI_TAGS_MAX || '8', 10)));
+      const aiTimeout = Math.max(3000, parseInt(process.env.OPENAI_TIMEOUT_MS || '6000', 10));
 
-      // Return up to 8 tags, prioritizing more specific ones
-      return tagArray.slice(0, 8);
+      if (useAI) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), aiTimeout);
+        try {
+          // Helper: moderation call with retries + Retry-After support
+          const callModeration = async (
+            input: string,
+            retries = 5,
+          ): Promise<any> => {
+            let wait = 500; // ms
+            for (let i = 0; i <= retries; i++) {
+              if (controller.signal.aborted) throw new Error('aborted');
+              const r = await fetch('https://api.openai.com/v1/moderations', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${apiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ model: 'omni-moderation-latest', input }),
+                signal: controller.signal,
+              });
+
+              console.log('r', r);
+
+              if (r.ok) return r.json();
+              if (r.status !== 429) throw new Error(await r.text());
+
+              const retryAfter = Number(r.headers.get('retry-after'));
+              if (!Number.isNaN(retryAfter)) {
+                await new Promise((s) => setTimeout(s, retryAfter * 1000));
+              } else {
+                await new Promise((s) => setTimeout(s, wait));
+                wait = Math.min(wait * 2, 8000) + Math.floor(Math.random() * 250);
+              }
+            }
+            throw new Error('Moderation still rate-limited after retries');
+          };
+
+          // 1) Moderation check (OpenAI only, when key present)
+          if (apiKey) {
+            const moderationInput = [name || '', description || '', url].join('\n').slice(0, 2000);
+            try {
+              const modJson: any = await callModeration(moderationInput);
+              const flagged = modJson?.results?.[0]?.flagged === true;
+              if (flagged) {
+                // If flagged, avoid AI tag generation and fall back to simple tags only
+                clearTimeout(timeoutId);
+                const tagArray = Array.from(tags);
+                return tagArray.slice(0, maxTags);
+              }
+            } catch (modErr) {
+              // On persistent 429s or other moderation errors, set cooldown and skip AI
+              OPENAI_COOLDOWN_UNTIL = Date.now() + 60_000; // 60s cooldown
+              clearTimeout(timeoutId);
+              const tagArray = Array.from(tags);
+              return tagArray.slice(0, maxTags);
+            }
+          }
+
+          // 2) Tag generation via Chat Completions (OpenRouter or OpenAI)
+          const useOpenRouter = !!process.env.OPENROUTER_API_KEY?.trim();
+          const chatUrl = useOpenRouter
+            ? 'https://openrouter.ai/api/v1/chat/completions'
+            : 'https://api.openai.com/v1/chat/completions';
+          const chatApiKey = useOpenRouter
+            ? process.env.OPENROUTER_API_KEY!.trim()
+            : apiKey!;
+          const chatModel = useOpenRouter
+            ? (process.env.OPENROUTER_TAG_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1:free')
+            : (process.env.OPENAI_TAG_MODEL?.trim() || 'gpt-5-nano');
+
+          const sys =
+            'You extract concise, useful tags from a web resource. Return ONLY a JSON array of 3-8 short, lowercase tags (single words or hyphenated), no explanations.';
+          const user = `URL: ${url}\nTitle: ${name || ''}\nDescription: ${description || ''}\nInstructions: derive up to ${maxTags} relevant tags.`;
+
+          // Helper: chat completion with retries + Retry-After
+          const callChat = async (retries = 5): Promise<any> => {
+            let wait = 500; // ms
+            for (let i = 0; i <= retries; i++) {
+              if (controller.signal.aborted) throw new Error('aborted');
+              const r = await fetch(chatUrl, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${chatApiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: chatModel,
+                  temperature: 0.2,
+                  messages: [
+                    { role: 'system', content: sys },
+                    { role: 'user', content: user },
+                  ],
+                }),
+                signal: controller.signal,
+              });
+              if (r.ok) return r.json();
+              if (r.status !== 429) throw new Error(await r.text());
+
+              const retryAfter = Number(r.headers.get('retry-after'));
+              if (!Number.isNaN(retryAfter)) {
+                await new Promise((s) => setTimeout(s, retryAfter * 1000));
+              } else {
+                await new Promise((s) => setTimeout(s, wait));
+                wait = Math.min(wait * 2, 8000) + Math.floor(Math.random() * 250);
+              }
+            }
+            throw new Error('Chat completion still rate-limited after retries');
+          };
+
+          try {
+            const data: any = await callChat();
+            const content = data?.choices?.[0]?.message?.content?.trim?.() || '';
+            try {
+              const parsed = JSON.parse(content);
+              if (Array.isArray(parsed)) {
+                for (const t of parsed) {
+                  if (typeof t === 'string' && t.trim()) tags.add(t.trim().toLowerCase());
+                }
+              }
+            } catch {
+              // Try to salvage tags from brackets if present
+              const match = content.match(/\[(.|\n|\r)*\]/);
+              if (match) {
+                try {
+                  const arr = JSON.parse(match[0]);
+                  if (Array.isArray(arr)) {
+                    for (const t of arr) {
+                      if (typeof t === 'string' && t.trim()) tags.add(t.trim().toLowerCase());
+                    }
+                  }
+                } catch { }
+              }
+            }
+          } catch (chatErr) {
+            // Rate limited or other chat error — set cooldown and skip AI for now
+            OPENAI_COOLDOWN_UNTIL = Date.now() + 60_000;
+          }
+        } catch (e) {
+          // Timeout or API error — silently ignore and fall back
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
+      // Convert set to array and limit to configured number
+      const tagArray = Array.from(tags);
+      return tagArray.slice(0, maxTags);
     } catch (error) {
       console.error('Error generating auto tags:', error);
       // Return empty array if URL parsing or other errors occur
       return [];
+    }
+  }
+
+  async generateAutoDescription(
+    url: string,
+    name?: string,
+    description?: string,
+    opts?: { userId?: string },
+  ): Promise<string | undefined> {
+    try {
+      // If description already exists and is non-empty, prefer returning it
+      if (description && description.trim()) return description.trim();
+
+      // Provider and preference checks
+      const openaiKey = process.env.OPENAI_API_KEY?.trim();
+      const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+      let useAI = !!(openaiKey || openRouterKey);
+      if (useAI && Date.now() < OPENAI_COOLDOWN_UNTIL) useAI = false;
+      if (useAI && opts?.userId) {
+        try {
+          const prefs = await this.getUserPreferences(opts.userId);
+          if (prefs && prefs.aiTaggingEnabled === false) useAI = false;
+        } catch { }
+      }
+
+      const maxChars = Math.max(60, Math.min(300, parseInt(process.env.AI_DESC_MAX_CHARS || '220', 10)));
+      const aiTimeout = Math.max(3000, parseInt(process.env.OPENAI_TIMEOUT_MS || '6000', 10));
+
+      // Try to fetch basic metadata for a non-AI fallback and better prompts
+      let metaTitle = '';
+      let metaDesc = '';
+      try {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), 3000);
+        const res = await fetch(url, { method: 'GET', signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0 memorize-vault' } });
+        clearTimeout(t);
+        if (res.ok) {
+          const html = await res.text();
+          const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+          if (titleMatch) metaTitle = titleMatch[1].trim();
+          const md1 = html.match(/<meta[^>]*name=['"]description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+          const md2 = html.match(/<meta[^>]*property=['"][og:]*description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+          metaDesc = (md1?.[1] || md2?.[1] || '').trim();
+        }
+      } catch { }
+
+      // If we have a meta description and no AI, return it (trimmed)
+      if (!useAI && metaDesc) return metaDesc.slice(0, maxChars);
+
+      if (useAI) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), aiTimeout);
+        try {
+          // Optional moderation (OpenAI only)
+          if (openaiKey) {
+            const moderationInput = [name || '', metaTitle || '', metaDesc || '', url].join('\n').slice(0, 2000);
+            const callModeration = async (input: string, retries = 5) => {
+              let wait = 500;
+              for (let i = 0; i <= retries; i++) {
+                if (controller.signal.aborted) throw new Error('aborted');
+                const r = await fetch('https://api.openai.com/v1/moderations', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${openaiKey}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ model: 'omni-moderation-latest', input }),
+                  signal: controller.signal,
+                });
+                if (r.ok) return r.json();
+                if (r.status !== 429) throw new Error(await r.text());
+                const retryAfter = Number(r.headers.get('retry-after'));
+                if (!Number.isNaN(retryAfter)) await new Promise((s) => setTimeout(s, retryAfter * 1000));
+                else {
+                  await new Promise((s) => setTimeout(s, wait));
+                  wait = Math.min(wait * 2, 8000) + Math.floor(Math.random() * 250);
+                }
+              }
+              throw new Error('Moderation still rate-limited after retries');
+            };
+
+            try {
+              const mod = await callModeration(moderationInput);
+              const flagged = mod?.results?.[0]?.flagged === true;
+              if (flagged) {
+                clearTimeout(timeoutId);
+                return metaDesc ? metaDesc.slice(0, maxChars) : undefined;
+              }
+            } catch {
+              OPENAI_COOLDOWN_UNTIL = Date.now() + 60_000;
+              clearTimeout(timeoutId);
+              return metaDesc ? metaDesc.slice(0, maxChars) : undefined;
+            }
+          }
+
+          // Chat completion via OpenRouter or OpenAI
+          const useOpenRouter = !!openRouterKey;
+          const chatUrl = useOpenRouter
+            ? 'https://openrouter.ai/api/v1/chat/completions'
+            : 'https://api.openai.com/v1/chat/completions';
+          const chatApiKey = useOpenRouter ? openRouterKey! : openaiKey!;
+          const chatModel = useOpenRouter
+            ? (process.env.OPENROUTER_DESC_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1:free')
+            : (process.env.OPENAI_DESC_MODEL?.trim() || process.env.OPENAI_TAG_MODEL?.trim() || 'gpt-5-nano');
+
+          const sys = `You write one concise, helpful description for a web resource. Return plain text only, no quotes or markdown, max ${maxChars} characters.`;
+          const user = `URL: ${url}\nTitle: ${name || metaTitle || ''}\nKnown description: ${description || metaDesc || ''}\nTask: Write a succinct 1-2 sentence description within ${maxChars} characters.`;
+
+          const callChat = async (retries = 5) => {
+            let wait = 500;
+            for (let i = 0; i <= retries; i++) {
+              if (controller.signal.aborted) throw new Error('aborted');
+              const r = await fetch(chatUrl, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${chatApiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: chatModel,
+                  temperature: 0.3,
+                  messages: [
+                    { role: 'system', content: sys },
+                    { role: 'user', content: user },
+                  ],
+                }),
+                signal: controller.signal,
+              });
+              if (r.ok) return r.json();
+              if (r.status !== 429) throw new Error(await r.text());
+              const retryAfter = Number(r.headers.get('retry-after'));
+              if (!Number.isNaN(retryAfter)) await new Promise((s) => setTimeout(s, retryAfter * 1000));
+              else {
+                await new Promise((s) => setTimeout(s, wait));
+                wait = Math.min(wait * 2, 8000) + Math.floor(Math.random() * 250);
+              }
+            }
+            throw new Error('Chat completion still rate-limited after retries');
+          };
+
+          try {
+            const data: any = await callChat();
+            let content = data?.choices?.[0]?.message?.content?.trim?.() || '';
+            // Sanitize and trim to character budget
+            content = content.replace(/^"|"$/g, '').replace(/^'+|'+$/g, '').trim();
+            if (!content && metaDesc) return metaDesc.slice(0, maxChars);
+            return content.slice(0, maxChars);
+          } catch {
+            OPENAI_COOLDOWN_UNTIL = Date.now() + 60_000;
+            return metaDesc ? metaDesc.slice(0, maxChars) : undefined;
+          }
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
+      // Final fallback
+      if (metaDesc) return metaDesc.slice(0, maxChars);
+      const u = new URL(url);
+      const base = `${u.hostname.replace(/^www\./, '')}${u.pathname && u.pathname !== '/' ? u.pathname : ''}`;
+      return `A link to ${name || base}`.slice(0, maxChars);
+    } catch (e) {
+      console.error('Error generating auto description:', e);
+      return undefined;
     }
   }
 
@@ -1360,8 +1750,7 @@ export class DatabaseStorage implements IStorage {
         'noanimate',
         'noscroll',
       ].join('/');
-
-      const thumToken = '75165-bookmark';
+      const thumToken = process.env.THUMIO_TOKEN?.trim();
 
       // Build candidate URLs in order of preference
       const candidates: string[] = [];
