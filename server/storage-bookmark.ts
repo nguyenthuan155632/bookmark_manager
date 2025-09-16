@@ -6,7 +6,20 @@ import {
   type InsertBookmarkInternal,
   type Category,
 } from '@shared/schema';
-import { db, eq, ilike, or, desc, asc, and, isNull, sql, inArray, bcrypt, crypto } from './storage-base';
+import {
+  db,
+  eq,
+  ilike,
+  or,
+  desc,
+  asc,
+  and,
+  isNull,
+  sql,
+  inArray,
+  bcrypt,
+  crypto,
+} from './storage-base';
 
 export class BookmarkStorage {
   // Bookmark methods
@@ -119,15 +132,17 @@ export class BookmarkStorage {
         updatedAt: bookmarks.updatedAt,
         category: categories,
         // Add search relevance score when searching
-        ...(params?.search ? {
-          searchRank: sql<number>`
+        ...(params?.search
+          ? {
+              searchRank: sql<number>`
             CASE 
               WHEN ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
               THEN ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search}))
               ELSE 0.1  -- Lower score for ILIKE matches
             END
-          `.as('search_rank')
-        } : {}),
+          `.as('search_rank'),
+            }
+          : {}),
       })
       .from(bookmarks)
       .leftJoin(
@@ -154,10 +169,16 @@ export class BookmarkStorage {
         `),
         // Then apply the requested sort
         sortBy === 'name'
-          ? (sortOrder === 'asc' ? asc(bookmarks.name) : desc(bookmarks.name))
+          ? sortOrder === 'asc'
+            ? asc(bookmarks.name)
+            : desc(bookmarks.name)
           : sortBy === 'isFavorite'
-            ? (sortOrder === 'asc' ? asc(bookmarks.isFavorite) : desc(bookmarks.isFavorite))
-            : (sortOrder === 'asc' ? asc(bookmarks.createdAt) : desc(bookmarks.createdAt)),
+            ? sortOrder === 'asc'
+              ? asc(bookmarks.isFavorite)
+              : desc(bookmarks.isFavorite)
+            : sortOrder === 'asc'
+              ? asc(bookmarks.createdAt)
+              : desc(bookmarks.createdAt),
         // Tie-breaker for deterministic pagination
         desc(bookmarks.id),
       );
@@ -264,7 +285,10 @@ export class BookmarkStorage {
       bookmarkData.passcodeHash = null;
     }
 
-    const [newBookmark] = await db.insert(bookmarks).values(bookmarkData as any).returning();
+    const [newBookmark] = await db
+      .insert(bookmarks)
+      .values(bookmarkData as any)
+      .returning();
 
     // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = newBookmark;
@@ -333,7 +357,9 @@ export class BookmarkStorage {
       .where(
         and(
           eq(bookmarks.userId, userId),
-          orig.categoryId == null ? isNull(bookmarks.categoryId) : eq(bookmarks.categoryId, orig.categoryId!),
+          orig.categoryId == null
+            ? isNull(bookmarks.categoryId)
+            : eq(bookmarks.categoryId, orig.categoryId!),
         ),
       );
 
@@ -583,15 +609,15 @@ export class BookmarkStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-      name: string;
-      description: string | null;
-      url: string | null;
-      tags: string[] | null;
-      screenshotUrl?: string | null;
-      createdAt: Date;
-      category?: { name: string } | null;
-      hasPasscode?: boolean;
-    }
+        name: string;
+        description: string | null;
+        url: string | null;
+        tags: string[] | null;
+        screenshotUrl?: string | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+        hasPasscode?: boolean;
+      }
     | undefined
   > {
     const [result] = await db

@@ -47,10 +47,22 @@ export function registerPreferencesRoutes(app: Express) {
 
       // Apply per-user schedule with min 10 minutes
       const enabled = (data as any).linkCheckEnabled;
-      const interval = Math.max(1, (data as any).linkCheckIntervalMinutes ?? preferences.linkCheckIntervalMinutes ?? 30);
+      const interval = Math.max(
+        1,
+        (data as any).linkCheckIntervalMinutes ?? preferences.linkCheckIntervalMinutes ?? 30,
+      );
       const batch = (data as any).linkCheckBatchSize ?? preferences.linkCheckBatchSize ?? 25;
-      if (enabled !== undefined || (data as any).linkCheckIntervalMinutes !== undefined || (data as any).linkCheckBatchSize !== undefined) {
-        userLinkCheckerService.setUserConfig(userId, !!(enabled ?? preferences.linkCheckEnabled), interval, batch);
+      if (
+        enabled !== undefined ||
+        (data as any).linkCheckIntervalMinutes !== undefined ||
+        (data as any).linkCheckBatchSize !== undefined
+      ) {
+        userLinkCheckerService.setUserConfig(
+          userId,
+          !!(enabled ?? preferences.linkCheckEnabled),
+          interval,
+          batch,
+        );
       }
       res.json(preferences);
     } catch (error: any) {

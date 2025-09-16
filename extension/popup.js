@@ -46,7 +46,7 @@ async function getInstallType() {
         chrome.management.getSelf((info) => resolve(info?.installType || 'unknown'));
       });
     }
-  } catch { }
+  } catch {}
   return 'unknown';
 }
 
@@ -59,7 +59,7 @@ async function loadCategories() {
 
     const res = await fetch(`${base}/api/categories`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -71,7 +71,7 @@ async function loadCategories() {
     els.category.innerHTML = '<option value="">Select a folder...</option>';
 
     // Add categories to dropdown
-    categories.forEach(category => {
+    categories.forEach((category) => {
       const option = document.createElement('option');
       option.value = category.id;
       option.textContent = category.name;
@@ -93,13 +93,13 @@ async function processAiFeaturesInBackground(base, token, bookmarkId, wantsAiTag
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({}),
-        }).catch(error => {
+        }).catch((error) => {
           console.error('AI tags failed:', error);
           return { ok: false, error };
-        })
+        }),
       );
     }
 
@@ -109,19 +109,19 @@ async function processAiFeaturesInBackground(base, token, bookmarkId, wantsAiTag
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({}),
-        }).catch(error => {
+        }).catch((error) => {
           console.error('AI description failed:', error);
           return { ok: false, error };
-        })
+        }),
       );
     }
 
     // Wait for all AI processing to complete (but don't block the UI)
-    Promise.all(promises).then(results => {
-      const successCount = results.filter(r => r && r.ok).length;
+    Promise.all(promises).then((results) => {
+      const successCount = results.filter((r) => r && r.ok).length;
       const totalCount = results.length;
 
       if (successCount === totalCount) {
@@ -130,7 +130,6 @@ async function processAiFeaturesInBackground(base, token, bookmarkId, wantsAiTag
         console.warn(`AI processing completed: ${successCount}/${totalCount} features succeeded`);
       }
     });
-
   } catch (error) {
     console.error('Background AI processing failed:', error);
   }
@@ -205,7 +204,9 @@ els.loginBtn.addEventListener('click', async () => {
     const ct = (res.headers.get('content-type') || '').toLowerCase();
     if (!ct.includes('application/json')) {
       const text = await res.text();
-      throw new Error('Server returned HTML. Please set Server URL to your API host (e.g., http://localhost:4001).');
+      throw new Error(
+        'Server returned HTML. Please set Server URL to your API host (e.g., http://localhost:4001).',
+      );
     }
     const j = await res.json();
     if (!res.ok) {
@@ -268,7 +269,9 @@ els.createBtn.addEventListener('click', async () => {
     const ct = (res.headers.get('content-type') || '').toLowerCase();
     if (!ct.includes('application/json')) {
       const text = await res.text();
-      throw new Error('Server returned non-JSON. Verify Server URL points to your API (e.g., http://localhost:4001).');
+      throw new Error(
+        'Server returned non-JSON. Verify Server URL points to your API (e.g., http://localhost:4001).',
+      );
     }
 
     const j = await res.json();
@@ -287,10 +290,14 @@ els.createBtn.addEventListener('click', async () => {
     }
 
     // Close the popup after a short delay
-    setTimeout(() => {
-      try { window.close(); } catch { }
-    }, wantsAiTags || wantsAiDesc ? 2000 : 1000);
-
+    setTimeout(
+      () => {
+        try {
+          window.close();
+        } catch {}
+      },
+      wantsAiTags || wantsAiDesc ? 2000 : 1000,
+    );
   } catch (e) {
     els.createError.textContent = e.message || 'Failed to create bookmark';
     show(els.createError, true);

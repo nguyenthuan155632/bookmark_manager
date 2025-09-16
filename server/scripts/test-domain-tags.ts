@@ -34,13 +34,16 @@ async function testDomainTags() {
 
     // Test 3: Test specific domain lookups
     console.log('\n3️⃣ Testing specific domain lookups...');
-    const testDomains = ['github.com', 'youtube.com', 'stackoverflow.com', 'figma.com', 'notion.so'];
+    const testDomains = [
+      'github.com',
+      'youtube.com',
+      'stackoverflow.com',
+      'figma.com',
+      'notion.so',
+    ];
 
     for (const domain of testDomains) {
-      const [result] = await db
-        .select()
-        .from(domainTags)
-        .where(eq(domainTags.domain, domain));
+      const [result] = await db.select().from(domainTags).where(eq(domainTags.domain, domain));
 
       if (result) {
         console.log(`   ✅ ${domain}: [${result.tags.join(', ')}] (${result.category})`);
@@ -72,7 +75,7 @@ async function testDomainTags() {
       'https://youtube.com/watch?v=abc123',
       'https://stackoverflow.com/questions/123456',
       'https://figma.com/design/abc123',
-      'https://notion.so/workspace/abc123'
+      'https://notion.so/workspace/abc123',
     ];
 
     console.log('   🤖 Testing AI auto-tagging with database domain tags:');
@@ -83,10 +86,7 @@ async function testDomainTags() {
         const urlObj = new URL(url);
         const domain = urlObj.hostname.toLowerCase();
 
-        const [domainTag] = await db
-          .select()
-          .from(domainTags)
-          .where(eq(domainTags.domain, domain));
+        const [domainTag] = await db.select().from(domainTags).where(eq(domainTags.domain, domain));
 
         if (domainTag) {
           console.log(`      ${domain}: [${domainTag.tags.join(', ')}] (${domainTag.category})`);
@@ -103,12 +103,18 @@ async function testDomainTags() {
     const startTime = Date.now();
 
     // Simulate multiple domain lookups
-    const performanceDomains = ['github.com', 'youtube.com', 'stackoverflow.com', 'figma.com', 'notion.so', 'medium.com', 'dev.to', 'reddit.com'];
+    const performanceDomains = [
+      'github.com',
+      'youtube.com',
+      'stackoverflow.com',
+      'figma.com',
+      'notion.so',
+      'medium.com',
+      'dev.to',
+      'reddit.com',
+    ];
     for (const domain of performanceDomains) {
-      await db
-        .select()
-        .from(domainTags)
-        .where(eq(domainTags.domain, domain));
+      await db.select().from(domainTags).where(eq(domainTags.domain, domain));
     }
 
     const endTime = Date.now();
@@ -122,7 +128,6 @@ async function testDomainTags() {
     console.log('• ✅ Fast lookups with indexes');
     console.log('• ✅ Easy to maintain and extend');
     console.log('• ✅ No more hardcoded mappings!');
-
   } catch (error) {
     console.error('❌ Test failed:', error);
     process.exit(1);

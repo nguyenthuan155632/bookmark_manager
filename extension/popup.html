@@ -1,177 +1,197 @@
 <!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memorize Bookmark</title>
+    <style>
+      body {
+        font:
+          13px/1.4 -apple-system,
+          system-ui,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        min-width: 340px;
+        margin: 0;
+        padding: 12px;
+      }
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Memorize Bookmark</title>
-  <style>
-    body {
-      font: 13px/1.4 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
-      min-width: 340px;
-      margin: 0;
-      padding: 12px;
-    }
+      h1 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
 
-    h1 {
-      font-size: 16px;
-      margin: 0 0 8px;
-    }
+      .row {
+        margin-bottom: 8px;
+      }
 
-    .row {
-      margin-bottom: 8px;
-    }
+      label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
 
-    label {
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
+      input[type='text'],
+      input[type='password'],
+      textarea,
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+      }
 
-    input[type="text"],
-    input[type="password"],
-    textarea,
-    select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 6px 8px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-    }
+      textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
 
-    textarea {
-      min-height: 70px;
-      resize: vertical;
-    }
+      .actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 12px;
+      }
 
-    .actions {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      margin-top: 12px;
-    }
+      button {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid #0ea5e9;
+        background: #0284c7;
+        color: #fff;
+        cursor: pointer;
+      }
 
-    button {
-      padding: 6px 12px;
-      border-radius: 6px;
-      border: 1px solid #0ea5e9;
-      background: #0284c7;
-      color: #fff;
-      cursor: pointer;
-    }
+      button.secondary {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+        color: #0f172a;
+      }
 
-    button.secondary {
-      border-color: #cbd5e1;
-      background: #f8fafc;
-      color: #0f172a;
-    }
+      .muted {
+        color: #64748b;
+        font-size: 12px;
+      }
 
-    .muted {
-      color: #64748b;
-      font-size: 12px;
-    }
+      .note {
+        background: #f1f5f9;
+        border-radius: 6px;
+        padding: 6px 8px;
+        margin-bottom: 8px;
+      }
 
-    .note {
-      background: #f1f5f9;
-      border-radius: 6px;
-      padding: 6px 8px;
-      margin-bottom: 8px;
-    }
+      .inline {
+        display: inline-block;
+      }
 
-    .inline {
-      display: inline-block;
-    }
+      .flex {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
 
-    .flex {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    .checkbox {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+      .error {
+        color: #b91c1c;
+        margin-bottom: 8px;
+      }
 
-    .error {
-      color: #b91c1c;
-      margin-bottom: 8px;
-    }
+      .success {
+        color: #166534;
+        margin-bottom: 8px;
+      }
 
-    .success {
-      color: #166534;
-      margin-bottom: 8px;
-    }
+      .hidden {
+        display: none;
+      }
 
-    .hidden {
-      display: none;
-    }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+      .section {
+        border-top: 1px solid #e2e8f0;
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+    </style>
+  </head>
 
-    .section {
-      border-top: 1px solid #e2e8f0;
-      margin-top: 10px;
-      padding-top: 10px;
-    }
-  </style>
-</head>
+  <body>
+    <h1>Memorize Bookmark</h1>
 
-<body>
-  <h1>Memorize Bookmark</h1>
-
-  <div id="baseUrlRow" class="row">
-    <label for="baseUrl">Server URL</label>
-    <input id="baseUrl" type="text" placeholder="http://localhost:4001" />
-    <div class="muted">The Memorize server base URL.</div>
-  </div>
-
-  <div id="loginView" class="section">
-    <h2 class="muted">Sign in</h2>
-    <div id="loginError" class="error hidden"></div>
-    <div class="row"><label for="username">Username</label><input id="username" type="text" /></div>
-    <div class="row"><label for="password">Password</label><input id="password" type="password" /></div>
-    <div class="actions">
-      <button id="loginBtn">Sign in</button>
+    <div id="baseUrlRow" class="row">
+      <label for="baseUrl">Server URL</label>
+      <input id="baseUrl" type="text" placeholder="http://localhost:4001" />
+      <div class="muted">The Memorize server base URL.</div>
     </div>
-  </div>
 
-  <div id="createView" class="section hidden">
-    <h2 class="muted">Create Bookmark</h2>
-    <div id="createMsg" class="success hidden"></div>
-    <div id="createError" class="error hidden"></div>
-    <div class="row"><label for="url">URL</label><input id="url" type="text" /></div>
-    <div class="row"><label for="name">Name</label><input id="name" type="text" /></div>
-    <div class="row"><label for="description">Description</label><textarea id="description"></textarea></div>
-    <div class="row"><label for="tags">Tags</label><input id="tags" type="text" placeholder="comma,separated,tags" />
-    </div>
-    <div class="row">
-      <label for="category">Folder (Category)</label>
-      <select id="category">
-        <option value="">Select a folder...</option>
-      </select>
-    </div>
-    <div class="row"><label class="checkbox"><input id="favorite" type="checkbox" /> Favorite</label></div>
-    <div class="row"><label class="checkbox"><input id="autoTags" type="checkbox" /> Auto-generate tags</label></div>
-    <div class="row"><label class="checkbox"><input id="autoDesc" type="checkbox" /> Auto-generate description</label>
-    </div>
-    <div class="row">
-      <label for="passcode">Passcode (optional)</label>
-      <input id="passcode" type="password" />
-      <div class="muted">Owner can unlock protected items with this passcode or the account password (when logged in).
+    <div id="loginView" class="section">
+      <h2 class="muted">Sign in</h2>
+      <div id="loginError" class="error hidden"></div>
+      <div class="row">
+        <label for="username">Username</label><input id="username" type="text" />
+      </div>
+      <div class="row">
+        <label for="password">Password</label><input id="password" type="password" />
+      </div>
+      <div class="actions">
+        <button id="loginBtn">Sign in</button>
       </div>
     </div>
-    <div class="actions">
-      <button id="logoutBtn" class="secondary">Sign out</button>
-      <button id="createBtn">Create</button>
+
+    <div id="createView" class="section hidden">
+      <h2 class="muted">Create Bookmark</h2>
+      <div id="createMsg" class="success hidden"></div>
+      <div id="createError" class="error hidden"></div>
+      <div class="row"><label for="url">URL</label><input id="url" type="text" /></div>
+      <div class="row"><label for="name">Name</label><input id="name" type="text" /></div>
+      <div class="row">
+        <label for="description">Description</label><textarea id="description"></textarea>
+      </div>
+      <div class="row">
+        <label for="tags">Tags</label
+        ><input id="tags" type="text" placeholder="comma,separated,tags" />
+      </div>
+      <div class="row">
+        <label for="category">Folder (Category)</label>
+        <select id="category">
+          <option value="">Select a folder...</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="checkbox"><input id="favorite" type="checkbox" /> Favorite</label>
+      </div>
+      <div class="row">
+        <label class="checkbox"><input id="autoTags" type="checkbox" /> Auto-generate tags</label>
+      </div>
+      <div class="row">
+        <label class="checkbox"
+          ><input id="autoDesc" type="checkbox" /> Auto-generate description</label
+        >
+      </div>
+      <div class="row">
+        <label for="passcode">Passcode (optional)</label>
+        <input id="passcode" type="password" />
+        <div class="muted">
+          Owner can unlock protected items with this passcode or the account password (when logged
+          in).
+        </div>
+      </div>
+      <div class="actions">
+        <button id="logoutBtn" class="secondary">Sign out</button>
+        <button id="createBtn">Create</button>
+      </div>
     </div>
-  </div>
 
-  <script src="popup.js"></script>
-</body>
-
+    <script src="popup.js"></script>
+  </body>
 </html>

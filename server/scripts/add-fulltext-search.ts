@@ -109,7 +109,6 @@ async function addFullTextSearch() {
     console.log('- Boolean operators: "react AND typescript"');
     console.log('- Prefix matching: "react*"');
     console.log('- Negation: "javascript NOT jquery"');
-
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);

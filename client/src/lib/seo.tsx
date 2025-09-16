@@ -54,7 +54,14 @@ function upsertJsonLd(id: string, data: any) {
   el.textContent = json;
 }
 
-export function SEO({ title, description, canonicalPath, noindex, ogImage, structuredData }: SEOProps) {
+export function SEO({
+  title,
+  description,
+  canonicalPath,
+  noindex,
+  ogImage,
+  structuredData,
+}: SEOProps) {
   useEffect(() => {
     const baseTitle = 'Memorize';
     const fullTitle = title ? `${title} • ${baseTitle}` : baseTitle;

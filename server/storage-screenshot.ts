@@ -1,10 +1,8 @@
-import {
-  bookmarks,
-} from '@shared/schema';
+import { bookmarks } from '@shared/schema';
 import { db, eq, and } from './storage-base';
 
 export class ScreenshotStorage {
-  constructor(private getBookmark: (userId: string, id: number) => Promise<any>) { }
+  constructor(private getBookmark: (userId: string, id: number) => Promise<any>) {}
 
   // Screenshot methods implementation
   async triggerScreenshot(
@@ -40,19 +38,22 @@ export class ScreenshotStorage {
         process.env.SCREENSHOT_PENDING_TIMEOUT_MS || '30000',
         10,
       );
-      setTimeout(async () => {
-        try {
-          const [row] = await db
-            .select({ status: bookmarks.screenshotStatus, at: bookmarks.screenshotUpdatedAt })
-            .from(bookmarks)
-            .where(eq(bookmarks.id, bookmarkId));
-          if (row?.status === 'pending') {
-            await this.updateScreenshotStatus(bookmarkId, 'idle');
+      setTimeout(
+        async () => {
+          try {
+            const [row] = await db
+              .select({ status: bookmarks.screenshotStatus, at: bookmarks.screenshotUpdatedAt })
+              .from(bookmarks)
+              .where(eq(bookmarks.id, bookmarkId));
+            if (row?.status === 'pending') {
+              await this.updateScreenshotStatus(bookmarkId, 'idle');
+            }
+          } catch (e) {
+            console.warn('Pending screenshot failsafe check failed:', e);
           }
-        } catch (e) {
-          console.warn('Pending screenshot failsafe check failed:', e);
-        }
-      }, Math.max(5000, pendingTimeoutMs));
+        },
+        Math.max(5000, pendingTimeoutMs),
+      );
 
       return { status: 'pending', message: 'Screenshot generation started' };
     } catch (error) {
@@ -132,11 +133,7 @@ export class ScreenshotStorage {
         'noanimate',
         'noscroll',
       ].join('/');
-      const minimalOptions = [
-        `width/${thumWidth}`,
-        'noanimate',
-        'noscroll',
-      ].join('/');
+      const minimalOptions = [`width/${thumWidth}`, 'noanimate', 'noscroll'].join('/');
       const thumToken = process.env.THUMIO_TOKEN?.trim();
 
       // Build candidate URLs in order of preference

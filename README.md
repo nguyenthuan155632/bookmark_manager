@@ -262,17 +262,17 @@ npm run check        # Run TypeScript type checking
 ### Advanced Features
 
 - ✅ Bulk operations (select, delete, move)
- - ✅ AI-powered auto-tagging
- - ✅ AI-powered auto-description
+- ✅ AI-powered auto-tagging
+- ✅ AI-powered auto-description
 - ✅ Automatic screenshot thumbnails
 - ✅ Broken link monitoring
 - ✅ Protected bookmarks with passcode (owner can also unlock using account password when logged in)
 - ✅ Public bookmark sharing
 - ✅ Mobile-responsive design
 - ✅ Dark/light theme support
- - ✅ Settings page with preferences (theme, layout, default category, session timeout, per‑user link checker, export/import, auto‑tag toggle)
- - ✅ Hidden folder for protected bookmarks
- - ✅ Slug‑only category URLs
+- ✅ Settings page with preferences (theme, layout, default category, session timeout, per‑user link checker, export/import, auto‑tag toggle)
+- ✅ Hidden folder for protected bookmarks
+- ✅ Slug‑only category URLs
 
 ### Security Features
 
@@ -295,7 +295,7 @@ npm run check        # Run TypeScript type checking
 - Use `npm run db:push` to apply schema changes
 - Drizzle Kit manages migrations from `shared/schema.ts`
 - Session table is included in the schema to prevent accidental drops during pushes
- - Preferences fields include: `defaultCategoryId`, `sessionTimeoutMinutes`, `linkCheckEnabled`, `linkCheckIntervalMinutes`, `linkCheckBatchSize`, `autoTagSuggestionsEnabled`, `aiTaggingEnabled`, `autoDescriptionEnabled`, `aiDescriptionEnabled`
+- Preferences fields include: `defaultCategoryId`, `sessionTimeoutMinutes`, `linkCheckEnabled`, `linkCheckIntervalMinutes`, `linkCheckBatchSize`, `autoTagSuggestionsEnabled`, `aiTaggingEnabled`, `autoDescriptionEnabled`, `aiDescriptionEnabled`
 
 ### Environment Variables
 
@@ -310,15 +310,15 @@ npm run check        # Run TypeScript type checking
 - `THUMIO_TIMEOUT_MS` (optional): Timeout for Thum.io probes in milliseconds. Default `8000`.
 - `SCREENSHOT_PENDING_TIMEOUT_MS` (optional): Failsafe timeout to auto-fail screenshots stuck in pending. Default `30000`.
 - `VITE_PUBLIC_BASE_URL` (optional): Absolute base URL for the site (e.g., `https://yourdomain.com`). Used for canonical URLs and structured data in the SEO helper.
- - AI (OpenRouter)
-   - `OPENROUTER_API_KEY` (optional): Enables AI-assisted tag and description generation via OpenRouter.
-   - `OPENROUTER_TAG_MODEL` (optional): OpenRouter model for tag generation. Default `deepseek/deepseek-chat-v3.1:free`.
-   - `OPENROUTER_DESC_MODEL` (optional): OpenRouter model for description generation. Default `deepseek/deepseek-chat-v3.1:free`.
-   - `OPENROUTER_SITE_URL` (optional): Public site URL used as Referer header for OpenRouter.
-   - `OPENROUTER_SITE_TITLE` (optional): Site/app name sent to OpenRouter.
- - Deprecated: OpenAI variables (`OPENAI_*`) are no longer used.
- - `AI_DESC_MAX_CHARS` (optional): Max characters for generated descriptions (120–500). Default `300`.
- - `AI_DESC_MIN_CHARS` (optional): Minimum target length; if first draft is shorter, the server retries once to expand. Default `180`.
+- AI (OpenRouter)
+  - `OPENROUTER_API_KEY` (optional): Enables AI-assisted tag and description generation via OpenRouter.
+  - `OPENROUTER_TAG_MODEL` (optional): OpenRouter model for tag generation. Default `deepseek/deepseek-chat-v3.1:free`.
+  - `OPENROUTER_DESC_MODEL` (optional): OpenRouter model for description generation. Default `deepseek/deepseek-chat-v3.1:free`.
+  - `OPENROUTER_SITE_URL` (optional): Public site URL used as Referer header for OpenRouter.
+  - `OPENROUTER_SITE_TITLE` (optional): Site/app name sent to OpenRouter.
+- Deprecated: OpenAI variables (`OPENAI_*`) are no longer used.
+- `AI_DESC_MAX_CHARS` (optional): Max characters for generated descriptions (120–500). Default `300`.
+- `AI_DESC_MIN_CHARS` (optional): Minimum target length; if first draft is shorter, the server retries once to expand. Default `180`.
 
 ### Hot Module Replacement
 
@@ -347,7 +347,7 @@ npm run check        # Run TypeScript type checking
 - Thum.io is used to generate thumbnails. When `THUMIO_TOKEN` is set, authenticated PNG requests are used: `https://image.thum.io/get/auth/<token>/png/<options>/<url>`.
 - If no token is configured, unauthenticated PNG requests are attempted; if they fail, a placeholder is applied.
 - If you encounter 400 responses from Thum.io, verify the token value and try simplifying options. The server already retries with both a full and a minimal option set.
- - Defaults favor smaller images for faster loading: width `800`, viewport `1024x640`. Override with `THUMIO_WIDTH`, `THUMIO_VP_WIDTH`, `THUMIO_VP_HEIGHT`.
+- Defaults favor smaller images for faster loading: width `800`, viewport `1024x640`. Override with `THUMIO_WIDTH`, `THUMIO_VP_WIDTH`, `THUMIO_VP_HEIGHT`.
 
 ## Feature Details
 
@@ -368,7 +368,7 @@ npm run check        # Run TypeScript type checking
 - Export/Import: JSON/CSV export; CSV import with column mapping and tags delimiter
 - Auto‑tag Suggestions: enable/disable automatic tag suggestions when adding bookmarks
   - When `OPENROUTER_API_KEY` is configured, AI is used to refine tags; otherwise, a heuristic fallback is used.
- - Auto‑description: when description is blank, the server will attempt to generate a concise description in the background (uses OpenRouter when `OPENROUTER_API_KEY` is set). Preview and per‑bookmark endpoints are also available.
+- Auto‑description: when description is blank, the server will attempt to generate a concise description in the background (uses OpenRouter when `OPENROUTER_API_KEY` is set). Preview and per‑bookmark endpoints are also available.
 
 ### API Endpoints (AI)
 
@@ -389,6 +389,7 @@ npm run check        # Run TypeScript type checking
   - Response: `{ description: string | null | undefined; generated: boolean; updated: boolean }`
 
 Behavior
+
 - On create/update, if a bookmark’s description is blank, the server triggers background generation and updates the record when ready. This avoids blocking the request.
 - Support: contact email `nt.apple.it@gmail.com`
 

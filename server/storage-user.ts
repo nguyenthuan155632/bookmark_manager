@@ -49,10 +49,7 @@ export class UserStorage {
   async createApiToken(userId: string): Promise<{ token: string; id: number }> {
     // Generate a 64-char hex token
     const token = crypto.randomBytes(32).toString('hex');
-    const [row] = await db
-      .insert(apiTokens)
-      .values({ userId, token })
-      .returning();
+    const [row] = await db.insert(apiTokens).values({ userId, token }).returning();
     return { token, id: row.id };
   }
 
@@ -67,10 +64,7 @@ export class UserStorage {
   }
 
   async touchApiToken(token: string): Promise<void> {
-    await db
-      .update(apiTokens)
-      .set({ lastUsedAt: new Date() })
-      .where(eq(apiTokens.token, token));
+    await db.update(apiTokens).set({ lastUsedAt: new Date() }).where(eq(apiTokens.token, token));
   }
 
   // User Preferences methods

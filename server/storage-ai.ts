@@ -1,12 +1,8 @@
-import {
-  bookmarks,
-  domainTags,
-  type Bookmark,
-} from '@shared/schema';
+import { bookmarks, domainTags, type Bookmark } from '@shared/schema';
 import { db, eq, and, logAI, OpenAI } from './storage-base';
 
 export class AIStorage {
-  constructor(private getUserPreferences: (userId: string) => Promise<any>) { }
+  constructor(private getUserPreferences: (userId: string) => Promise<any>) {}
 
   // Cache for domain tags to avoid repeated database queries
   private domainTagsCache: Map<string, string[]> = new Map();
@@ -307,7 +303,9 @@ export class AIStorage {
             // Note: autoTagSuggestionsEnabled is primarily a client-side toggle for auto-run; we also honor it here.
             if (prefs.autoTagSuggestionsEnabled === false) useAI = false;
           }
-        } catch (_e) { void _e; }
+        } catch (_e) {
+          void _e;
+        }
       }
       const maxTags = Math.max(1, Math.min(12, parseInt(process.env.OPENAI_TAGS_MAX || '8', 10)));
       const aiTimeout = Math.max(3000, parseInt(process.env.OPENAI_TIMEOUT_MS || '6000', 10));
@@ -317,10 +315,14 @@ export class AIStorage {
         const timeoutId = setTimeout(() => controller.abort(), aiTimeout);
         try {
           // Tag generation via Chat Completions (OpenRouter)
-          const siteReferer = process.env.OPENROUTER_SITE_URL?.trim() || process.env.VITE_PUBLIC_BASE_URL?.trim() || '';
+          const siteReferer =
+            process.env.OPENROUTER_SITE_URL?.trim() ||
+            process.env.VITE_PUBLIC_BASE_URL?.trim() ||
+            '';
           const siteTitle = process.env.OPENROUTER_SITE_TITLE?.trim() || 'Memorize Vault';
           const chatApiKey = process.env.OPENROUTER_API_KEY!.trim();
-          const chatModel = process.env.OPENROUTER_TAG_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1:free';
+          const chatModel =
+            process.env.OPENROUTER_TAG_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1:free';
 
           const sys =
             'You extract concise, useful tags from a web resource. Return ONLY a JSON array of 3-8 short, lowercase tags (single words or hyphenated), no explanations.';
@@ -349,7 +351,10 @@ export class AIStorage {
                     { role: 'user', content: user },
                   ],
                 });
-                logAI('OR response (tags)', completion.choices?.[0]?.message?.content?.slice?.(0, 180));
+                logAI(
+                  'OR response (tags)',
+                  completion.choices?.[0]?.message?.content?.slice?.(0, 180),
+                );
                 return completion;
               } catch (e: any) {
                 const status = e?.status || e?.response?.status;
@@ -390,7 +395,9 @@ export class AIStorage {
                       if (typeof t === 'string' && t.trim()) tags.add(t.trim().toLowerCase());
                     }
                   }
-                } catch (_e) { void _e; }
+                } catch (_e) {
+                  void _e;
+                }
               }
             }
           } catch (chatErr) {
@@ -432,7 +439,9 @@ export class AIStorage {
           if (prefs) {
             if (prefs.aiDescriptionEnabled === false) useAI = false;
           }
-        } catch (_e) { void _e; }
+        } catch (_e) {
+          void _e;
+        }
       }
 
       const maxChars = Math.max(120, parseInt(process.env.AI_DESC_MAX_CHARS || '300', 10));
@@ -440,7 +449,9 @@ export class AIStorage {
         120,
         Math.min(maxChars - 40, parseInt(process.env.AI_DESC_MIN_CHARS || '180', 10)),
       );
-      const descFormat = (process.env.AI_DESC_FORMAT || (process.env.AI_DESC_MARKDOWN === '1' ? 'markdown' : 'text')).toLowerCase();
+      const descFormat = (
+        process.env.AI_DESC_FORMAT || (process.env.AI_DESC_MARKDOWN === '1' ? 'markdown' : 'text')
+      ).toLowerCase();
       const isMarkdown = descFormat === 'markdown';
       const aiTimeout = Math.max(3000, parseInt(process.env.OPENAI_TIMEOUT_MS || '6000', 10));
 
@@ -450,17 +461,27 @@ export class AIStorage {
       try {
         const controller = new AbortController();
         const t = setTimeout(() => controller.abort(), 3000);
-        const res = await fetch(url, { method: 'GET', signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0 memorize-vault' } });
+        const res = await fetch(url, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0 memorize-vault' },
+        });
         clearTimeout(t);
         if (res.ok) {
           const html = await res.text();
           const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
           if (titleMatch) metaTitle = titleMatch[1].trim();
-          const md1 = html.match(/<meta[^>]*name=['"]description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
-          const md2 = html.match(/<meta[^>]*property=['"][og:]*description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+          const md1 = html.match(
+            /<meta[^>]*name=['"]description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i,
+          );
+          const md2 = html.match(
+            /<meta[^>]*property=['"][og:]*description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i,
+          );
           metaDesc = (md1?.[1] || md2?.[1] || '').trim();
         }
-      } catch (_e) { void _e; }
+      } catch (_e) {
+        void _e;
+      }
 
       // If we have a meta description and no AI, return it
       if (!useAI && metaDesc) return metaDesc;
@@ -470,12 +491,19 @@ export class AIStorage {
         const timeoutId = setTimeout(() => controller.abort(), aiTimeout);
         try {
           // Chat completion via OpenRouter
-          const siteReferer = process.env.OPENROUTER_SITE_URL?.trim() || process.env.VITE_PUBLIC_BASE_URL?.trim() || '';
+          const siteReferer =
+            process.env.OPENROUTER_SITE_URL?.trim() ||
+            process.env.VITE_PUBLIC_BASE_URL?.trim() ||
+            '';
           const siteTitle = process.env.OPENROUTER_SITE_TITLE?.trim() || 'Memorize Vault';
           const chatApiKey = openRouterKey!;
-          const chatModel = process.env.OPENROUTER_DESC_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1:free';
+          const chatModel =
+            process.env.OPENROUTER_DESC_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1:free';
 
-          const targetLen = Math.max(minChars + 100, Math.min(maxChars - 20, Math.floor((minChars + maxChars) / 2)));
+          const targetLen = Math.max(
+            minChars + 100,
+            Math.min(maxChars - 20, Math.floor((minChars + maxChars) / 2)),
+          );
           const sys = isMarkdown
             ? `You are a clear, neutral technical writer. Produce a comprehensive Markdown overview of a web page.
 - Target length: aim for about ${targetLen} characters (never exceed ${maxChars}).
@@ -542,7 +570,10 @@ Write a clear, specific multi-sentence summary of a web page:
             let content = data?.choices?.[0]?.message?.content?.trim?.() || '';
             logAI('OR response (desc)', content);
             // Sanitize and trim to character budget
-            content = content.replace(/^"|"$/g, '').replace(/^'+|'+$/g, '').trim();
+            content = content
+              .replace(/^"|"$/g, '')
+              .replace(/^'+|'+$/g, '')
+              .trim();
             if (!content && metaDesc) return metaDesc;
             // If too short, retry once with explicit expansion prompt
             if (content.length < minChars) {
@@ -568,7 +599,10 @@ Write a clear, specific multi-sentence summary of a web page:
               });
               logAI('OR response (desc)', data2?.choices?.[0]?.message?.content?.slice?.(0, 180));
               content = data2?.choices?.[0]?.message?.content?.trim?.() || content;
-              content = content.replace(/^"|"$/g, '').replace(/^'+|'+$/g, '').trim();
+              content = content
+                .replace(/^"|"$/g, '')
+                .replace(/^'+|'+$/g, '')
+                .trim();
             }
             return content;
           } catch {
@@ -584,7 +618,10 @@ Write a clear, specific multi-sentence summary of a web page:
       if (metaDesc) {
         if (isMarkdown) {
           const titleText = name || metaTitle || 'Overview';
-          const body = metaDesc.slice(0, Math.max(0, maxChars - Math.min(titleText.length + 6, 60)));
+          const body = metaDesc.slice(
+            0,
+            Math.max(0, maxChars - Math.min(titleText.length + 6, 60)),
+          );
           return `# ${titleText}\n\n## Overview\n${body}`;
         }
         return metaDesc;

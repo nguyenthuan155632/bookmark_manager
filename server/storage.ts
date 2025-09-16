@@ -35,8 +35,12 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     this.categoryStorage = new CategoryStorage();
     this.statsStorage = new StatsStorage();
     this.aiStorage = new AIStorage(this.userStorage.getUserPreferences.bind(this.userStorage));
-    this.screenshotStorage = new ScreenshotStorage(this.bookmarkStorage.getBookmark.bind(this.bookmarkStorage));
-    this.linkCheckerStorage = new LinkCheckerStorage(this.bookmarkStorage.getBookmark.bind(this.bookmarkStorage));
+    this.screenshotStorage = new ScreenshotStorage(
+      this.bookmarkStorage.getBookmark.bind(this.bookmarkStorage),
+    );
+    this.linkCheckerStorage = new LinkCheckerStorage(
+      this.bookmarkStorage.getBookmark.bind(this.bookmarkStorage),
+    );
   }
 
   // User methods - delegate to UserStorage
@@ -102,7 +106,11 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     return this.bookmarkStorage.createBookmark(userId, bookmark);
   }
 
-  async updateBookmark(userId: string, id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark> {
+  async updateBookmark(
+    userId: string,
+    id: number,
+    bookmark: Partial<InsertBookmark>,
+  ): Promise<Bookmark> {
     return this.bookmarkStorage.updateBookmark(userId, id, bookmark);
   }
 
@@ -155,7 +163,11 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     return this.categoryStorage.createCategory(userId, category);
   }
 
-  async updateCategory(userId: string, id: number, category: Partial<InsertCategory>): Promise<Category> {
+  async updateCategory(
+    userId: string,
+    id: number,
+    category: Partial<InsertCategory>,
+  ): Promise<Category> {
     return this.categoryStorage.updateCategory(userId, id, category);
   }
 
@@ -205,7 +217,11 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     return this.bookmarkStorage.generateShareId();
   }
 
-  async setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark> {
+  async setBookmarkSharing(
+    userId: string,
+    bookmarkId: number,
+    isShared: boolean,
+  ): Promise<Bookmark> {
     return this.bookmarkStorage.setBookmarkSharing(userId, bookmarkId, isShared);
   }
 
@@ -214,15 +230,15 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-      name: string;
-      description: string | null;
-      url: string | null;
-      tags: string[] | null;
-      screenshotUrl?: string | null;
-      createdAt: Date;
-      category?: { name: string } | null;
-      hasPasscode?: boolean;
-    }
+        name: string;
+        description: string | null;
+        url: string | null;
+        tags: string[] | null;
+        screenshotUrl?: string | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+        hasPasscode?: boolean;
+      }
     | undefined
   > {
     return this.bookmarkStorage.getSharedBookmark(shareId, options);
@@ -245,7 +261,12 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     return this.aiStorage.acceptSuggestedTags(userId, bookmarkId, tagsToAccept);
   }
 
-  async generateAutoTags(url: string, name?: string, description?: string, opts?: { userId?: string }): Promise<string[]> {
+  async generateAutoTags(
+    url: string,
+    name?: string,
+    description?: string,
+    opts?: { userId?: string },
+  ): Promise<string[]> {
     return this.aiStorage.generateAutoTags(url, name, description, opts);
   }
 
@@ -301,7 +322,12 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     httpStatus?: number,
     linkFailCount?: number,
   ): Promise<void> {
-    return this.linkCheckerStorage.updateLinkStatus(bookmarkId, linkStatus, httpStatus, linkFailCount);
+    return this.linkCheckerStorage.updateLinkStatus(
+      bookmarkId,
+      linkStatus,
+      httpStatus,
+      linkFailCount,
+    );
   }
 
   async getBookmarksForLinkCheck(

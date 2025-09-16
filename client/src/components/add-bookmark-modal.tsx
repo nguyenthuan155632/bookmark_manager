@@ -100,7 +100,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       tagInput: '',
       passcode: '',
       removeVerify: '',
-      },
+    },
   });
 
   // Clear passcode errors when protection state changes
@@ -187,7 +187,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     mutationFn: async ({ bookmarkId, passcode }: { bookmarkId?: number; passcode?: string }) => {
       if (bookmarkId) {
         // For existing bookmarks
-        const res = await apiRequest('POST', `/api/bookmarks/${bookmarkId}/auto-tags`, { passcode });
+        const res = await apiRequest('POST', `/api/bookmarks/${bookmarkId}/auto-tags`, {
+          passcode,
+        });
         return await res.json();
       } else {
         // For new bookmarks, use the URL, name and description directly
@@ -266,7 +268,10 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       toast({ description: 'Tags accepted successfully!' });
     },
     onError: (error: any) => {
-      toast({ variant: 'destructive', description: error.message || 'Failed to accept suggested tags' });
+      toast({
+        variant: 'destructive',
+        description: error.message || 'Failed to accept suggested tags',
+      });
     },
   });
 
@@ -320,7 +325,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       new URL(currentUrl); // Validate URL
       setIsGeneratingSuggestions(true);
       const passcode = isProtected
-        ? (form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined)
+        ? form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined
         : undefined;
       generateAutoTagsMutation.mutate({
         bookmarkId: editingBookmark?.id,
@@ -338,13 +343,19 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const handleGenerateDescription = async () => {
     const currentUrl = form.getValues('url');
     if (!currentUrl) {
-      toast({ variant: 'destructive', description: 'Please enter a URL first to generate a description' });
+      toast({
+        variant: 'destructive',
+        description: 'Please enter a URL first to generate a description',
+      });
       return;
     }
     try {
       new URL(currentUrl);
     } catch {
-      toast({ variant: 'destructive', description: 'Please enter a valid URL to generate a description' });
+      toast({
+        variant: 'destructive',
+        description: 'Please enter a valid URL to generate a description',
+      });
       return;
     }
 
@@ -373,7 +384,10 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         );
       }
     } catch (error: any) {
-      toast({ variant: 'destructive', description: error?.message || 'Failed to generate description' });
+      toast({
+        variant: 'destructive',
+        description: error?.message || 'Failed to generate description',
+      });
     } finally {
       setIsGeneratingDescription(false);
     }
@@ -384,7 +398,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     if (editingBookmark) {
       // For existing bookmarks, use the API. If protected, prefer form passcode; fall back to unlocked passcode from parent.
       const passcode = isProtected
-        ? (form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined)
+        ? form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined
         : undefined;
       acceptSuggestedTagsMutation.mutate({
         bookmarkId: editingBookmark.id,
@@ -409,7 +423,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     if (editingBookmark) {
       // For existing bookmarks, use the API. If protected, prefer form passcode; fall back to unlocked passcode from parent.
       const passcode = isProtected
-        ? (form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined)
+        ? form.getValues('passcode') || (editingBookmark as any)?.__passcode || undefined
         : undefined;
       acceptSuggestedTagsMutation.mutate({
         bookmarkId: editingBookmark.id,
@@ -507,7 +521,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         if (!verify) {
           toast({
             variant: 'destructive',
-            description: 'Please enter your current passcode or account password to remove protection',
+            description:
+              'Please enter your current passcode or account password to remove protection',
           });
           return;
         }
@@ -584,7 +599,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
           {(preferences?.autoDescriptionEnabled ?? true) && (
             <>
               <div className="flex items-center justify-between -mt-1">
-                <div className="text-xs text-muted-foreground">Let AI suggest a concise description</div>
+                <div className="text-xs text-muted-foreground">
+                  Let AI suggest a concise description
+                </div>
                 <Button
                   type="button"
                   variant="outline"
@@ -611,7 +628,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                     <div className="flex items-center space-x-2">
                       <Sparkles size={14} className="text-muted-foreground" />
                       <Label className="text-sm font-medium text-muted-foreground">
-                        {isGeneratingDescription ? 'Generating description...' : 'Suggested Description'}
+                        {isGeneratingDescription
+                          ? 'Generating description...'
+                          : 'Suggested Description'}
                       </Label>
                     </div>
                     {!isGeneratingDescription && suggestedDescription && (
@@ -621,7 +640,14 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => form.setValue('description', (form.getValues('description') || '').trim() + (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') + suggestedDescription)}
+                            onClick={() =>
+                              form.setValue(
+                                'description',
+                                (form.getValues('description') || '').trim() +
+                                  (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') +
+                                  suggestedDescription,
+                              )
+                            }
                             className="text-xs"
                             data-testid="button-append-suggested-description"
                           >
@@ -730,65 +756,66 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             />
 
             {/* Suggested Tags Section */}
-            {(preferences?.autoTagSuggestionsEnabled ?? true) && (suggestedTags.length > 0 || isGeneratingSuggestions) && (
-              <div className="border border-border rounded-md p-3 bg-muted/20">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles size={14} className="text-muted-foreground" />
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      {isGeneratingSuggestions
-                        ? 'Generating tag suggestions...'
-                        : `Suggested Tags (${suggestedTags.length})`}
-                    </Label>
+            {(preferences?.autoTagSuggestionsEnabled ?? true) &&
+              (suggestedTags.length > 0 || isGeneratingSuggestions) && (
+                <div className="border border-border rounded-md p-3 bg-muted/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Sparkles size={14} className="text-muted-foreground" />
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        {isGeneratingSuggestions
+                          ? 'Generating tag suggestions...'
+                          : `Suggested Tags (${suggestedTags.length})`}
+                      </Label>
+                    </div>
+                    {suggestedTags.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleAcceptAllSuggestedTags}
+                        disabled={acceptSuggestedTagsMutation.isPending}
+                        data-testid="button-accept-all-suggested"
+                        className="text-xs"
+                      >
+                        Accept All
+                      </Button>
+                    )}
                   </div>
-                  {suggestedTags.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleAcceptAllSuggestedTags}
-                      disabled={acceptSuggestedTagsMutation.isPending}
-                      data-testid="button-accept-all-suggested"
-                      className="text-xs"
-                    >
-                      Accept All
-                    </Button>
+
+                  <div className="text-[11px] text-muted-foreground mb-2">
+                    AI credits: {remainingAiUsage == null ? 'Unlimited' : remainingAiUsage}
+                  </div>
+
+                  {isGeneratingSuggestions ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <Sparkles size={16} className="animate-spin" />
+                        <span>Analyzing URL and content...</span>
+                      </div>
+                    </div>
+                  ) : suggestedTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {suggestedTags.map((tag, index) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 flex items-center space-x-1 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+                          onClick={() => handleAcceptSuggestedTag(tag)}
+                          data-testid={`suggested-tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          <span>{tag}</span>
+                          <Plus size={12} className="text-blue-500" />
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-sm text-muted-foreground">
+                      No tag suggestions found for this URL
+                    </div>
                   )}
                 </div>
-
-                <div className="text-[11px] text-muted-foreground mb-2">
-                  AI credits: {remainingAiUsage == null ? 'Unlimited' : remainingAiUsage}
-                </div>
-
-                {isGeneratingSuggestions ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                      <Sparkles size={16} className="animate-spin" />
-                      <span>Analyzing URL and content...</span>
-                    </div>
-                  </div>
-                ) : suggestedTags.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {suggestedTags.map((tag, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 flex items-center space-x-1 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
-                        onClick={() => handleAcceptSuggestedTag(tag)}
-                        data-testid={`suggested-tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
-                      >
-                        <span>{tag}</span>
-                        <Plus size={12} className="text-blue-500" />
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-sm text-muted-foreground">
-                    No tag suggestions found for this URL
-                  </div>
-                )}
-              </div>
-            )}
+              )}
 
             {/* Current Tags */}
             {tags.length > 0 && (
@@ -880,7 +907,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                     : 'Must be 4-64 characters long. Required for protection.'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  You (the owner) can unlock protected items using either this passcode or your account password when logged in.
+                  You (the owner) can unlock protected items using either this passcode or your
+                  account password when logged in.
                 </p>
               </div>
             )}

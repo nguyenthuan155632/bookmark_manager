@@ -71,7 +71,9 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
       // If currently viewing this category, navigate home
-      const maybeSlug = variables.name ? categorySlug({ id: variables.id, name: variables.name }) : undefined;
+      const maybeSlug = variables.name
+        ? categorySlug({ id: variables.id, name: variables.name })
+        : undefined;
       if (
         (maybeSlug && location === `/category/${maybeSlug}`) ||
         location.startsWith(`/category/${variables.id}`)
@@ -98,7 +100,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     if (!pendingCategory) return;
     try {
       setIsProcessing(true);
-      await deleteMutation.mutateAsync({ id: pendingCategory.id, strategy, name: pendingCategory.name });
+      await deleteMutation.mutateAsync({
+        id: pendingCategory.id,
+        strategy,
+        name: pendingCategory.name,
+      });
       setConfirmOpen(false);
       setPendingCategory(null);
     } catch (err) {
@@ -171,10 +177,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             <Link key={item.path} href={item.path}>
               <Button
                 variant={item.active ? 'default' : 'ghost'}
-                className={`w-full justify-start space-x-3 pr-2 ${item.active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                  }`}
+                className={`w-full justify-start space-x-3 pr-2 ${
+                  item.active
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                }`}
                 onClick={onClose}
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
@@ -182,10 +189,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.count !== undefined && (
                   <span
-                    className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${item.active
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-secondary text-secondary-foreground'
-                      }`}
+                    className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
+                      item.active
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
+                    }`}
                   >
                     {formatCount(item.count)}
                   </span>
@@ -215,24 +223,33 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
 
             <div className="space-y-1">
               {/* Hidden protected bookmarks (synthetic, non-deletable) */}
-              <div className={`group flex items-center rounded-md ${isCategoryActive('hidden') ? 'bg-primary' : ''
-                }`}>
+              <div
+                className={`group flex items-center rounded-md ${
+                  isCategoryActive('hidden') ? 'bg-primary' : ''
+                }`}
+              >
                 <Link href={`/category/hidden`} className="flex-1">
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('hidden')
-                      ? 'text-primary-foreground hover:bg-transparent'
-                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                      }`}
+                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${
+                      isCategoryActive('hidden')
+                        ? 'text-primary-foreground hover:bg-transparent'
+                        : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                    }`}
                     onClick={onClose}
                     data-testid={`folder-hidden`}
                   >
                     <Lock size={16} />
-                    <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-medium">Hidden</span>
-                    <span className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('hidden')
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-secondary text-secondary-foreground'
-                      }`}>
+                    <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-medium">
+                      Hidden
+                    </span>
+                    <span
+                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
+                        isCategoryActive('hidden')
+                          ? 'bg-primary-foreground text-primary'
+                          : 'bg-secondary text-secondary-foreground'
+                      }`}
+                    >
                       {formatCount(hiddenCount)}
                     </span>
                   </Button>
@@ -242,24 +259,33 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               </div>
 
               {/* Default uncategorized folder (synthetic, non-deletable, pinned on top) */}
-              <div className={`group flex items-center rounded-md ${isCategoryActive('uncategorized') ? 'bg-primary' : ''
-                }`}>
+              <div
+                className={`group flex items-center rounded-md ${
+                  isCategoryActive('uncategorized') ? 'bg-primary' : ''
+                }`}
+              >
                 <Link href={`/category/uncategorized`} className="flex-1">
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('uncategorized')
-                      ? 'text-primary-foreground hover:bg-transparent'
-                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                      }`}
+                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${
+                      isCategoryActive('uncategorized')
+                        ? 'text-primary-foreground hover:bg-transparent'
+                        : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                    }`}
                     onClick={onClose}
                     data-testid={`folder-uncategorized`}
                   >
                     <Folder size={16} />
-                    <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text text-transparent font-medium">Uncategorized</span>
-                    <span className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('uncategorized')
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-secondary text-secondary-foreground'
-                      }`}>
+                    <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text text-transparent font-medium">
+                      Uncategorized
+                    </span>
+                    <span
+                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
+                        isCategoryActive('uncategorized')
+                          ? 'bg-primary-foreground text-primary'
+                          : 'bg-secondary text-secondary-foreground'
+                      }`}
+                    >
                       {formatCount(uncategorizedCount)}
                     </span>
                   </Button>
@@ -269,24 +295,34 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               </div>
 
               {categories.map((category) => (
-                <div key={category.id} className={`group flex items-center rounded-md ${isCategoryActive(categorySlug(category)) ? 'bg-primary' : ''
-                  }`}>
+                <div
+                  key={category.id}
+                  className={`group flex items-center rounded-md ${
+                    isCategoryActive(categorySlug(category)) ? 'bg-primary' : ''
+                  }`}
+                >
                   <Link href={`/category/${categorySlug(category)}`} className="flex-1">
                     <Button
                       variant="ghost"
-                      className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive(categorySlug(category))
-                        ? 'text-primary-foreground hover:bg-transparent'
-                        : 'text-slate-900 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                        }`}
+                      className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${
+                        isCategoryActive(categorySlug(category))
+                          ? 'text-primary-foreground hover:bg-transparent'
+                          : 'text-slate-900 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                      }`}
                       onClick={onClose}
                       data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       <Folder size={16} />
-                      <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight">{category.name}</span>
-                      <span className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive(categorySlug(category))
-                        ? 'bg-primary-foreground text-primary'
-                        : 'bg-secondary text-secondary-foreground'
-                        }`}>
+                      <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight">
+                        {category.name}
+                      </span>
+                      <span
+                        className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
+                          isCategoryActive(categorySlug(category))
+                            ? 'bg-primary-foreground text-primary'
+                            : 'bg-secondary text-secondary-foreground'
+                        }`}
+                      >
                         {formatCount(category.bookmarkCount)}
                       </span>
                     </Button>
@@ -311,7 +347,9 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               ))}
 
               {categories.length === 0 && (
-                <p className="text-sm text-slate-600 dark:text-muted-foreground px-3 py-2">No folders yet</p>
+                <p className="text-sm text-slate-600 dark:text-muted-foreground px-3 py-2">
+                  No folders yet
+                </p>
               )}
             </div>
           </div>

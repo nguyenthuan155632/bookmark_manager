@@ -130,15 +130,15 @@ export interface IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-      name: string;
-      description: string | null;
-      url: string | null;
-      tags: string[] | null;
-      screenshotUrl?: string | null;
-      createdAt: Date;
-      category?: { name: string } | null;
-      hasPasscode?: boolean;
-    }
+        name: string;
+        description: string | null;
+        url: string | null;
+        tags: string[] | null;
+        screenshotUrl?: string | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+        hasPasscode?: boolean;
+      }
     | undefined
   >;
 
@@ -153,7 +153,12 @@ export interface IStorage {
     bookmarkId: number,
     tagsToAccept: string[],
   ): Promise<Bookmark & { hasPasscode?: boolean }>;
-  generateAutoTags(url: string, name?: string, description?: string, opts?: { userId?: string }): Promise<string[]>;
+  generateAutoTags(
+    url: string,
+    name?: string,
+    description?: string,
+    opts?: { userId?: string },
+  ): Promise<string[]>;
   generateAutoDescription(
     url: string,
     name?: string,
@@ -237,7 +242,11 @@ export abstract class BaseStorage implements IStorage {
     id: number,
   ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean }) | undefined>;
   abstract createBookmark(userId: string, bookmark: InsertBookmark): Promise<Bookmark>;
-  abstract updateBookmark(userId: string, id: number, bookmark: Partial<InsertBookmark>): Promise<Bookmark>;
+  abstract updateBookmark(
+    userId: string,
+    id: number,
+    bookmark: Partial<InsertBookmark>,
+  ): Promise<Bookmark>;
   abstract deleteBookmark(userId: string, id: number): Promise<void>;
   abstract verifyBookmarkPasscode(userId: string, id: number, passcode: string): Promise<boolean>;
   abstract bulkDeleteBookmarks(
@@ -258,10 +267,16 @@ export abstract class BaseStorage implements IStorage {
     failed: { id: number; reason: string }[];
   }>;
   abstract getCategories(userId: string): Promise<Category[]>;
-  abstract getCategoriesWithCounts(userId: string): Promise<(Category & { bookmarkCount: number })[]>;
+  abstract getCategoriesWithCounts(
+    userId: string,
+  ): Promise<(Category & { bookmarkCount: number })[]>;
   abstract getCategory(userId: string, id: number): Promise<Category | undefined>;
   abstract createCategory(userId: string, category: InsertCategory): Promise<Category>;
-  abstract updateCategory(userId: string, id: number, category: Partial<InsertCategory>): Promise<Category>;
+  abstract updateCategory(
+    userId: string,
+    id: number,
+    category: Partial<InsertCategory>,
+  ): Promise<Category>;
   abstract unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void>;
   abstract deleteBookmarksByCategory(userId: string, categoryId: number): Promise<number>;
   abstract deleteCategory(userId: string, id: number): Promise<void>;
@@ -284,21 +299,25 @@ export abstract class BaseStorage implements IStorage {
     preferences: Partial<InsertUserPreferences>,
   ): Promise<UserPreferences>;
   abstract generateShareId(): string;
-  abstract setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
+  abstract setBookmarkSharing(
+    userId: string,
+    bookmarkId: number,
+    isShared: boolean,
+  ): Promise<Bookmark>;
   abstract getSharedBookmark(
     shareId: string,
     options?: { full?: boolean },
   ): Promise<
     | {
-      name: string;
-      description: string | null;
-      url: string | null;
-      tags: string[] | null;
-      screenshotUrl?: string | null;
-      createdAt: Date;
-      category?: { name: string } | null;
-      hasPasscode?: boolean;
-    }
+        name: string;
+        description: string | null;
+        url: string | null;
+        tags: string[] | null;
+        screenshotUrl?: string | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+        hasPasscode?: boolean;
+      }
     | undefined
   >;
   abstract updateBookmarkSuggestedTags(
@@ -311,7 +330,12 @@ export abstract class BaseStorage implements IStorage {
     bookmarkId: number,
     tagsToAccept: string[],
   ): Promise<Bookmark & { hasPasscode?: boolean }>;
-  abstract generateAutoTags(url: string, name?: string, description?: string, opts?: { userId?: string }): Promise<string[]>;
+  abstract generateAutoTags(
+    url: string,
+    name?: string,
+    description?: string,
+    opts?: { userId?: string },
+  ): Promise<string[]>;
   abstract generateAutoDescription(
     url: string,
     name?: string,
@@ -352,4 +376,14 @@ export abstract class BaseStorage implements IStorage {
 
 // Export common utilities and types
 export { db, pool, eq, ilike, or, desc, asc, and, isNull, sql, inArray, bcrypt, crypto, OpenAI };
-export type { Bookmark, InsertBookmark, InsertBookmarkInternal, Category, InsertCategory, User, InsertUser, UserPreferences, InsertUserPreferences };
+export type {
+  Bookmark,
+  InsertBookmark,
+  InsertBookmarkInternal,
+  Category,
+  InsertCategory,
+  User,
+  InsertUser,
+  UserPreferences,
+  InsertUserPreferences,
+};

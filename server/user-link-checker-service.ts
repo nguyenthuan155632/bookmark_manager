@@ -26,7 +26,14 @@ class UserLinkCheckerService {
       existing.isRunning = false;
       // keep lastRunAt
     } else {
-      this.users.set(userId, { intervalMs, timer: null, isRunning: false, isChecking: false, batchSize: bs, lastRunAt: null });
+      this.users.set(userId, {
+        intervalMs,
+        timer: null,
+        isRunning: false,
+        isChecking: false,
+        batchSize: bs,
+        lastRunAt: null,
+      });
     }
     if (enabled) {
       this.startForUser(userId);
@@ -139,8 +146,7 @@ class UserLinkCheckerService {
       }
     } catch {
       // non-fatal
-    }
-    finally {
+    } finally {
       ctx.isChecking = false;
     }
   }

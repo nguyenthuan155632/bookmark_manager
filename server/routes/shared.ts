@@ -140,9 +140,7 @@ export const verifyProtectedBookmarkAccess = async (
 
   // Log failed attempts for monitoring
   if (!isValid) {
-    console.warn(
-      `Failed passcode attempt for protected bookmark ${bookmarkId} from IP ${req.ip}`,
-    );
+    console.warn(`Failed passcode attempt for protected bookmark ${bookmarkId} from IP ${req.ip}`);
     return {
       success: false,
       error: {

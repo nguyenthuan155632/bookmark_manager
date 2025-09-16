@@ -70,7 +70,7 @@ export class LinkCheckerService {
   private readonly MAX_REDIRECTS = 5; // Maximum redirects to follow
   private readonly REQUEST_TIMEOUT = 10000; // 10 second timeout
 
-  constructor() { }
+  constructor() {}
 
   setConfig(config: { intervalMinutes?: number; batchSize?: number }) {
     if (typeof config.intervalMinutes === 'number' && config.intervalMinutes > 0) {
@@ -392,9 +392,7 @@ export class LinkCheckerService {
   /**
    * Perform a single link check with comprehensive SSRF protection
    */
-  async performSingleLinkCheck(
-    url: string,
-  ): Promise<{ linkStatus: string; httpStatus?: number }> {
+  async performSingleLinkCheck(url: string): Promise<{ linkStatus: string; httpStatus?: number }> {
     try {
       // 1. Comprehensive SSRF validation
       const validation = await this.validateUrlForSsrf(url);

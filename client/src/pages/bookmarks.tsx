@@ -182,7 +182,9 @@ function BookmarksContent() {
     if (selectedCategory === 'uncategorized') return null; // special filter
     const maybeId = parseInt(selectedCategory);
     if (!Number.isNaN(maybeId)) return maybeId; // backward compatibility for id-based routes
-    const matchCat = categories.find((c) => categorySlug(c) === selectedCategory || slugify(c.name) === selectedCategory);
+    const matchCat = categories.find(
+      (c) => categorySlug(c) === selectedCategory || slugify(c.name) === selectedCategory,
+    );
     return matchCat?.id;
   }, [selectedCategory, categories]);
 
@@ -194,10 +196,7 @@ function BookmarksContent() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery<
-    (Bookmark & { category?: Category; hasPasscode?: boolean })[],
-    Error
-  >({
+  } = useInfiniteQuery<(Bookmark & { category?: Category; hasPasscode?: boolean })[], Error>({
     queryKey: [
       '/api/bookmarks',
       {
@@ -205,7 +204,10 @@ function BookmarksContent() {
         // Only pass numeric categoryId; special folders handled client-side
         categoryId: typeof resolvedCategoryId === 'number' ? String(resolvedCategoryId) : undefined,
         // Distinguish special folders in cache to avoid stale views
-        special: selectedCategory === 'hidden' || selectedCategory === 'uncategorized' ? selectedCategory : undefined,
+        special:
+          selectedCategory === 'hidden' || selectedCategory === 'uncategorized'
+            ? selectedCategory
+            : undefined,
         tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
         linkStatus: selectedLinkStatus || undefined,
         isFavorite: location === '/favorites' ? 'true' : undefined,
@@ -247,8 +249,8 @@ function BookmarksContent() {
   const bookmarks = useMemo(() => {
     const flat = bookmarksPages?.pages
       ? ([] as (Bookmark & { category?: Category; hasPasscode?: boolean })[]).concat(
-        ...bookmarksPages.pages,
-      )
+          ...bookmarksPages.pages,
+        )
       : [];
     // Dedupe by id to avoid duplicate keys when re-fetches shift pages
     const seen = new Set<number>();
@@ -334,7 +336,20 @@ function BookmarksContent() {
     );
     observer.observe(sentinelRef);
     return () => observer.disconnect();
-  }, [sentinelRef, hasNextPage, isFetchingNextPage, fetchNextPage, bookmarks, selectedCategory, searchQuery, selectedTags, selectedLinkStatus, sortBy, sortOrder, location]);
+  }, [
+    sentinelRef,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    bookmarks,
+    selectedCategory,
+    searchQuery,
+    selectedTags,
+    selectedLinkStatus,
+    sortBy,
+    sortOrder,
+    location,
+  ]);
 
   // Hide/show sticky header on scroll using transform (smooth & cheap)
   useEffect(() => {
@@ -428,11 +443,18 @@ function BookmarksContent() {
     if (filteredBookmarks.length === 0 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [selectedCategory, filteredBookmarks.length, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
+  }, [
+    selectedCategory,
+    filteredBookmarks.length,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    fetchNextPage,
+  ]);
 
   const handleEdit = (bookmark: Bookmark & { category?: Category; hasPasscode?: boolean }) => {
     const pass = unlockedPasscodes[bookmark.id];
-    setEditingBookmark(pass ? ({ ...(bookmark as any), __passcode: pass }) : bookmark);
+    setEditingBookmark(pass ? { ...(bookmark as any), __passcode: pass } : bookmark);
     setIsAddModalOpen(true);
   };
 
@@ -608,7 +630,7 @@ function BookmarksContent() {
     if (newSharingStatus && bookmark.hasPasscode) {
       // Warn user: passcode-only, not account password
       const proceed = confirm(
-        'You are about to share a protected bookmark. Viewers must enter the bookmark\'s passcode (NOT your account password) to see its content.\n\nOnly share if the passcode is unique and not your account password. Continue?',
+        "You are about to share a protected bookmark. Viewers must enter the bookmark's passcode (NOT your account password) to see its content.\n\nOnly share if the passcode is unique and not your account password. Continue?",
       );
       if (!proceed) return;
     }
@@ -979,7 +1001,9 @@ function BookmarksContent() {
           if (selectedCategory === 'hidden') return 'Hidden Bookmarks';
           if (selectedCategory === 'uncategorized') return 'Uncategorized Bookmarks';
           // Try to find a matching category by slug or name
-          const bySlug = categories.find((c) => categorySlug({ name: c.name, id: c.id }) === selectedCategory);
+          const bySlug = categories.find(
+            (c) => categorySlug({ name: c.name, id: c.id }) === selectedCategory,
+          );
           const byName = categories.find((c) => slugify(c.name) === selectedCategory);
           const name = bySlug?.name || byName?.name || 'Bookmarks';
           return `${name}`;
@@ -1131,7 +1155,9 @@ function BookmarksContent() {
           </div>
         </header>
         {/* Header bottom gradient fade */}
-        <div className={`pointer-events-none h-2 w-full ${isScrolled ? 'bg-gradient-to-b from-border/40 to-transparent' : ''}`} />
+        <div
+          className={`pointer-events-none h-2 w-full ${isScrolled ? 'bg-gradient-to-b from-border/40 to-transparent' : ''}`}
+        />
 
         {/* Filter Bar */}
         <div className="bg-card border-b border-border px-4 py-3" data-testid="filter-bar">
@@ -1287,7 +1313,9 @@ function BookmarksContent() {
                       });
                       return next;
                     });
-                    toast({ description: `Locked ${ids.length} item${ids.length === 1 ? '' : 's'}` });
+                    toast({
+                      description: `Locked ${ids.length} item${ids.length === 1 ? '' : 's'}`,
+                    });
                   }}
                   className="flex items-center space-x-2"
                   data-testid="button-lock-all"
@@ -1434,7 +1462,9 @@ function BookmarksContent() {
                       });
                       return next;
                     });
-                    toast({ description: `Locked ${ids.length} item${ids.length === 1 ? '' : 's'}` });
+                    toast({
+                      description: `Locked ${ids.length} item${ids.length === 1 ? '' : 's'}`,
+                    });
                   }}
                   className="flex items-center space-x-2"
                   data-testid="button-lock-all-mobile"
@@ -1650,9 +1680,13 @@ function BookmarksContent() {
                     const targets = lockedProtectedInView.map((b) => b.id);
                     const results = await Promise.allSettled(
                       targets.map(async (id) => {
-                        const res = await apiRequest('POST', `/api/bookmarks/${id}/verify-passcode`, {
-                          passcode: unlockAllPassword,
-                        });
+                        const res = await apiRequest(
+                          'POST',
+                          `/api/bookmarks/${id}/verify-passcode`,
+                          {
+                            passcode: unlockAllPassword,
+                          },
+                        );
                         const json = await res.json();
                         return { id, valid: json.valid as boolean };
                       }),
@@ -1667,8 +1701,8 @@ function BookmarksContent() {
                     });
 
                     if (unlocked > 0) {
-                      setUnlockedBookmarks((prev) =>
-                        new Set([...Array.from(prev), ...newlyUnlocked]),
+                      setUnlockedBookmarks(
+                        (prev) => new Set([...Array.from(prev), ...newlyUnlocked]),
                       );
                       setUnlockedPasscodes((prev) => {
                         const next = { ...prev } as Record<number, string>;
@@ -1718,12 +1752,14 @@ function BookmarksContent() {
             <AlertDialogDescription>
               {selectedIds.length > 0
                 ? `This will check ${selectedIds.length} selected bookmark${selectedIds.length === 1 ? '' : 's'}.`
-                : 'This will check all bookmarks in the current view.'}
-              {' '}This operation can call external services and may hit rate limits.
+                : 'This will check all bookmarks in the current view.'}{' '}
+              This operation can call external services and may hit rate limits.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkCheckLinksMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={bulkCheckLinksMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmBulkCheckLinks}
               disabled={bulkCheckLinksMutation.isPending}

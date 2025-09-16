@@ -160,7 +160,6 @@ async function testFullTextSearch() {
     console.log('• Support for phrase searches');
     console.log('• Automatic stemming and language processing');
     console.log('• Boolean operators support (AND, OR, NOT)');
-
   } catch (error) {
     console.error('❌ Test failed:', error);
     process.exit(1);

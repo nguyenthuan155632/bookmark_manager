@@ -83,6 +83,7 @@ services:
 ## ☁️ Cloud Platform Deployment
 
 ### Vercel
+
 Add to your `vercel.json`:
 
 ```json
@@ -93,6 +94,7 @@ Add to your `vercel.json`:
 ```
 
 ### Railway
+
 Add to your `railway.toml`:
 
 ```toml
@@ -101,6 +103,7 @@ buildCommand = "npm run build && npm run deploy:search"
 ```
 
 ### Heroku
+
 Add to your `package.json`:
 
 ```json
@@ -125,12 +128,14 @@ npx tsx server/scripts/test-partial-search.ts
 ### Common Issues
 
 1. **Permission Denied**
+
    ```bash
    # Ensure your DATABASE_URL has proper permissions
    # The user needs CREATE, ALTER, and INDEX privileges
    ```
 
 2. **Column Already Exists**
+
    ```bash
    # This is normal - the script handles existing installations
    # It will convert the column type if needed
@@ -148,17 +153,17 @@ Check if full-text search is working:
 
 ```sql
 -- Check if search_vector column exists
-SELECT column_name, data_type 
-FROM information_schema.columns 
+SELECT column_name, data_type
+FROM information_schema.columns
 WHERE table_name = 'bookmarks' AND column_name = 'search_vector';
 
 -- Check if GIN index exists
-SELECT indexname FROM pg_indexes 
+SELECT indexname FROM pg_indexes
 WHERE tablename = 'bookmarks' AND indexname = 'bookmarks_search_idx';
 
 -- Test search functionality
 SELECT name, ts_rank(search_vector, plainto_tsquery('english', 'test')) as rank
-FROM bookmarks 
+FROM bookmarks
 WHERE search_vector @@ plainto_tsquery('english', 'test')
 ORDER BY rank DESC;
 ```

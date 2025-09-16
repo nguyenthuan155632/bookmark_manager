@@ -173,7 +173,11 @@ export default function AuthPage() {
                     ref={passwordInputRef}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    onKeyUp={(e) => setCapsLockOn((e as any).getModifierState && (e as any).getModifierState('CapsLock'))}
+                    onKeyUp={(e) =>
+                      setCapsLockOn(
+                        (e as any).getModifierState && (e as any).getModifierState('CapsLock'),
+                      )
+                    }
                     placeholder={isRegisterMode ? 'Create a password' : 'Enter your password'}
                     required
                     minLength={4}
@@ -217,7 +221,12 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={!username || password.length < 4 || loginMutation.isPending || registerMutation.isPending}
+                disabled={
+                  !username ||
+                  password.length < 4 ||
+                  loginMutation.isPending ||
+                  registerMutation.isPending
+                }
                 data-testid={isRegisterMode ? 'button-register' : 'button-login'}
               >
                 {loginMutation.isPending || registerMutation.isPending
@@ -252,8 +261,8 @@ export default function AuthPage() {
           <h2 className="text-4xl font-bold mb-6">Organize Your Digital Life</h2>
 
           <p className="text-xl text-primary-foreground/80 mb-8">
-            Keep all your important bookmarks organized, searchable, and secure in one place.
-            Let AI help you categorize and describe your content automatically.
+            Keep all your important bookmarks organized, searchable, and secure in one place. Let AI
+            help you categorize and describe your content automatically.
           </p>
 
           <div className="space-y-4">

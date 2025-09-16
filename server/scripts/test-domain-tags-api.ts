@@ -32,8 +32,8 @@ async function testDomainTagsAPI() {
         or(
           ilike(domainTags.domain, `%${query.search}%`),
           ilike(domainTags.description, `%${query.search}%`),
-          sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${query.search}%`}`
-        )
+          sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${query.search}%`}`,
+        ),
       );
     }
 
@@ -97,7 +97,7 @@ async function testDomainTagsAPI() {
       'https://youtube.com/watch?v=abc123',
       'https://stackoverflow.com/questions/123456',
       'https://figma.com/design/abc123',
-      'https://notion.so/workspace/abc123'
+      'https://notion.so/workspace/abc123',
     ];
 
     for (const url of testUrls) {
@@ -124,16 +124,13 @@ async function testDomainTagsAPI() {
           .select()
           .from(domainTags)
           .where(
-            and(
-              sql`${domainTags.domain} LIKE ${`%${domain}%`}`,
-              eq(domainTags.isActive, true)
-            )
+            and(sql`${domainTags.domain} LIKE ${`%${domain}%`}`, eq(domainTags.isActive, true)),
           )
           .limit(3);
 
         if (partialMatches.length > 0) {
           console.log(`   🔍 ${domain}: Found ${partialMatches.length} partial matches`);
-          partialMatches.forEach(match => {
+          partialMatches.forEach((match) => {
             console.log(`      - ${match.domain}: [${match.tags.join(', ')}] (${match.category})`);
           });
         } else {
@@ -156,16 +153,18 @@ async function testDomainTagsAPI() {
             or(
               ilike(domainTags.domain, `%${searchTerm}%`),
               ilike(domainTags.description, `%${searchTerm}%`),
-              sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${searchTerm}%`}`
+              sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${searchTerm}%`}`,
             ),
-            eq(domainTags.isActive, true)
-          )
+            eq(domainTags.isActive, true),
+          ),
         )
         .limit(5);
 
       console.log(`   🔍 Search "${searchTerm}": ${searchResults.length} results`);
       searchResults.forEach((result, index) => {
-        console.log(`      ${index + 1}. ${result.domain}: [${result.tags.join(', ')}] (${result.category})`);
+        console.log(
+          `      ${index + 1}. ${result.domain}: [${result.tags.join(', ')}] (${result.category})`,
+        );
       });
     }
 
@@ -180,7 +179,12 @@ async function testDomainTagsAPI() {
       () => db.select().from(domainTags).where(eq(domainTags.category, 'design')).limit(10),
       () => db.select().from(domainTags).where(eq(domainTags.category, 'education')).limit(10),
       () => db.select().from(domainTags).where(ilike(domainTags.domain, '%github%')).limit(5),
-      () => db.select().from(domainTags).where(sql`array_to_string(${domainTags.tags}, ' ') ILIKE '%design%'`).limit(5),
+      () =>
+        db
+          .select()
+          .from(domainTags)
+          .where(sql`array_to_string(${domainTags.tags}, ' ') ILIKE '%design%'`)
+          .limit(5),
     ];
 
     for (const apiCall of apiCalls) {
@@ -199,7 +203,6 @@ async function testDomainTagsAPI() {
     console.log('• ✅ Domain suggestions');
     console.log('• ✅ Fast performance');
     console.log('• ✅ Proper error handling');
-
   } catch (error) {
     console.error('❌ API test failed:', error);
     process.exit(1);

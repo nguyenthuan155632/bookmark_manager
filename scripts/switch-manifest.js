@@ -20,4 +20,3 @@ if (!fs.existsSync(src)) {
 
 fs.copyFileSync(src, dest);
 console.log(`Wrote ${dest} from ${path.basename(src)}`);
-

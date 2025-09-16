@@ -1,9 +1,4 @@
-import {
-  categories,
-  bookmarks,
-  type Category,
-  type InsertCategory,
-} from '@shared/schema';
+import { categories, bookmarks, type Category, type InsertCategory } from '@shared/schema';
 import { db, eq, asc, and, sql } from './storage-base';
 
 export class CategoryStorage {

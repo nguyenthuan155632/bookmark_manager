@@ -180,7 +180,10 @@ export function BookmarkCard({
       toast({ description: 'Protection removed' });
     },
     onError: (error: any) => {
-      toast({ variant: 'destructive', description: error?.message || 'Failed to remove protection' });
+      toast({
+        variant: 'destructive',
+        description: error?.message || 'Failed to remove protection',
+      });
     },
   });
 
@@ -437,8 +440,9 @@ export function BookmarkCard({
             ref={imageRef}
             src={currentScreenshotUrl}
             alt={`Screenshot of ${bookmark.name}`}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             loading="lazy"
@@ -515,9 +519,11 @@ export function BookmarkCard({
   return (
     <Card
       ref={cardRef}
-      className={`group hover:shadow-md transition-shadow ${isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
-        } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${bulkMode ? 'cursor-pointer' : ''
-        }`}
+      className={`group hover:shadow-md transition-shadow ${
+        isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
+      } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${
+        bulkMode ? 'cursor-pointer' : ''
+      }`}
       onClick={bulkMode ? () => onSelect?.(bookmark.id, !isSelected) : undefined}
       data-testid={`bookmark-card-${bookmark.id}`}
     >
@@ -704,10 +710,7 @@ export function BookmarkCard({
               disabled={toggleFavoriteMutation.isPending}
               data-testid={`button-favorite-${bookmark.id}`}
             >
-              <Star
-                size={16}
-                className={bookmark.isFavorite ? 'fill-current text-accent' : ''}
-              />
+              <Star size={16} className={bookmark.isFavorite ? 'fill-current text-accent' : ''} />
             </Button>
 
             <Button
@@ -727,8 +730,9 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${bookmark.isShared ? 'text-blue-500' : ''
-                }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
+                bookmark.isShared ? 'text-blue-500' : ''
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 onShare?.(bookmark);
@@ -775,8 +779,9 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${generateScreenshotMutation.isPending ? 'animate-pulse' : ''
-                }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
+                generateScreenshotMutation.isPending ? 'animate-pulse' : ''
+              }`}
               onClick={handleGenerateScreenshot}
               disabled={
                 generateScreenshotMutation.isPending ||
@@ -800,8 +805,9 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${checkLinkMutation.isPending ? 'animate-pulse' : ''
-                }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
+                checkLinkMutation.isPending ? 'animate-pulse' : ''
+              }`}
               onClick={handleCheckLink}
               disabled={checkLinkMutation.isPending || isProtected}
               title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}

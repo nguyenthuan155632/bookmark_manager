@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, text, varchar, boolean, timestamp, integer, json, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  varchar,
+  boolean,
+  timestamp,
+  integer,
+  json,
+  index,
+} from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -64,51 +73,59 @@ export const categories = pgTable('categories', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const domainTags = pgTable('domain_tags', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  domain: varchar('domain', { length: 255 }).notNull().unique(),
-  tags: text('tags').array().notNull().default([]),
-  category: varchar('category', { length: 100 }), // e.g., 'development', 'design', 'education'
-  description: text('description'),
-  isActive: boolean('is_active').default(true),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => ({
-  domainIdx: index('domain_tags_domain_idx').on(table.domain),
-  categoryIdx: index('domain_tags_category_idx').on(table.category),
-  activeIdx: index('domain_tags_active_idx').on(table.isActive),
-}));
+export const domainTags = pgTable(
+  'domain_tags',
+  {
+    id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+    domain: varchar('domain', { length: 255 }).notNull().unique(),
+    tags: text('tags').array().notNull().default([]),
+    category: varchar('category', { length: 100 }), // e.g., 'development', 'design', 'education'
+    description: text('description'),
+    isActive: boolean('is_active').default(true),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    domainIdx: index('domain_tags_domain_idx').on(table.domain),
+    categoryIdx: index('domain_tags_category_idx').on(table.category),
+    activeIdx: index('domain_tags_active_idx').on(table.isActive),
+  }),
+);
 
-export const bookmarks = pgTable('bookmarks', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  name: varchar('name', { length: 255 }).notNull(),
-  description: text('description'),
-  url: text('url').notNull(),
-  tags: text('tags').array().default([]),
-  suggestedTags: text('suggested_tags').array().default([]),
-  isFavorite: boolean('is_favorite').default(false),
-  categoryId: integer('category_id'),
-  userId: varchar('user_id').notNull(),
-  passcodeHash: text('passcode_hash'),
-  isShared: boolean('is_shared').default(false),
-  shareId: varchar('share_id', { length: 36 }).unique(),
-  screenshotUrl: text('screenshot_url'),
-  screenshotStatus: varchar('screenshot_status', { length: 16 }).default('idle'),
-  screenshotUpdatedAt: timestamp('screenshot_updated_at'),
-  linkStatus: varchar('link_status', { length: 16 }).default('unknown'),
-  httpStatus: integer('http_status'),
-  lastLinkCheckAt: timestamp('last_link_check_at'),
-  linkFailCount: integer('link_fail_count').default(0),
-  // Full-text search columns
-  searchVector: text('search_vector'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (table) => ({
-  // Full-text search index
-  searchIdx: index('bookmarks_search_idx').on(table.searchVector),
-  // User index for efficient filtering
-  userIdIdx: index('bookmarks_user_id_idx').on(table.userId),
-}));
+export const bookmarks = pgTable(
+  'bookmarks',
+  {
+    id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    url: text('url').notNull(),
+    tags: text('tags').array().default([]),
+    suggestedTags: text('suggested_tags').array().default([]),
+    isFavorite: boolean('is_favorite').default(false),
+    categoryId: integer('category_id'),
+    userId: varchar('user_id').notNull(),
+    passcodeHash: text('passcode_hash'),
+    isShared: boolean('is_shared').default(false),
+    shareId: varchar('share_id', { length: 36 }).unique(),
+    screenshotUrl: text('screenshot_url'),
+    screenshotStatus: varchar('screenshot_status', { length: 16 }).default('idle'),
+    screenshotUpdatedAt: timestamp('screenshot_updated_at'),
+    linkStatus: varchar('link_status', { length: 16 }).default('unknown'),
+    httpStatus: integer('http_status'),
+    lastLinkCheckAt: timestamp('last_link_check_at'),
+    linkFailCount: integer('link_fail_count').default(0),
+    // Full-text search columns
+    searchVector: text('search_vector'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    // Full-text search index
+    searchIdx: index('bookmarks_search_idx').on(table.searchVector),
+    // User index for efficient filtering
+    userIdIdx: index('bookmarks_user_id_idx').on(table.userId),
+  }),
+);
 
 // Relations
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -183,14 +200,8 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks)
   })
   .extend({
     // Enforce non-empty name and valid URL
-    name: z
-      .string({ required_error: 'Name is required' })
-      .trim()
-      .min(1, 'Name is required'),
-    url: z
-      .string({ required_error: 'URL is required' })
-      .trim()
-      .url('Please provide a valid URL'),
+    name: z.string({ required_error: 'Name is required' }).trim().min(1, 'Name is required'),
+    url: z.string({ required_error: 'URL is required' }).trim().url('Please provide a valid URL'),
     // Add client-facing passcode field with validation
     passcode: z
       .string()

@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm';
 /**
  * Production deployment script for full-text search
  * This script is safe to run multiple times and handles existing installations
- * 
+ *
  * Usage:
  * - Development: npx tsx server/scripts/deploy-fulltext-search.ts
  * - Production: Add to your deployment pipeline
@@ -156,7 +156,6 @@ async function deployFullTextSearch() {
       console.log('\n🚀 Production deployment complete!');
       console.log('Your search functionality is now live and ready to use.');
     }
-
   } catch (error) {
     console.error('❌ Deployment failed:', error);
     console.error('\n🔧 Troubleshooting:');

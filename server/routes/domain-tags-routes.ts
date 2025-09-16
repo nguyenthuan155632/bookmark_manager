@@ -48,8 +48,8 @@ export function registerDomainTagsRoutes(app: Express) {
           or(
             ilike(domainTags.domain, `%${query.search}%`),
             ilike(domainTags.description, `%${query.search}%`),
-            sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${query.search}%`}`
-          )
+            sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${query.search}%`}`,
+          ),
         );
       }
 
@@ -127,10 +127,7 @@ export function registerDomainTagsRoutes(app: Express) {
         return res.status(400).json({ message: 'Invalid domain tag ID' });
       }
 
-      const [domainTag] = await db
-        .select()
-        .from(domainTags)
-        .where(eq(domainTags.id, id));
+      const [domainTag] = await db.select().from(domainTags).where(eq(domainTags.id, id));
 
       if (!domainTag) {
         return res.status(404).json({ message: 'Domain tag not found' });
@@ -261,7 +258,7 @@ export function registerDomainTagsRoutes(app: Express) {
             .returning();
           break;
 
-        case 'update':
+        case 'update': {
           if (!data) {
             return res.status(400).json({ message: 'Update data required' });
           }
@@ -272,6 +269,7 @@ export function registerDomainTagsRoutes(app: Express) {
             .where(sql`${domainTags.id} = ANY(${ids})`)
             .returning();
           break;
+        }
 
         case 'delete':
           result = await db
@@ -287,11 +285,13 @@ export function registerDomainTagsRoutes(app: Express) {
       res.json({
         message: `Bulk ${action} completed`,
         affected: result.length,
-        data: result
+        data: result,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid bulk operation data', errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: 'Invalid bulk operation data', errors: error.errors });
       }
       console.error('Error in bulk operation:', error);
       res.status(500).json({ message: 'Failed to perform bulk operation' });
@@ -334,17 +334,12 @@ export function registerDomainTagsRoutes(app: Express) {
       const partialMatches = await db
         .select()
         .from(domainTags)
-        .where(
-          and(
-            sql`${domainTags.domain} LIKE ${`%${domain}%`}`,
-            eq(domainTags.isActive, true)
-          )
-        )
+        .where(and(sql`${domainTags.domain} LIKE ${`%${domain}%`}`, eq(domainTags.isActive, true)))
         .limit(5);
 
       res.json({
         domain,
-        suggestions: partialMatches.map(match => ({
+        suggestions: partialMatches.map((match) => ({
           domain: match.domain,
           tags: match.tags,
           category: match.category,

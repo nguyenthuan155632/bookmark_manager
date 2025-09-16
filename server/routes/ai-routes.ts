@@ -2,7 +2,12 @@ import type { Express } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage';
 import { requireAuth } from '../auth';
-import { getUserId, verifyProtectedBookmarkAccess, getAiChargeDecision, tryConsumeAiUsage } from './shared';
+import {
+  getUserId,
+  verifyProtectedBookmarkAccess,
+  getAiChargeDecision,
+  tryConsumeAiUsage,
+} from './shared';
 
 export function registerAiRoutes(app: Express) {
   // Auto-description endpoints
@@ -20,7 +25,11 @@ export function registerAiRoutes(app: Express) {
       if (decision.shouldCharge) {
         const usage = await tryConsumeAiUsage(userId);
         if (!usage.ok) {
-          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+          return res.status(403).json({
+            message:
+              'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.',
+            remainingAiUsage: 0,
+          });
         }
         usageRemaining = usage.remaining;
       }
@@ -71,7 +80,11 @@ export function registerAiRoutes(app: Express) {
       if (decision.shouldCharge) {
         const usage = await tryConsumeAiUsage(userId);
         if (!usage.ok) {
-          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+          return res.status(403).json({
+            message:
+              'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.',
+            remainingAiUsage: 0,
+          });
         }
         usageRemaining = usage.remaining;
       }
@@ -84,17 +97,31 @@ export function registerAiRoutes(app: Express) {
       );
 
       if (!suggestedDescription) {
-        return res.status(200).json({ description: bookmark.description || null, generated: false });
+        return res
+          .status(200)
+          .json({ description: bookmark.description || null, generated: false });
       }
 
       // Update only if currently empty or overwrite requested
       if (!bookmark.description || overwrite === true) {
-        const updated = await storage.updateBookmark(userId, id, { description: suggestedDescription });
-        return res.json({ description: updated.description, generated: true, updated: true, remainingAiUsage: usageRemaining });
+        const updated = await storage.updateBookmark(userId, id, {
+          description: suggestedDescription,
+        });
+        return res.json({
+          description: updated.description,
+          generated: true,
+          updated: true,
+          remainingAiUsage: usageRemaining,
+        });
       }
 
       // Don't overwrite existing description by default
-      return res.json({ description: suggestedDescription, generated: true, updated: false, remainingAiUsage: usageRemaining });
+      return res.json({
+        description: suggestedDescription,
+        generated: true,
+        updated: false,
+        remainingAiUsage: usageRemaining,
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
@@ -121,15 +148,24 @@ export function registerAiRoutes(app: Express) {
       if (decision.shouldCharge) {
         const usage = await tryConsumeAiUsage(userId);
         if (!usage.ok) {
-          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+          return res.status(403).json({
+            message:
+              'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.',
+            remainingAiUsage: 0,
+          });
         }
         usageRemaining = usage.remaining;
       }
 
       // Generate suggested tags without saving to database
-      const suggestedTags = await storage.generateAutoTags(url, name || '', description || undefined, {
-        userId,
-      });
+      const suggestedTags = await storage.generateAutoTags(
+        url,
+        name || '',
+        description || undefined,
+        {
+          userId,
+        },
+      );
 
       res.json({ suggestedTags, remainingAiUsage: usageRemaining });
     } catch (error) {
@@ -177,11 +213,20 @@ export function registerAiRoutes(app: Express) {
       if (decision.shouldCharge) {
         const usage = await tryConsumeAiUsage(userId);
         if (!usage.ok) {
-          return res.status(403).json({ message: 'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.', remainingAiUsage: 0 });
+          return res.status(403).json({
+            message:
+              'AI usage limit reached. Please contact nt.apple.it@gmail.com to buy more credits.',
+            remainingAiUsage: 0,
+          });
         }
         usageRemaining = usage.remaining;
       }
-      const suggestedTags = await storage.generateAutoTags(bookmark.url, bookmark.name, bookmark.description || undefined, { userId });
+      const suggestedTags = await storage.generateAutoTags(
+        bookmark.url,
+        bookmark.name,
+        bookmark.description || undefined,
+        { userId },
+      );
 
       // Update the bookmark with suggested tags
       await storage.updateBookmarkSuggestedTags(userId, id, suggestedTags);
@@ -235,7 +280,12 @@ export function registerAiRoutes(app: Express) {
           }
 
           // Generate suggested tags based on URL, name, and description
-          const suggestedTags = await storage.generateAutoTags(bookmark.url, bookmark.name, bookmark.description || undefined, { userId });
+          const suggestedTags = await storage.generateAutoTags(
+            bookmark.url,
+            bookmark.name,
+            bookmark.description || undefined,
+            { userId },
+          );
 
           // Update the bookmark with suggested tags
           await storage.updateBookmarkSuggestedTags(userId, id, suggestedTags);

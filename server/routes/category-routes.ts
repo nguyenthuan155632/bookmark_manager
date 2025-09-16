@@ -93,15 +93,13 @@ export function registerCategoryRoutes(app: Express) {
       }
 
       if (!strategy) {
-        return res
-          .status(409)
-          .json({
-            message: 'Category contains bookmarks. Specify strategy query param.',
-            required: {
-              strategy: ['unlink', 'delete'],
-            },
-            count,
-          });
+        return res.status(409).json({
+          message: 'Category contains bookmarks. Specify strategy query param.',
+          required: {
+            strategy: ['unlink', 'delete'],
+          },
+          count,
+        });
       }
 
       if (strategy === 'unlink') {

@@ -166,7 +166,6 @@ async function testPartialSearch() {
     console.log('• Full-text search provides better ranking for exact matches');
     console.log('• ILIKE fallback ensures partial matches are found');
     console.log('• Hybrid approach combines best of both worlds');
-
   } catch (error) {
     console.error('❌ Test failed:', error);
     process.exit(1);

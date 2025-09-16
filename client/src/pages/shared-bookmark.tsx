@@ -15,7 +15,8 @@ import { SEO } from '@/lib/seo';
 export function SharedBookmark() {
   const [, params] = useRoute('/shared/:shareId');
   const [bookmark, setBookmark] = useState<
-    (Partial<Bookmark> & { category?: Category | { name: string } | null; hasPasscode?: boolean }) | null
+    | (Partial<Bookmark> & { category?: Category | { name: string } | null; hasPasscode?: boolean })
+    | null
   >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +120,9 @@ export function SharedBookmark() {
     );
   }
 
-  const timeAgo = bookmark?.createdAt ? formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true }) : '';
+  const timeAgo = bookmark?.createdAt
+    ? formatDistanceToNow(new Date(bookmark.createdAt), { addSuffix: true })
+    : '';
 
   return (
     <div className="min-h-screen bg-background">
@@ -320,7 +323,11 @@ export function SharedBookmark() {
             />
             {unlockError && <div className="text-sm text-destructive mb-2">{unlockError}</div>}
             <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsUnlockOpen(false)} disabled={isUnlocking}>
+              <Button
+                variant="outline"
+                onClick={() => setIsUnlockOpen(false)}
+                disabled={isUnlocking}
+              >
                 Close
               </Button>
               <Button

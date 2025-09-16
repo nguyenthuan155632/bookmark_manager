@@ -14,9 +14,21 @@ import type { Category } from '@shared/schema';
 import { Sidebar } from '@/components/sidebar';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Grid as GridIcon, List as ListIcon, Moon as MoonIcon, Sun as SunIcon, ArrowLeft } from 'lucide-react';
+import {
+  Grid as GridIcon,
+  List as ListIcon,
+  Moon as MoonIcon,
+  Sun as SunIcon,
+  ArrowLeft,
+} from 'lucide-react';
 import { Link } from 'wouter';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { SEO } from '@/lib/seo';
 
 export default function SettingsPage() {
@@ -199,16 +211,25 @@ export default function SettingsPage() {
       favorites: number;
       categories: number;
       tags: string[];
-      linkStats?: { total: number; working: number; broken: number; timeout: number; unknown: number };
+      linkStats?: {
+        total: number;
+        working: number;
+        broken: number;
+        timeout: number;
+        unknown: number;
+      };
     }>({ queryKey: ['/api/stats'] });
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SEO title="Settings" description="Adjust theme, layout, defaults, export/import, and support options for your Memorize account." />
+      <SEO
+        title="Settings"
+        description="Adjust theme, layout, defaults, export/import, and support options for your Memorize account."
+      />
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onCreateFolder={() => { }}
+        onCreateFolder={() => {}}
         stats={stats}
       />
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
@@ -274,11 +295,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 items-center sm:justify-end">
-                  <a
-                    href="https://paypal.me/vensera2022"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a href="https://paypal.me/vensera2022" target="_blank" rel="noreferrer">
                     <Button>
                       <span className="mr-2 inline-flex items-center">
                         <svg
@@ -320,7 +337,9 @@ export default function SettingsPage() {
               <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                 <div className="sm:col-span-2">
                   <div className="font-medium">Default Category</div>
-                  <div className="text-sm text-muted-foreground">Applied when creating new bookmarks</div>
+                  <div className="text-sm text-muted-foreground">
+                    Applied when creating new bookmarks
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
                   <Select
@@ -357,16 +376,22 @@ export default function SettingsPage() {
               <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                 <div className="sm:col-span-2">
                   <div className="font-medium">Theme</div>
-                  <div className="text-sm text-muted-foreground">Toggle between light and dark mode</div>
+                  <div className="text-sm text-muted-foreground">
+                    Toggle between light and dark mode
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 sm:justify-end">
-                  <SunIcon className={`h-4 w-4 ${theme === 'light' ? 'text-foreground' : 'text-muted-foreground'}`} />
+                  <SunIcon
+                    className={`h-4 w-4 ${theme === 'light' ? 'text-foreground' : 'text-muted-foreground'}`}
+                  />
                   <Switch
                     checked={theme === 'dark'}
                     onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
                     aria-label="Toggle dark mode"
                   />
-                  <MoonIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-foreground' : 'text-muted-foreground'}`} />
+                  <MoonIcon
+                    className={`h-4 w-4 ${theme === 'dark' ? 'text-foreground' : 'text-muted-foreground'}`}
+                  />
                 </div>
               </div>
 
@@ -417,7 +442,11 @@ export default function SettingsPage() {
                   />
                   <Button
                     onClick={() => updateUsernameMutation.mutate(newUsername)}
-                    disabled={!newUsername || newUsername.trim().length < 3 || updateUsernameMutation.isPending}
+                    disabled={
+                      !newUsername ||
+                      newUsername.trim().length < 3 ||
+                      updateUsernameMutation.isPending
+                    }
                   >
                     Save
                   </Button>
@@ -450,9 +479,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex justify-end">
                   <Button
-                    onClick={() =>
-                      updatePasswordMutation.mutate({ currentPassword, newPassword })
-                    }
+                    onClick={() => updatePasswordMutation.mutate({ currentPassword, newPassword })}
                     disabled={
                       !currentPassword ||
                       newPassword.length < 4 ||
@@ -496,8 +523,13 @@ export default function SettingsPage() {
                     <Button
                       variant="outline"
                       onClick={async () => {
-                        const scope = exportCategoryId && exportCategoryId !== 'all' ? `&categoryId=${exportCategoryId}` : '';
-                        const res = await fetch(`/api/bookmarks/export?format=json${scope}`, { credentials: 'include' });
+                        const scope =
+                          exportCategoryId && exportCategoryId !== 'all'
+                            ? `&categoryId=${exportCategoryId}`
+                            : '';
+                        const res = await fetch(`/api/bookmarks/export?format=json${scope}`, {
+                          credentials: 'include',
+                        });
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -512,8 +544,13 @@ export default function SettingsPage() {
                     <Button
                       variant="outline"
                       onClick={async () => {
-                        const scope = exportCategoryId && exportCategoryId !== 'all' ? `&categoryId=${exportCategoryId}` : '';
-                        const res = await fetch(`/api/bookmarks/export?format=csv${scope}`, { credentials: 'include' });
+                        const scope =
+                          exportCategoryId && exportCategoryId !== 'all'
+                            ? `&categoryId=${exportCategoryId}`
+                            : '';
+                        const res = await fetch(`/api/bookmarks/export?format=csv${scope}`, {
+                          credentials: 'include',
+                        });
                         const blob = await res.blob();
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -561,12 +598,15 @@ export default function SettingsPage() {
                             const guesses: Record<string, string> = {};
                             parsed.headers.forEach((h) => {
                               const key = h.toLowerCase();
-                              if (key.includes('name') || key.includes('title')) guesses[h] = 'name';
-                              else if (key.includes('url') || key.includes('link')) guesses[h] = 'url';
+                              if (key.includes('name') || key.includes('title'))
+                                guesses[h] = 'name';
+                              else if (key.includes('url') || key.includes('link'))
+                                guesses[h] = 'url';
                               else if (key.includes('desc')) guesses[h] = 'description';
                               else if (key.includes('tag')) guesses[h] = 'tags';
                               else if (key.includes('fav')) guesses[h] = 'isFavorite';
-                              else if (key.includes('category') || key === 'folder') guesses[h] = 'category';
+                              else if (key.includes('category') || key === 'folder')
+                                guesses[h] = 'category';
                             });
                             setMapping(guesses);
                             toast({ description: 'CSV loaded. Map columns below.' });
@@ -613,7 +653,11 @@ export default function SettingsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Label className="text-sm">Tags delimiter</Label>
-                        <Input className="w-24" value={tagsDelimiter} onChange={(e) => setTagsDelimiter(e.target.value)} />
+                        <Input
+                          className="w-24"
+                          value={tagsDelimiter}
+                          onChange={(e) => setTagsDelimiter(e.target.value)}
+                        />
                       </div>
                       <div className="flex justify-end">
                         <Button
@@ -624,17 +668,29 @@ export default function SettingsPage() {
                               const field = mapping[h];
                               if (field) colIndex[field] = idx;
                             });
-                            const data = csvRows.map((row) => {
-                              const name = colIndex.name != null ? row[colIndex.name] : '';
-                              const url = colIndex.url != null ? row[colIndex.url] : '';
-                              const description = colIndex.description != null ? row[colIndex.description] : '';
-                              const tagsStr = colIndex.tags != null ? row[colIndex.tags] : '';
-                              const category = colIndex.category != null ? row[colIndex.category] : '';
-                              const favStr = colIndex.isFavorite != null ? row[colIndex.isFavorite] : '';
-                              const tags = tagsStr ? tagsStr.split(tagsDelimiter).map((t) => t.trim()).filter(Boolean) : [];
-                              const isFavorite = ['1', 'true', 'yes', 'y'].includes(String(favStr).toLowerCase());
-                              return { name, url, description, tags, isFavorite, category };
-                            }).filter((i) => i.name && i.url);
+                            const data = csvRows
+                              .map((row) => {
+                                const name = colIndex.name != null ? row[colIndex.name] : '';
+                                const url = colIndex.url != null ? row[colIndex.url] : '';
+                                const description =
+                                  colIndex.description != null ? row[colIndex.description] : '';
+                                const tagsStr = colIndex.tags != null ? row[colIndex.tags] : '';
+                                const category =
+                                  colIndex.category != null ? row[colIndex.category] : '';
+                                const favStr =
+                                  colIndex.isFavorite != null ? row[colIndex.isFavorite] : '';
+                                const tags = tagsStr
+                                  ? tagsStr
+                                      .split(tagsDelimiter)
+                                      .map((t) => t.trim())
+                                      .filter(Boolean)
+                                  : [];
+                                const isFavorite = ['1', 'true', 'yes', 'y'].includes(
+                                  String(favStr).toLowerCase(),
+                                );
+                                return { name, url, description, tags, isFavorite, category };
+                              })
+                              .filter((i) => i.name && i.url);
                             const scope = importCategoryId ? `?categoryId=${importCategoryId}` : '';
                             await apiRequest('POST', `/api/bookmarks/import${scope}`, data);
                             setCsvHeaders(null);
@@ -656,7 +712,9 @@ export default function SettingsPage() {
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                   <div className="sm:col-span-2">
                     <div className="font-medium">Session Timeout</div>
-                    <div className="text-sm text-muted-foreground">Minutes of inactivity before logout (min 1)</div>
+                    <div className="text-sm text-muted-foreground">
+                      Minutes of inactivity before logout (min 1)
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2 items-center sm:justify-end">
                     <Input
@@ -758,7 +816,8 @@ export default function SettingsPage() {
                   <div className="sm:col-span-2">
                     <div className="font-medium">AI Usage</div>
                     <div className="text-sm text-muted-foreground">
-                      Remaining credits: {preferences?.aiUsageLimit == null ? 'Unlimited' : preferences?.aiUsageLimit}
+                      Remaining credits:{' '}
+                      {preferences?.aiUsageLimit == null ? 'Unlimited' : preferences?.aiUsageLimit}
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       If you run out of credits, contact nt.apple.it@gmail.com to buy more.
@@ -791,7 +850,9 @@ export default function SettingsPage() {
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                   <div className="sm:col-span-2">
                     <div className="font-medium">Auto-tag Suggestions</div>
-                    <div className="text-sm text-muted-foreground">Suggest tags when adding new bookmarks</div>
+                    <div className="text-sm text-muted-foreground">
+                      Suggest tags when adding new bookmarks
+                    </div>
                   </div>
                   <div className="flex items-center justify-end">
                     <Switch
@@ -806,7 +867,9 @@ export default function SettingsPage() {
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                   <div className="sm:col-span-2">
                     <div className="font-medium">Use AI for Tagging</div>
-                    <div className="text-sm text-muted-foreground">Generate smarter tags using AI. Requires server API key.</div>
+                    <div className="text-sm text-muted-foreground">
+                      Generate smarter tags using AI. Requires server API key.
+                    </div>
                   </div>
                   <div className="flex items-center justify-end">
                     <Switch
@@ -826,7 +889,9 @@ export default function SettingsPage() {
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                   <div className="sm:col-span-2">
                     <div className="font-medium">Auto-description</div>
-                    <div className="text-sm text-muted-foreground">When the description is blank, generate one automatically after save.</div>
+                    <div className="text-sm text-muted-foreground">
+                      When the description is blank, generate one automatically after save.
+                    </div>
                   </div>
                   <div className="flex items-center justify-end">
                     <Switch
@@ -842,7 +907,9 @@ export default function SettingsPage() {
                 <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
                   <div className="sm:col-span-2">
                     <div className="font-medium">Use AI for Descriptions</div>
-                    <div className="text-sm text-muted-foreground">Use AI to write the description. When off, only basic metadata is used.</div>
+                    <div className="text-sm text-muted-foreground">
+                      Use AI to write the description. When off, only basic metadata is used.
+                    </div>
                   </div>
                   <div className="flex items-center justify-end">
                     <Switch

@@ -1,7 +1,4 @@
-import {
-  bookmarks,
-  categories,
-} from '@shared/schema';
+import { bookmarks, categories } from '@shared/schema';
 import { db, eq, and, sql } from './storage-base';
 
 export class StatsStorage {

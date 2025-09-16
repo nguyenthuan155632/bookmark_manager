@@ -14,7 +14,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [location] = useLocation();
 
   // Fetch preferences from database
-  const { data: preferences } = useQuery<{ theme?: Theme; viewMode?: 'grid' | 'list' } | null, Error>({
+  const { data: preferences } = useQuery<
+    { theme?: Theme; viewMode?: 'grid' | 'list' } | null,
+    Error
+  >({
     queryKey: ['/api/preferences'],
     queryFn: getQueryFn({ on401: 'returnNull' }),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
