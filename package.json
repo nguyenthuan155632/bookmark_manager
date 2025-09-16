@@ -19,7 +19,7 @@
     "seed": "tsx server/scripts/seed.ts",
     "seed:domain-tags": "tsx server/scripts/populate-domain-tags.ts",
     "deploy:search": "tsx server/scripts/deploy-fulltext-search.ts",
-    "fix:search": "tsx server/scripts/fix-fulltext-search.ts",
+    "fix:custom-search-function": "tsx server/scripts/deploy-custom-search-rank.ts",
     "ext:manifest:dev": "node scripts/switch-manifest.js dev",
     "ext:manifest:prod": "node scripts/switch-manifest.js prod"
   },

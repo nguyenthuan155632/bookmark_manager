@@ -138,7 +138,6 @@ export class BookmarkStorage {
             CASE 
               WHEN ${bookmarks.searchVector} IS NOT NULL AND ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
               THEN COALESCE(
-                ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search})),
                 custom_search_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search})),
                 0.5
               )
@@ -175,7 +174,7 @@ export class BookmarkStorage {
         desc(sql`
           CASE 
             WHEN ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
-            THEN ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search}))
+            THEN custom_search_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search}))
             ELSE 0.1  -- Lower score for ILIKE matches
           END
         `),
