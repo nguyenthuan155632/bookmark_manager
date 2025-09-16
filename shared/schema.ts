@@ -64,6 +64,21 @@ export const categories = pgTable('categories', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const domainTags = pgTable('domain_tags', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  domain: varchar('domain', { length: 255 }).notNull().unique(),
+  tags: text('tags').array().notNull().default([]),
+  category: varchar('category', { length: 100 }), // e.g., 'development', 'design', 'education'
+  description: text('description'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  domainIdx: index('domain_tags_domain_idx').on(table.domain),
+  categoryIdx: index('domain_tags_category_idx').on(table.category),
+  activeIdx: index('domain_tags_active_idx').on(table.isActive),
+}));
+
 export const bookmarks = pgTable('bookmarks', {
   id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
   name: varchar('name', { length: 255 }).notNull(),
@@ -135,6 +150,11 @@ export const userPreferencesRelations = relations(userPreferences, ({ one }) => 
     fields: [userPreferences.userId],
     references: [users.id],
   }),
+}));
+
+export const domainTagsRelations = relations(domainTags, ({ many }) => ({
+  // Domain tags can be used by many bookmarks
+  bookmarks: many(bookmarks),
 }));
 
 // Schemas
@@ -212,3 +232,13 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type UserPreferences = typeof userPreferences.$inferSelect;
+
+// Domain tags schemas and types
+export const insertDomainTagSchema = createInsertSchema(domainTags).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertDomainTag = z.infer<typeof insertDomainTagSchema>;
+export type DomainTag = typeof domainTags.$inferSelect;

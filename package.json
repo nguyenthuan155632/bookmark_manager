@@ -18,7 +18,8 @@
     "ci": "npm run check && npm run lint && npm run format:check && npm test",
     "seed": "tsx server/scripts/seed.ts",
     "deploy:search": "tsx server/scripts/deploy-fulltext-search.ts",
-    "deploy:full": "npm run db:push && npm run deploy:search",
+    "populate:domain-tags": "tsx server/scripts/populate-domain-tags.ts",
+    "deploy:full": "npm run db:push && npm run deploy:search && npm run populate:domain-tags",
     "ext:manifest:dev": "node scripts/switch-manifest.js dev",
     "ext:manifest:prod": "node scripts/switch-manifest.js prod"
   },

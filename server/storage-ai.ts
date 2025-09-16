@@ -1,11 +1,56 @@
 import {
   bookmarks,
+  domainTags,
   type Bookmark,
 } from '@shared/schema';
 import { db, eq, and, logAI, OpenAI } from './storage-base';
 
 export class AIStorage {
   constructor(private getUserPreferences: (userId: string) => Promise<any>) { }
+
+  // Cache for domain tags to avoid repeated database queries
+  private domainTagsCache: Map<string, string[]> = new Map();
+  private cacheExpiry: number = 0;
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  // Get domain tags mapping from database
+  private async getDomainTagsMap(): Promise<Record<string, string[]>> {
+    const now = Date.now();
+
+    // Return cached data if still valid
+    if (this.domainTagsCache.size > 0 && now < this.cacheExpiry) {
+      return Object.fromEntries(this.domainTagsCache);
+    }
+
+    try {
+      // Fetch all active domain tags from database
+      const domainTagsData = await db
+        .select({
+          domain: domainTags.domain,
+          tags: domainTags.tags,
+        })
+        .from(domainTags)
+        .where(eq(domainTags.isActive, true));
+
+      // Build the mapping
+      const domainTagMap: Record<string, string[]> = {};
+      this.domainTagsCache.clear();
+
+      for (const row of domainTagsData) {
+        domainTagMap[row.domain] = row.tags || [];
+        this.domainTagsCache.set(row.domain, row.tags || []);
+      }
+
+      // Update cache expiry
+      this.cacheExpiry = now + this.CACHE_DURATION;
+
+      return domainTagMap;
+    } catch (error) {
+      console.error('Failed to fetch domain tags from database:', error);
+      // Return empty mapping if database query fails
+      return {};
+    }
+  }
 
   // Auto-tagging methods
   async updateBookmarkSuggestedTags(
@@ -95,58 +140,8 @@ export class AIStorage {
       const path = urlObj.pathname.toLowerCase();
 
       // Domain-based tag mapping
-      const domainTagMap: Record<string, string[]> = {
-        'github.com': ['development', 'code', 'git', 'repository'],
-        'stackoverflow.com': ['programming', 'help', 'q&a', 'development'],
-        'youtube.com': ['video', 'entertainment', 'media'],
-        'youtu.be': ['video', 'entertainment', 'media'],
-        'medium.com': ['article', 'blog', 'writing'],
-        'dev.to': ['development', 'blog', 'programming'],
-        'reddit.com': ['social', 'community', 'discussion'],
-        'twitter.com': ['social', 'microblog'],
-        'x.com': ['social', 'microblog'],
-        'linkedin.com': ['professional', 'networking', 'career'],
-        'dribbble.com': ['design', 'ui', 'portfolio'],
-        'behance.net': ['design', 'portfolio', 'creative'],
-        'figma.com': ['design', 'ui', 'tool', 'collaboration'],
-        'notion.so': ['productivity', 'notes', 'tool'],
-        'google.com': ['search', 'tool'],
-        'docs.google.com': ['document', 'collaboration', 'productivity'],
-        'sheets.google.com': ['spreadsheet', 'data', 'productivity'],
-        'slides.google.com': ['presentation', 'slides', 'productivity'],
-        'wikipedia.org': ['reference', 'encyclopedia', 'knowledge'],
-        'mdn.mozilla.org': ['documentation', 'web', 'development'],
-        'w3schools.com': ['tutorial', 'web', 'development'],
-        'codepen.io': ['development', 'demo', 'frontend'],
-        'jsfiddle.net': ['development', 'demo', 'javascript'],
-        'npmjs.com': ['javascript', 'package', 'development'],
-        'pypi.org': ['python', 'package', 'development'],
-        'aws.amazon.com': ['cloud', 'infrastructure', 'aws'],
-        'azure.microsoft.com': ['cloud', 'infrastructure', 'azure'],
-        'cloud.google.com': ['cloud', 'infrastructure', 'gcp'],
-        'stripe.com': ['payment', 'api', 'fintech'],
-        'twilio.com': ['communication', 'api', 'sms'],
-        'shopify.com': ['ecommerce', 'store', 'business'],
-        'wordpress.com': ['blog', 'cms', 'website'],
-        'wix.com': ['website', 'builder', 'tool'],
-        'squarespace.com': ['website', 'builder', 'design'],
-        'canva.com': ['design', 'graphics', 'tool'],
-        'unsplash.com': ['photos', 'stock', 'images'],
-        'pexels.com': ['photos', 'stock', 'images'],
-        'fonts.google.com': ['fonts', 'typography', 'design'],
-        'hackernews.com': ['tech', 'news', 'startup'],
-        'news.ycombinator.com': ['tech', 'news', 'startup'],
-        'techcrunch.com': ['tech', 'news', 'startup'],
-        'arstechnica.com': ['tech', 'news'],
-        'theverge.com': ['tech', 'news', 'culture'],
-        'wired.com': ['tech', 'news', 'culture'],
-        'coursera.org': ['education', 'course', 'learning'],
-        'udemy.com': ['education', 'course', 'learning'],
-        'edx.org': ['education', 'course', 'learning'],
-        'khanacademy.org': ['education', 'learning', 'free'],
-        'freecodecamp.org': ['education', 'programming', 'free'],
-        'codecademy.com': ['education', 'programming', 'interactive'],
-      };
+      // Get domain tags from database
+      const domainTagMap = await this.getDomainTagsMap();
 
       // Add domain-specific tags
       for (const [domainPattern, domainTags] of Object.entries(domainTagMap)) {
