@@ -131,13 +131,17 @@ export class BookmarkStorage {
         createdAt: bookmarks.createdAt,
         updatedAt: bookmarks.updatedAt,
         category: categories,
-        // Add search relevance score when searching (with fallback for missing full-text search)
+        // Add search relevance score when searching (with robust fallback for missing ts_rank)
         ...(params?.search
           ? {
             searchRank: sql<number>`
             CASE 
               WHEN ${bookmarks.searchVector} IS NOT NULL AND ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
-              THEN ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search}))
+              THEN COALESCE(
+                ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search})),
+                custom_search_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search})),
+                0.5
+              )
               WHEN ${bookmarks.name} ILIKE ${`%${params.search}%`}
               THEN 0.8  -- High score for name matches
               WHEN ${bookmarks.description} ILIKE ${`%${params.search}%`}
