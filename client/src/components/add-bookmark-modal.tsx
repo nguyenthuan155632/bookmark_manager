@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Plus, Lock, Sparkles } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Plus, Lock, Sparkles, Globe } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -73,6 +73,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
   const [suggestedDescription, setSuggestedDescription] = useState<string>('');
   const [remainingAiUsage, setRemainingAiUsage] = useState<number | null>(null);
+  const [domainSuggestions, setDomainSuggestions] = useState<string[]>([]);
+  const [_isLoadingDomainSuggestions, setIsLoadingDomainSuggestions] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -109,6 +111,47 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       form.clearErrors('passcode');
     }
   }, [isProtected, form]);
+
+  // Fetch domain suggestions when URL changes
+  const fetchDomainSuggestions = useCallback(async (url: string) => {
+    if (!url) {
+      setDomainSuggestions([]);
+      return;
+    }
+
+    try {
+      setIsLoadingDomainSuggestions(true);
+      const response = await fetch(`/api/domain-tags/suggest?url=${encodeURIComponent(url)}`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.tags) {
+          setDomainSuggestions(data.tags);
+        } else if (data.suggestions) {
+          // If no exact match, show suggestions
+          setDomainSuggestions([]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch domain suggestions:', error);
+    } finally {
+      setIsLoadingDomainSuggestions(false);
+    }
+  }, []);
+
+  const watchedUrl = form.watch('url');
+  useEffect(() => {
+    if (watchedUrl) {
+      const timeoutId = setTimeout(() => {
+        fetchDomainSuggestions(watchedUrl);
+      }, 500); // Debounce for 500ms
+      return () => clearTimeout(timeoutId);
+    } else {
+      setDomainSuggestions([]);
+    }
+  }, [watchedUrl, fetchDomainSuggestions]);
 
   // Reset form when editingBookmark changes
   useEffect(() => {
@@ -222,8 +265,30 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             : Number(data.remainingAiUsage),
         );
       }
+
+      // Automatically save all AI suggestions to domain tags database (non-blocking)
+      if (suggestions.length > 0) {
+        const currentUrl = form.getValues('url') || editingBookmark?.url;
+        if (currentUrl) {
+          try {
+            const urlObj = new URL(currentUrl);
+            const domain = urlObj.hostname.toLowerCase();
+
+            // Save all AI suggestions to domain tags (async, don't wait for completion)
+            createOrUpdateDomainTagMutation.mutate({
+              domain,
+              tags: suggestions,
+              category: 'ai-generated',
+              description: `AI-generated from bookmark: ${form.getValues('name') || editingBookmark?.name || 'Untitled'}`,
+            });
+          } catch (error) {
+            console.error('Failed to extract domain from URL:', error);
+          }
+        }
+      }
+
       toast({
-        description: `Generated ${suggestions.length} tag suggestions${suggestions.length === 0 ? ' (none found)' : ''}`,
+        description: `Generated ${suggestions.length} tag suggestions${suggestions.length === 0 ? ' (none found)' : ''}${suggestions.length > 0 ? ' - automatically saved to domain tags' : ''}`,
       });
     },
     onError: (error: any) => {
@@ -272,6 +337,90 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         variant: 'destructive',
         description: error.message || 'Failed to accept suggested tags',
       });
+    },
+  });
+
+  // Mutation to create or update domain tags automatically
+  const createOrUpdateDomainTagMutation = useMutation({
+    mutationFn: async (data: { domain: string; tags: string[]; category?: string; description?: string }) => {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      try {
+        // First, check if domain tag already exists
+        const checkResponse = await fetch(`/api/domain-tags/suggest?url=${encodeURIComponent(`https://${data.domain}`)}`, {
+          credentials: 'include',
+          signal: controller.signal,
+        });
+
+        if (checkResponse.ok) {
+          const existingData = await checkResponse.json();
+
+          if (existingData.tags && existingData.tags.length > 0) {
+            // Domain tag exists, update it with new tags
+            const existingTags = Array.isArray(existingData.tags) ? existingData.tags : [];
+            const newTags = Array.from(new Set([...existingTags, ...data.tags])); // Merge and deduplicate
+
+            // Find the domain tag ID by searching for it
+            const searchResponse = await fetch(`/api/domain-tags?search=${encodeURIComponent(data.domain)}&limit=1`, {
+              credentials: 'include',
+            });
+
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              if (searchData.data && searchData.data.length > 0) {
+                const domainTagId = searchData.data[0].id;
+
+                // Update existing domain tag
+                const updateResponse = await fetch(`/api/domain-tags/${domainTagId}`, {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({
+                    tags: newTags,
+                    category: data.category || existingData.category,
+                    description: data.description || existingData.description,
+                  }),
+                });
+
+                if (updateResponse.ok) {
+                  return await updateResponse.json();
+                }
+              }
+            }
+          }
+        }
+
+        // If no existing domain tag found, create a new one
+        const response = await fetch('/api/domain-tags', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          signal: controller.signal,
+          body: JSON.stringify(data),
+        });
+        if (!response.ok) throw new Error('Failed to create domain tag');
+        return response.json();
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    },
+    onSuccess: () => {
+      // Invalidate domain tags queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/domain-tags'] });
+    },
+    onError: (error: any) => {
+      console.error('Failed to create/update domain tag:', error);
+      // Don't show error toast as this is automatic and non-blocking
+    },
+    onSettled: () => {
+      // Ensure we don't block the UI even if domain tag operations fail
+      console.log('Domain tag operation completed (success or failure)');
     },
   });
 
@@ -412,6 +561,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       }
     }
 
+    // Note: Domain tags are already saved automatically when AI suggestions are generated
+    // No need to save again here
+
     // Remove from suggested tags
     setSuggestedTags((prev) => prev.filter((tag) => tag !== tagToAccept));
   };
@@ -435,6 +587,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       const newTags = suggestedTags.filter((tag) => !tags.includes(tag));
       setTags((prev) => [...prev, ...newTags]);
     }
+
+    // Note: Domain tags are already saved automatically when AI suggestions are generated
+    // No need to save again here
 
     // Clear all suggested tags
     setSuggestedTags([]);
@@ -644,8 +799,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                               form.setValue(
                                 'description',
                                 (form.getValues('description') || '').trim() +
-                                  (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') +
-                                  suggestedDescription,
+                                (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') +
+                                suggestedDescription,
                               )
                             }
                             className="text-xs"
@@ -816,6 +971,36 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                   )}
                 </div>
               )}
+
+            {/* Domain Suggestions Section */}
+            {domainSuggestions.length > 0 && (
+              <div className="border border-border rounded-md p-3 bg-blue-50 dark:bg-blue-950/20">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Globe size={14} className="text-blue-600 dark:text-blue-400" />
+                  <Label className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Domain Tags ({domainSuggestions.length})
+                  </Label>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {domainSuggestions.map((tag, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="text-xs cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-800"
+                      onClick={() => {
+                        if (!tags.includes(tag)) {
+                          setTags([...tags, tag]);
+                        }
+                      }}
+                      data-testid={`domain-tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <span>{tag}</span>
+                      <Plus size={12} className="text-blue-500 ml-1" />
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Current Tags */}
             {tags.length > 0 && (

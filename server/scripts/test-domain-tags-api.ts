@@ -32,7 +32,7 @@ async function testDomainTagsAPI() {
         or(
           ilike(domainTags.domain, `%${query.search}%`),
           ilike(domainTags.description, `%${query.search}%`),
-          sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${query.search}%`}`,
+          sql`${domainTags.tags}::text ILIKE ${`%${query.search}%`}`,
         ),
       );
     }
@@ -68,7 +68,8 @@ async function testDomainTagsAPI() {
     console.log(`   📊 Found ${results.length} domain tags (total: ${count})`);
     console.log('   📋 Sample results:');
     results.slice(0, 3).forEach((row, index) => {
-      console.log(`      ${index + 1}. ${row.domain}: [${row.tags.join(', ')}] (${row.category})`);
+      const tags = Array.isArray(row.tags) ? (row.tags as string[]) : [];
+      console.log(`      ${index + 1}. ${row.domain}: [${tags.join(', ')}] (${row.category})`);
     });
 
     // Test 2: GET /api/domain-tags/categories
@@ -117,7 +118,8 @@ async function testDomainTagsAPI() {
         .where(and(eq(domainTags.domain, domain), eq(domainTags.isActive, true)));
 
       if (exactMatch) {
-        console.log(`   ✅ ${domain}: [${exactMatch.tags.join(', ')}] (${exactMatch.category})`);
+        const tags = Array.isArray(exactMatch.tags) ? (exactMatch.tags as string[]) : [];
+        console.log(`   ✅ ${domain}: [${tags.join(', ')}] (${exactMatch.category})`);
       } else {
         // Find partial domain matches
         const partialMatches = await db
@@ -131,7 +133,8 @@ async function testDomainTagsAPI() {
         if (partialMatches.length > 0) {
           console.log(`   🔍 ${domain}: Found ${partialMatches.length} partial matches`);
           partialMatches.forEach((match) => {
-            console.log(`      - ${match.domain}: [${match.tags.join(', ')}] (${match.category})`);
+            const tags = Array.isArray(match.tags) ? (match.tags as string[]) : [];
+            console.log(`      - ${match.domain}: [${tags.join(', ')}] (${match.category})`);
           });
         } else {
           console.log(`   ❌ ${domain}: No matches found`);
@@ -153,7 +156,7 @@ async function testDomainTagsAPI() {
             or(
               ilike(domainTags.domain, `%${searchTerm}%`),
               ilike(domainTags.description, `%${searchTerm}%`),
-              sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${searchTerm}%`}`,
+              sql`${domainTags.tags}::text ILIKE ${`%${searchTerm}%`}`,
             ),
             eq(domainTags.isActive, true),
           ),
@@ -162,8 +165,9 @@ async function testDomainTagsAPI() {
 
       console.log(`   🔍 Search "${searchTerm}": ${searchResults.length} results`);
       searchResults.forEach((result, index) => {
+        const tags = Array.isArray(result.tags) ? (result.tags as string[]) : [];
         console.log(
-          `      ${index + 1}. ${result.domain}: [${result.tags.join(', ')}] (${result.category})`,
+          `      ${index + 1}. ${result.domain}: [${tags.join(', ')}] (${result.category})`,
         );
       });
     }
@@ -183,7 +187,7 @@ async function testDomainTagsAPI() {
         db
           .select()
           .from(domainTags)
-          .where(sql`array_to_string(${domainTags.tags}, ' ') ILIKE '%design%'`)
+          .where(sql`${domainTags.tags}::text ILIKE '%design%'`)
           .limit(5),
     ];
 

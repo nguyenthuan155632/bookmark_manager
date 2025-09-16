@@ -33,8 +33,9 @@ export class AIStorage {
       this.domainTagsCache.clear();
 
       for (const row of domainTagsData) {
-        domainTagMap[row.domain] = row.tags || [];
-        this.domainTagsCache.set(row.domain, row.tags || []);
+        const tags = Array.isArray(row.tags) ? (row.tags as string[]) : [];
+        domainTagMap[row.domain] = tags;
+        this.domainTagsCache.set(row.domain, tags);
       }
 
       // Update cache expiry

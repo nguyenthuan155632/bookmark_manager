@@ -1,6 +1,16 @@
 import { Link, useLocation } from 'wouter';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Folder, Home, Star, Plus, BookmarkIcon, Trash2, Lock, Settings } from 'lucide-react';
+import {
+  Folder,
+  Home,
+  Star,
+  Plus,
+  BookmarkIcon,
+  Trash2,
+  Lock,
+  Settings,
+  Globe,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { Category, Bookmark } from '@shared/schema';
@@ -136,6 +146,12 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       label: 'Favorites',
       count: stats.favorites,
       active: isActive('/favorites'),
+    },
+    {
+      path: '/domain-tags',
+      icon: Globe,
+      label: 'Domain Tags',
+      active: isActive('/domain-tags'),
     },
     {
       path: '/settings',

@@ -46,7 +46,8 @@ async function testDomainTags() {
       const [result] = await db.select().from(domainTags).where(eq(domainTags.domain, domain));
 
       if (result) {
-        console.log(`   ✅ ${domain}: [${result.tags.join(', ')}] (${result.category})`);
+        const tags = Array.isArray(result.tags) ? (result.tags as string[]) : [];
+        console.log(`   ✅ ${domain}: [${tags.join(', ')}] (${result.category})`);
       } else {
         console.log(`   ❌ ${domain}: Not found`);
       }
@@ -57,13 +58,14 @@ async function testDomainTags() {
     const searchResult = await db.execute(sql`
       SELECT domain, tags, category
       FROM domain_tags 
-      WHERE domain ILIKE '%github%' OR array_to_string(tags, ' ') ILIKE '%development%'
+      WHERE domain ILIKE '%github%' OR tags::text ILIKE '%development%'
       LIMIT 5
     `);
 
     console.log('   🔍 Search results for "github" or "development":');
     searchResult.rows.forEach((row: any) => {
-      console.log(`      ${row.domain}: [${row.tags.join(', ')}] (${row.category})`);
+      const tags = Array.isArray(row.tags) ? (row.tags as string[]) : [];
+      console.log(`      ${row.domain}: [${tags.join(', ')}] (${row.category})`);
     });
 
     // Test 5: Test AI storage integration
@@ -89,7 +91,8 @@ async function testDomainTags() {
         const [domainTag] = await db.select().from(domainTags).where(eq(domainTags.domain, domain));
 
         if (domainTag) {
-          console.log(`      ${domain}: [${domainTag.tags.join(', ')}] (${domainTag.category})`);
+          const tags = Array.isArray(domainTag.tags) ? (domainTag.tags as string[]) : [];
+          console.log(`      ${domain}: [${tags.join(', ')}] (${domainTag.category})`);
         } else {
           console.log(`      ${domain}: No domain tags found`);
         }

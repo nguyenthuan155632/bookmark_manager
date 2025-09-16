@@ -3,12 +3,12 @@ import { z } from 'zod';
 import { db } from '../db';
 import { domainTags } from '@shared/schema';
 import { eq, desc, asc, and, or, ilike, sql } from '../storage-base';
-import { requireAuth } from '../auth';
+import { requireAuth, requireAdmin } from '../auth';
 
 // Validation schemas
 const insertDomainTagSchema = z.object({
   domain: z.string().min(1).max(255),
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string()).min(1, 'At least one tag is required'),
   category: z.string().max(100).optional(),
   description: z.string().optional(),
   isActive: z.boolean().default(true),
@@ -48,7 +48,7 @@ export function registerDomainTagsRoutes(app: Express) {
           or(
             ilike(domainTags.domain, `%${query.search}%`),
             ilike(domainTags.description, `%${query.search}%`),
-            sql`array_to_string(${domainTags.tags}, ' ') ILIKE ${`%${query.search}%`}`,
+            sql`${domainTags.tags}::text ILIKE ${`%${query.search}%`}`,
           ),
         );
       }
@@ -108,7 +108,12 @@ export function registerDomainTagsRoutes(app: Express) {
           count: sql<number>`count(*)`,
         })
         .from(domainTags)
-        .where(eq(domainTags.isActive, true))
+        .where(
+          and(
+            eq(domainTags.isActive, true),
+            sql`${domainTags.category} IS NOT NULL AND ${domainTags.category} != ''`,
+          ),
+        )
         .groupBy(domainTags.category)
         .orderBy(asc(domainTags.category));
 
@@ -116,6 +121,61 @@ export function registerDomainTagsRoutes(app: Express) {
     } catch (error) {
       console.error('Error fetching domain tag categories:', error);
       res.status(500).json({ message: 'Failed to fetch categories' });
+    }
+  });
+
+  // Get domain suggestions for a URL (must be before /:id route)
+  app.get('/api/domain-tags/suggest', requireAuth, async (req, res) => {
+    try {
+      const { url } = req.query;
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ message: 'URL parameter is required' });
+      }
+
+      let domain: string;
+      try {
+        const urlObj = new URL(url);
+        domain = urlObj.hostname.toLowerCase();
+      } catch {
+        return res.status(400).json({ message: 'Invalid URL format' });
+      }
+
+      // Find exact domain match
+      const [exactMatch] = await db
+        .select()
+        .from(domainTags)
+        .where(and(eq(domainTags.domain, domain), eq(domainTags.isActive, true)));
+
+      if (exactMatch) {
+        return res.json({
+          domain: exactMatch.domain,
+          tags: exactMatch.tags,
+          category: exactMatch.category,
+          description: exactMatch.description,
+          matchType: 'exact',
+        });
+      }
+
+      // Find partial domain matches
+      const partialMatches = await db
+        .select()
+        .from(domainTags)
+        .where(and(sql`${domainTags.domain} LIKE ${`%${domain}%`}`, eq(domainTags.isActive, true)))
+        .limit(5);
+
+      res.json({
+        domain,
+        suggestions: partialMatches.map((match) => ({
+          domain: match.domain,
+          tags: match.tags,
+          category: match.category,
+          description: match.description,
+          matchType: 'partial',
+        })),
+      });
+    } catch (error) {
+      console.error('Error getting domain suggestions:', error);
+      res.status(500).json({ message: 'Failed to get domain suggestions' });
     }
   });
 
@@ -174,8 +234,8 @@ export function registerDomainTagsRoutes(app: Express) {
     }
   });
 
-  // Update a domain tag
-  app.patch('/api/domain-tags/:id', requireAuth, async (req, res) => {
+  // Update a domain tag (Admin only)
+  app.patch('/api/domain-tags/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -207,8 +267,8 @@ export function registerDomainTagsRoutes(app: Express) {
     }
   });
 
-  // Delete a domain tag
-  app.delete('/api/domain-tags/:id', requireAuth, async (req, res) => {
+  // Delete a domain tag (Admin only)
+  app.delete('/api/domain-tags/:id', requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -231,8 +291,8 @@ export function registerDomainTagsRoutes(app: Express) {
     }
   });
 
-  // Bulk operations
-  app.post('/api/domain-tags/bulk', requireAuth, async (req, res) => {
+  // Bulk operations (Admin only)
+  app.post('/api/domain-tags/bulk', requireAdmin, async (req, res) => {
     try {
       const { action, ids, data } = req.body;
 
@@ -295,61 +355,6 @@ export function registerDomainTagsRoutes(app: Express) {
       }
       console.error('Error in bulk operation:', error);
       res.status(500).json({ message: 'Failed to perform bulk operation' });
-    }
-  });
-
-  // Get domain suggestions for a URL
-  app.get('/api/domain-tags/suggest', requireAuth, async (req, res) => {
-    try {
-      const { url } = req.query;
-      if (!url || typeof url !== 'string') {
-        return res.status(400).json({ message: 'URL parameter is required' });
-      }
-
-      let domain: string;
-      try {
-        const urlObj = new URL(url);
-        domain = urlObj.hostname.toLowerCase();
-      } catch {
-        return res.status(400).json({ message: 'Invalid URL format' });
-      }
-
-      // Find exact domain match
-      const [exactMatch] = await db
-        .select()
-        .from(domainTags)
-        .where(and(eq(domainTags.domain, domain), eq(domainTags.isActive, true)));
-
-      if (exactMatch) {
-        return res.json({
-          domain: exactMatch.domain,
-          tags: exactMatch.tags,
-          category: exactMatch.category,
-          description: exactMatch.description,
-          matchType: 'exact',
-        });
-      }
-
-      // Find partial domain matches
-      const partialMatches = await db
-        .select()
-        .from(domainTags)
-        .where(and(sql`${domainTags.domain} LIKE ${`%${domain}%`}`, eq(domainTags.isActive, true)))
-        .limit(5);
-
-      res.json({
-        domain,
-        suggestions: partialMatches.map((match) => ({
-          domain: match.domain,
-          tags: match.tags,
-          category: match.category,
-          description: match.description,
-          matchType: 'partial',
-        })),
-      });
-    } catch (error) {
-      console.error('Error getting domain suggestions:', error);
-      res.status(500).json({ message: 'Failed to get domain suggestions' });
     }
   });
 }

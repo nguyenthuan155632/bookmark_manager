@@ -7,6 +7,7 @@ import {
   timestamp,
   integer,
   json,
+  jsonb,
   index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
@@ -78,7 +79,7 @@ export const domainTags = pgTable(
   {
     id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
     domain: varchar('domain', { length: 255 }).notNull().unique(),
-    tags: text('tags').array().notNull().default([]),
+    tags: jsonb('tags').notNull().default([]),
     category: varchar('category', { length: 100 }), // e.g., 'development', 'design', 'education'
     description: text('description'),
     isActive: boolean('is_active').default(true),

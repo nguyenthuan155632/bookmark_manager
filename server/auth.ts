@@ -180,4 +180,19 @@ export function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
+// Middleware to require admin access (username must be 'vensera')
+export function requireAdmin(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  if (req.user?.username !== 'vensera') {
+    return res
+      .status(403)
+      .json({ message: 'Admin access required. Only the admin user can perform this action.' });
+  }
+
+  next();
+}
+
 export { hashPassword };
