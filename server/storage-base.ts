@@ -1,8 +1,4 @@
 import {
-  bookmarks,
-  categories,
-  users,
-  userPreferences,
   type Bookmark,
   type InsertBookmark,
   type InsertBookmarkInternal,
@@ -12,7 +8,6 @@ import {
   type InsertUser,
   type UserPreferences,
   type InsertUserPreferences,
-  apiTokens,
 } from '@shared/schema';
 import { db, pool } from './db';
 import { eq, ilike, or, desc, asc, and, isNull, sql, inArray } from 'drizzle-orm';

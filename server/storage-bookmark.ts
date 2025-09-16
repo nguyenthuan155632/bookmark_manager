@@ -28,15 +28,27 @@ export class BookmarkStorage {
     const conditions = [eq(bookmarks.userId, userId)];
 
     if (params?.search) {
-      const searchCondition = or(
-        ilike(bookmarks.name, `%${params.search}%`),
-        ilike(bookmarks.description, `%${params.search}%`),
-        ilike(bookmarks.url, `%${params.search}%`),
-        // Search within tags array - convert array to string and search
-        sql`array_to_string(${bookmarks.tags}, ' ') ILIKE ${`%${params.search}%`}`,
-      );
-      if (searchCondition) {
-        conditions.push(searchCondition);
+      const searchQuery = params.search.trim();
+      if (searchQuery) {
+        // Use hybrid search: full-text search + ILIKE for partial matches
+        // This handles both exact word matches and partial word matches
+
+        // Full-text search condition
+        const ftsCondition = sql`${bookmarks.searchVector} @@ plainto_tsquery('english', ${searchQuery})`;
+
+        // ILIKE condition for partial matches (especially useful for hyphenated tags)
+        const ilikeCondition = or(
+          ilike(bookmarks.name, `%${searchQuery}%`),
+          ilike(bookmarks.description, `%${searchQuery}%`),
+          ilike(bookmarks.url, `%${searchQuery}%`),
+          sql`array_to_string(${bookmarks.tags}, ' ') ILIKE ${`%${searchQuery}%`}`,
+        );
+
+        // Combine both conditions with OR
+        const searchCondition = or(ftsCondition, ilikeCondition);
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
       }
     }
 
@@ -106,6 +118,16 @@ export class BookmarkStorage {
         createdAt: bookmarks.createdAt,
         updatedAt: bookmarks.updatedAt,
         category: categories,
+        // Add search relevance score when searching
+        ...(params?.search ? {
+          searchRank: sql<number>`
+            CASE 
+              WHEN ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
+              THEN ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search}))
+              ELSE 0.1  -- Lower score for ILIKE matches
+            END
+          `.as('search_rank')
+        } : {}),
       })
       .from(bookmarks)
       .leftJoin(
@@ -119,7 +141,27 @@ export class BookmarkStorage {
     const sortOrder = params?.sortOrder || 'desc';
 
     let finalQuery;
-    if (sortBy === 'name') {
+
+    // When searching, prioritize by search relevance first
+    if (params?.search) {
+      finalQuery = baseQuery.orderBy(
+        desc(sql`
+          CASE 
+            WHEN ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
+            THEN ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search}))
+            ELSE 0.1  -- Lower score for ILIKE matches
+          END
+        `),
+        // Then apply the requested sort
+        sortBy === 'name'
+          ? (sortOrder === 'asc' ? asc(bookmarks.name) : desc(bookmarks.name))
+          : sortBy === 'isFavorite'
+            ? (sortOrder === 'asc' ? asc(bookmarks.isFavorite) : desc(bookmarks.isFavorite))
+            : (sortOrder === 'asc' ? asc(bookmarks.createdAt) : desc(bookmarks.createdAt)),
+        // Tie-breaker for deterministic pagination
+        desc(bookmarks.id),
+      );
+    } else if (sortBy === 'name') {
       finalQuery = baseQuery.orderBy(
         sortOrder === 'asc' ? asc(bookmarks.name) : desc(bookmarks.name),
         // Tie-breaker for deterministic pagination
@@ -222,7 +264,7 @@ export class BookmarkStorage {
       bookmarkData.passcodeHash = null;
     }
 
-    const [newBookmark] = await db.insert(bookmarks).values(bookmarkData).returning();
+    const [newBookmark] = await db.insert(bookmarks).values(bookmarkData as any).returning();
 
     // Remove passcodeHash from response and add hasPasscode field
     const { passcodeHash, ...bookmarkResponse } = newBookmark;

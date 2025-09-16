@@ -1,7 +1,6 @@
 import {
   bookmarks,
   categories,
-  type UserPreferences,
 } from '@shared/schema';
 import { db, eq, and, sql } from './storage-base';
 

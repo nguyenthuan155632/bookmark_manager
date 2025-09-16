@@ -1371,7 +1371,7 @@ function BookmarksContent() {
             </div>
 
             {/* Line 2: Sort Select + Bookmark Count */}
-            <div className="flex items-center justify-between gap-4 mt-0">
+            <div className="flex items-center justify-between gap-4 !mt-0">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <span data-testid="bookmark-count">{filteredBookmarks.length}</span>
                 <span>bookmarks</span>

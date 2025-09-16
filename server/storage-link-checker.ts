@@ -1,7 +1,7 @@
 import {
   bookmarks,
 } from '@shared/schema';
-import { db, eq, and, inArray, asc, sql } from './storage-base';
+import { db, eq, and, asc, sql } from './storage-base';
 
 export class LinkCheckerStorage {
   constructor(private getBookmark: (userId: string, id: number) => Promise<any>) { }

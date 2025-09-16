@@ -53,8 +53,6 @@ async function processAiFeaturesInBackground(
             }
 
             const suggestedTags = await storage.generateAutoTags(url, name, description || undefined, { userId });
-            const set = new Set([...(tags || []), ...suggestedTags]);
-            const newTags = Array.from(set);
             await storage.updateBookmarkSuggestedTags(userId, bookmarkId, suggestedTags);
           } catch (error) {
             console.error('Background AI tags failed:', error);

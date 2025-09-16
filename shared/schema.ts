@@ -84,9 +84,16 @@ export const bookmarks = pgTable('bookmarks', {
   httpStatus: integer('http_status'),
   lastLinkCheckAt: timestamp('last_link_check_at'),
   linkFailCount: integer('link_fail_count').default(0),
+  // Full-text search columns
+  searchVector: text('search_vector'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Full-text search index
+  searchIdx: index('bookmarks_search_idx').on(table.searchVector),
+  // User index for efficient filtering
+  userIdIdx: index('bookmarks_user_id_idx').on(table.userId),
+}));
 
 // Relations
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -186,7 +193,7 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
 export type InsertBookmarkInternal = z.infer<typeof insertBookmarkInternalSchema>;
-export type Bookmark = Omit<typeof bookmarks.$inferSelect, 'passcodeHash'>; // Remove passcodeHash from public type
+export type Bookmark = Omit<typeof bookmarks.$inferSelect, 'passcodeHash' | 'searchVector'>; // Remove internal fields from public type
 
 // User and preferences types/schemas (tables already defined above)
 export const insertUserSchema = createInsertSchema(users).pick({

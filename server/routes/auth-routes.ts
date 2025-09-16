@@ -2,7 +2,6 @@ import type { Express } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage';
 import { comparePasswords } from '../auth';
-import { getUserFromBearer } from './shared';
 
 export function registerAuthRoutes(app: Express) {
   // CORS for extension endpoints only (no credentials; allows Authorization + JSON)

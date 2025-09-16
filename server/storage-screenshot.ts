@@ -1,6 +1,5 @@
 import {
   bookmarks,
-  type Bookmark,
 } from '@shared/schema';
 import { db, eq, and } from './storage-base';
 
