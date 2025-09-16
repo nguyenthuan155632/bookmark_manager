@@ -135,13 +135,13 @@ export function SharedBookmark() {
         canonicalPath={`/shared/${params?.shareId}`}
         ogImage={bookmark.screenshotUrl || undefined}
       />
-      <div className="container max-w-4xl mx-auto px-4 py-8">
+      <div className="container max-w-4xl mx-auto px-3 py-8">
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <h1
-                className="text-3xl font-bold text-foreground"
+                className="text-2xl sm:text-3xl font-bold text-foreground"
                 data-testid="shared-bookmark-title"
               >
                 {bookmark.name || 'Protected Bookmark'}
@@ -169,7 +169,7 @@ export function SharedBookmark() {
                 Website Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 px-4 md:px-6">
               {/* URL + Thumbnail row (thumbnail on the right, above the first separator) */}
               <div className="md:flex md:items-start md:gap-6">
                 {/* URL Section */}
@@ -279,7 +279,7 @@ export function SharedBookmark() {
                   </p>
                   {bookmark?.hasPasscode && (
                     <p className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      <Lock size={14} /> Protected — enter passcode to view details
+                      <Lock size={14} /> Protected — No passcode required
                     </p>
                   )}
                 </div>

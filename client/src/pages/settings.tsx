@@ -225,8 +225,7 @@ export default function SettingsPage() {
           <div className="text-sm text-muted-foreground">Signed in as {user?.username}</div>
         </div>
 
-        <div className="w-full p-6 space-y-6 overflow-x-hidden">
-
+        <div className="w-full p-6 space-y-6 overflow-x-hidden px-4">
           <Card>
             <CardHeader>
               <CardTitle>Support</CardTitle>
