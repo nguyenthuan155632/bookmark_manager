@@ -110,6 +110,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
   };
 
   const isActive = (path: string) => location === path;
+  const isCategoryActive = (categorySlug: string) => location === `/category/${categorySlug}`;
   const formatCount = (n: number | undefined) => {
     const num = typeof n === 'number' ? n : 0;
     return Math.max(0, Math.min(99, num));
@@ -160,7 +161,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <BookmarkIcon className="text-primary-foreground" size={16} />
             </div>
-            <h1 className="text-xl font-bold text-foreground">Memorize</h1>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-foreground">Memorize</h1>
           </div>
         </div>
 
@@ -172,7 +173,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 variant={item.active ? 'default' : 'ghost'}
                 className={`w-full justify-start space-x-3 pr-2 ${item.active
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
                   }`}
                 onClick={onClose}
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -198,13 +199,13 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
           {/* Folders Section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between pl-3 pr-2 py-2">
-              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              <h3 className="text-sm font-medium text-slate-600 dark:text-muted-foreground uppercase tracking-wide">
                 Folders
               </h3>
               <Button
                 size="sm"
                 variant="outline"
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                className="h-6 w-6 p-0 text-slate-600 hover:text-slate-800 dark:text-muted-foreground dark:hover:text-foreground"
                 onClick={onCreateFolder}
                 data-testid="button-create-folder"
               >
@@ -214,17 +215,24 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
 
             <div className="space-y-1">
               {/* Hidden protected bookmarks (synthetic, non-deletable) */}
-              <div className="group flex items-center">
+              <div className={`group flex items-center rounded-md ${isCategoryActive('hidden') ? 'bg-primary' : ''
+                }`}>
                 <Link href={`/category/hidden`} className="flex-1">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start space-x-3 text-muted-foreground hover:bg-muted hover:text-foreground pr-0 hover:pr-2"
+                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('hidden')
+                      ? 'text-primary-foreground hover:bg-transparent'
+                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                      }`}
                     onClick={onClose}
                     data-testid={`folder-hidden`}
                   >
                     <Lock size={16} />
                     <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-medium">Hidden</span>
-                    <span className="text-xs w-5 h-5 rounded-full flex items-center justify-center bg-secondary text-secondary-foreground">
+                    <span className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('hidden')
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-secondary text-secondary-foreground'
+                      }`}>
                       {formatCount(hiddenCount)}
                     </span>
                   </Button>
@@ -234,17 +242,24 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               </div>
 
               {/* Default uncategorized folder (synthetic, non-deletable, pinned on top) */}
-              <div className="group flex items-center">
+              <div className={`group flex items-center rounded-md ${isCategoryActive('uncategorized') ? 'bg-primary' : ''
+                }`}>
                 <Link href={`/category/uncategorized`} className="flex-1">
                   <Button
                     variant="ghost"
-                    className="w-full justify-start space-x-3 text-muted-foreground hover:bg-muted hover:text-foreground pr-0 hover:pr-2"
+                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('uncategorized')
+                      ? 'text-primary-foreground hover:bg-transparent'
+                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                      }`}
                     onClick={onClose}
                     data-testid={`folder-uncategorized`}
                   >
                     <Folder size={16} />
                     <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text text-transparent font-medium">Uncategorized</span>
-                    <span className="text-xs w-5 h-5 rounded-full flex items-center justify-center bg-secondary text-secondary-foreground">
+                    <span className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('uncategorized')
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-secondary text-secondary-foreground'
+                      }`}>
                       {formatCount(uncategorizedCount)}
                     </span>
                   </Button>
@@ -254,17 +269,24 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               </div>
 
               {categories.map((category) => (
-                <div key={category.id} className="group flex items-center">
+                <div key={category.id} className={`group flex items-center rounded-md ${isCategoryActive(categorySlug(category)) ? 'bg-primary' : ''
+                  }`}>
                   <Link href={`/category/${categorySlug(category)}`} className="flex-1">
                     <Button
                       variant="ghost"
-                      className="w-full justify-start space-x-3 text-muted-foreground hover:bg-muted hover:text-foreground pr-0 hover:pr-2"
+                      className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive(categorySlug(category))
+                        ? 'text-primary-foreground hover:bg-transparent'
+                        : 'text-slate-900 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                        }`}
                       onClick={onClose}
                       data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       <Folder size={16} />
                       <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight">{category.name}</span>
-                      <span className="text-xs w-5 h-5 rounded-full flex items-center justify-center bg-secondary text-secondary-foreground">
+                      <span className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive(categorySlug(category))
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
+                        }`}>
                         {formatCount(category.bookmarkCount)}
                       </span>
                     </Button>
@@ -272,7 +294,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    className="h-8 w-8 shrink-0 text-slate-600 hover:text-destructive dark:text-muted-foreground dark:hover:text-destructive"
                     aria-label={`Delete ${category.name}`}
                     onClick={(e) => {
                       e.preventDefault();
@@ -289,7 +311,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
               ))}
 
               {categories.length === 0 && (
-                <p className="text-sm text-muted-foreground px-3 py-2">No folders yet</p>
+                <p className="text-sm text-slate-600 dark:text-muted-foreground px-3 py-2">No folders yet</p>
               )}
             </div>
           </div>

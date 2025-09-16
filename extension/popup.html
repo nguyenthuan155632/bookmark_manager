@@ -30,7 +30,8 @@
 
     input[type="text"],
     input[type="password"],
-    textarea {
+    textarea,
+    select {
       width: 100%;
       box-sizing: border-box;
       padding: 6px 8px;
@@ -107,6 +108,11 @@
       display: none;
     }
 
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .section {
       border-top: 1px solid #e2e8f0;
       margin-top: 10px;
@@ -143,6 +149,12 @@
     <div class="row"><label for="description">Description</label><textarea id="description"></textarea></div>
     <div class="row"><label for="tags">Tags</label><input id="tags" type="text" placeholder="comma,separated,tags" />
     </div>
+    <div class="row">
+      <label for="category">Folder (Category)</label>
+      <select id="category">
+        <option value="">Select a folder...</option>
+      </select>
+    </div>
     <div class="row"><label class="checkbox"><input id="favorite" type="checkbox" /> Favorite</label></div>
     <div class="row"><label class="checkbox"><input id="autoTags" type="checkbox" /> Auto-generate tags</label></div>
     <div class="row"><label class="checkbox"><input id="autoDesc" type="checkbox" /> Auto-generate description</label>
@@ -150,7 +162,8 @@
     <div class="row">
       <label for="passcode">Passcode (optional)</label>
       <input id="passcode" type="password" />
-      <div class="muted">Owner can unlock protected items with this passcode or the account password (when logged in).</div>
+      <div class="muted">Owner can unlock protected items with this passcode or the account password (when logged in).
+      </div>
     </div>
     <div class="actions">
       <button id="logoutBtn" class="secondary">Sign out</button>

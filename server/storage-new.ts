@@ -245,8 +245,8 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     return this.aiStorage.acceptSuggestedTags(userId, bookmarkId, tagsToAccept);
   }
 
-  async generateAutoTags(url: string, name?: string, description?: string, opts?: { userId?: string }): Promise<string[]> {
-    return this.aiStorage.generateAutoTags(url, name, description, opts);
+  async generateAutoTags(url: string, name?: string, description?: string): Promise<string[]> {
+    return this.aiStorage.generateAutoTags(url, name, description);
   }
 
   async generateAutoDescription(
@@ -309,18 +309,6 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     userId?: string,
   ): Promise<{ id: number; url: string; lastLinkCheckAt: Date | null }[]> {
     return this.linkCheckerStorage.getBookmarksForLinkCheck(limit, userId);
-  }
-
-  // Additional methods that were missing
-  async duplicateBookmark(
-    userId: string,
-    id: number,
-  ): Promise<Bookmark & { hasPasscode?: boolean }> {
-    return this.bookmarkStorage.duplicateBookmark(userId, id);
-  }
-
-  async verifySharedPasscode(shareId: string, passcode: string): Promise<boolean> {
-    return this.bookmarkStorage.verifySharedPasscode(shareId, passcode);
   }
 }
 

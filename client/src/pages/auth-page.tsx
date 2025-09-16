@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useLocation } from 'wouter';
-import { Bookmark, Shield, Users, Search, Eye, EyeOff, Lock } from 'lucide-react';
+import { Bookmark, Shield, Users, Search, Eye, EyeOff, Lock, Brain, Sparkles } from 'lucide-react';
 import { SEO } from '@/lib/seo';
 
 // Removed the old 4-digit passcode UI in favor of standard password field
@@ -253,6 +253,7 @@ export default function AuthPage() {
 
           <p className="text-xl text-primary-foreground/80 mb-8">
             Keep all your important bookmarks organized, searchable, and secure in one place.
+            Let AI help you categorize and describe your content automatically.
           </p>
 
           <div className="space-y-4">
@@ -263,6 +264,14 @@ export default function AuthPage() {
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-primary-foreground/60" />
               <span>Organize with categories and tags</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Brain className="h-5 w-5 text-primary-foreground/60" />
+              <span>AI-powered auto-tagging and descriptions</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5 text-primary-foreground/60" />
+              <span>Smart content analysis and suggestions</span>
             </div>
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-primary-foreground/60" />
