@@ -131,17 +131,25 @@ export class BookmarkStorage {
         createdAt: bookmarks.createdAt,
         updatedAt: bookmarks.updatedAt,
         category: categories,
-        // Add search relevance score when searching
+        // Add search relevance score when searching (with fallback for missing full-text search)
         ...(params?.search
           ? {
-              searchRank: sql<number>`
+            searchRank: sql<number>`
             CASE 
-              WHEN ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
+              WHEN ${bookmarks.searchVector} IS NOT NULL AND ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
               THEN ts_rank(${bookmarks.searchVector}, plainto_tsquery('english', ${params.search}))
-              ELSE 0.1  -- Lower score for ILIKE matches
+              WHEN ${bookmarks.name} ILIKE ${`%${params.search}%`}
+              THEN 0.8  -- High score for name matches
+              WHEN ${bookmarks.description} ILIKE ${`%${params.search}%`}
+              THEN 0.6  -- Medium score for description matches
+              WHEN ${bookmarks.url} ILIKE ${`%${params.search}%`}
+              THEN 0.4  -- Lower score for URL matches
+              WHEN array_to_string(${bookmarks.tags}, ' ') ILIKE ${`%${params.search}%`}
+              THEN 0.5  -- Medium score for tag matches
+              ELSE 0.1  -- Low score for other matches
             END
           `.as('search_rank'),
-            }
+          }
           : {}),
       })
       .from(bookmarks)
@@ -609,15 +617,15 @@ export class BookmarkStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string | null;
-        tags: string[] | null;
-        screenshotUrl?: string | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-        hasPasscode?: boolean;
-      }
+      name: string;
+      description: string | null;
+      url: string | null;
+      tags: string[] | null;
+      screenshotUrl?: string | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+      hasPasscode?: boolean;
+    }
     | undefined
   > {
     const [result] = await db
