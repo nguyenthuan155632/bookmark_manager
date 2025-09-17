@@ -4,9 +4,8 @@ import { useAuth, getStoredUsername } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { useLocation } from 'wouter';
-import { Bookmark, Shield, Users, Search, Eye, EyeOff, Lock, Brain, Sparkles } from 'lucide-react';
+import { Bookmark, Shield, Users, Search, Lock, Brain, Sparkles, Share, User } from 'lucide-react';
 import { SEO } from '@/lib/seo';
 
 // Removed the old 4-digit passcode UI in favor of standard password field
@@ -17,18 +16,13 @@ export default function AuthPage() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [capsLockOn, setCapsLockOn] = useState(false);
-  const [showUsernameInput, setShowUsernameInput] = useState(true);
   const usernameInputRef = useRef<HTMLInputElement>(null);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   // Check for stored username on component mount
   useEffect(() => {
     const storedUsername = getStoredUsername();
     if (storedUsername) {
       setUsername(storedUsername);
-      setShowUsernameInput(false); // Skip username input if already stored
     }
   }, []);
 
@@ -49,53 +43,23 @@ export default function AuthPage() {
     }
   };
 
-  // Password strength helper
-  const getStrength = (pwd: string) => {
-    let score = 0;
-    if (pwd.length >= 4) score++;
-    if (/[A-Z]/.test(pwd)) score++;
-    if (/[a-z]/.test(pwd)) score++;
-    if (/\d/.test(pwd)) score++;
-    if (/[^A-Za-z0-9]/.test(pwd)) score++;
-    // Normalize to 0-3 for UI
-    const normalized = Math.min(3, Math.max(0, Math.floor((score / 5) * 3)));
-    const label = ['Weak', 'Medium', 'Strong'][normalized];
-    const percent = [33, 66, 100][normalized];
-    const color = ['bg-red-500', 'bg-amber-500', 'bg-emerald-500'][normalized];
-    return { label, percent, color } as const;
-  };
-  const strength = getStrength(password);
-
   const handleModeSwitch = () => {
     const nextMode = !isRegisterMode;
     setIsRegisterMode(nextMode);
     setPassword(''); // Clear password when switching modes
-
-    // Show username input for registration or if no stored username for login
-    const storedUsername = getStoredUsername();
-    setShowUsernameInput(nextMode ? true : !storedUsername);
   };
 
-  const handleUsernameChange = () => {
-    setShowUsernameInput(true);
-    setUsername('');
-  };
-
-  // Manage default focus: username when visible, otherwise password
+  // Focus username on mount for quicker input
   useEffect(() => {
-    if (showUsernameInput) {
-      usernameInputRef.current?.focus();
-    } else {
-      passwordInputRef.current?.focus();
-    }
-  }, [showUsernameInput]);
+    usernameInputRef.current?.focus();
+  }, []);
 
   if (user) {
     return null; // Will redirect via useEffect
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted flex flex-col lg:flex-row">
       <SEO
         title={isRegisterMode ? 'Create Account' : 'Sign In'}
         description={
@@ -106,116 +70,52 @@ export default function AuthPage() {
         noindex
       />
       {/* Left Column - Auth Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">
-              {isRegisterMode ? 'Create Account' : 'Welcome Back'}
+      <div className="order-1 w-full flex items-start justify-center px-4 py-6 sm:px-10 lg:flex-1 lg:py-10">
+        <Card className="relative w-full max-w-md overflow-hidden border border-emerald-200/70 bg-white/92 text-slate-900 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-colors duration-300 before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/92 before:via-slate-100/70 before:to-emerald-100/45 before:opacity-95 before:content-[''] after:pointer-events-none after:absolute after:-top-32 after:right-0 after:h-56 after:w-56 after:rounded-full after:bg-emerald-200/50 after:blur-3xl after:opacity-40 dark:border-emerald-500/25 dark:bg-slate-900/55 dark:text-slate-100 dark:before:from-white/12 dark:before:via-white/5 dark:before:to-emerald-400/12 dark:after:bg-emerald-500/25">
+          <CardHeader className="relative z-10 space-y-1 pb-3 text-center">
+            <CardTitle className="text-2xl font-semibold">
+              {isRegisterMode ? 'Create Account' : 'Sign In'}
             </CardTitle>
-            <CardDescription>
-              {isRegisterMode
-                ? 'Create your account to start organizing your bookmarks'
-                : 'Sign in to access your bookmark collection'}
-            </CardDescription>
+            {isRegisterMode ? (
+              <CardDescription>Start organizing your bookmarks in moments.</CardDescription>
+            ) : null}
           </CardHeader>
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Username Input - Show conditionally */}
-              {showUsernameInput && (
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    ref={usernameInputRef}
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username"
-                    required
-                    data-testid="input-username"
-                  />
-                </div>
-              )}
+          <CardContent className="relative z-10 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-600/22 text-emerald-700 shadow-sm dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-100">
+                  <User className="h-4 w-4" />
+                </span>
+                <Input
+                  ref={usernameInputRef}
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  placeholder="Username"
+                  required
+                  data-testid="input-username"
+                  className="pl-12 border-emerald-500/25 bg-white/96 text-slate-900 placeholder:text-slate-500 shadow-sm focus-visible:ring-emerald-500/50 focus-visible:ring-offset-0 dark:border-emerald-500/25 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus-visible:ring-emerald-400/50"
+                />
+              </div>
 
-              {/* Show current username as a clean label */}
-              {!showUsernameInput && (
-                <div className="space-y-2">
-                  <Label>Signing in as</Label>
-                  <div
-                    className="flex items-center justify-between px-3 py-2 bg-muted rounded-md select-none"
-                    tabIndex={-1}
-                  >
-                    <span className="font-medium" data-testid="text-current-username">
-                      {username}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleUsernameChange}
-                      disabled={loginMutation.isPending || registerMutation.isPending}
-                      data-testid="button-change-username"
-                    >
-                      Change
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Password Input */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    ref={passwordInputRef}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyUp={(e) =>
-                      setCapsLockOn(
-                        (e as any).getModifierState && (e as any).getModifierState('CapsLock'),
-                      )
-                    }
-                    placeholder={isRegisterMode ? 'Create a password' : 'Enter your password'}
-                    required
-                    minLength={4}
-                    autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
-                    data-testid="input-password"
-                    className="pl-10 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    disabled={loginMutation.isPending || registerMutation.isPending}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-muted-foreground hover:text-foreground"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {password.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                      <div
-                        className={`h-full ${strength.color} transition-all`}
-                        style={{ width: `${strength.percent}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Strength: {strength.label}</span>
-                      {capsLockOn && (
-                        <span className="text-amber-600 dark:text-amber-400">Caps Lock is on</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {password.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Use at least 4 characters. You can use letters, numbers, and symbols.
-                  </p>
-                )}
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-600/22 text-emerald-700 shadow-sm dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-100">
+                  <Lock className="h-4 w-4" />
+                </span>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isRegisterMode ? 'Create a password' : 'Password'}
+                  required
+                  minLength={4}
+                  autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
+                  data-testid="input-password"
+                  className="pl-12 border-emerald-500/25 bg-white/96 text-slate-900 placeholder:text-slate-500 shadow-sm focus-visible:ring-emerald-500/50 focus-visible:ring-offset-0 dark:border-emerald-500/25 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus-visible:ring-emerald-400/50"
+                />
               </div>
 
               <Button
@@ -237,8 +137,14 @@ export default function AuthPage() {
               </Button>
             </form>
 
-            <div className="text-center">
-              <Button variant="link" onClick={handleModeSwitch} data-testid="button-switch-mode">
+            <div className="pt-1 text-center">
+              <Button
+                variant="link"
+                size="sm"
+                className="text-sm"
+                onClick={handleModeSwitch}
+                data-testid="button-switch-mode"
+              >
                 {isRegisterMode
                   ? 'Already have an account? Sign in'
                   : "Don't have an account? Sign up"}
@@ -249,42 +155,54 @@ export default function AuthPage() {
       </div>
 
       {/* Right Column - Hero Section */}
-      <div className="flex-1 bg-primary text-primary-foreground p-8 flex flex-col justify-center">
-        <div className="max-w-lg">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-primary-foreground/10 rounded-lg">
+      <div className="relative order-2 w-full overflow-hidden rounded-t-3xl bg-primary text-white px-6 py-8 sm:px-12 sm:py-12 lg:order-2 lg:flex-1 lg:rounded-none lg:px-16 dark:text-slate-100">
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-emerald-400/30 opacity-80 dark:from-white/10 dark:via-transparent dark:to-emerald-400/20"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-48 w-48 rounded-full bg-primary-foreground/20 blur-3xl lg:h-72 lg:w-72 dark:bg-white/5"
+          aria-hidden="true"
+        />
+        <div className="relative z-10 max-w-xl mx-auto lg:mx-0">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 rounded-xl bg-white/15 backdrop-blur dark:bg-white/10">
               <Bookmark className="h-8 w-8" />
             </div>
-            <h1 className="text-3xl font-bold">Memorize</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Memorize</h1>
           </div>
 
-          <h2 className="text-4xl font-bold mb-6">Organize Your Digital Life</h2>
+          <h2 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">Organize Your Digital Life</h2>
 
-          <p className="text-xl text-primary-foreground/80 mb-8">
+          <p className="mt-6 text-base text-white/80 sm:text-lg dark:text-slate-200">
             Keep all your important bookmarks organized, searchable, and secure in one place. Let AI
             help you categorize and describe your content automatically.
           </p>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Search className="h-5 w-5 text-primary-foreground/60" />
-              <span>Powerful search and filtering</span>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
+              <Search className="h-5 w-5 text-white/80 dark:text-slate-100" />
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Powerful search and filtering</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-primary-foreground/60" />
-              <span>Organize with categories and tags</span>
+            <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
+              <Users className="h-5 w-5 text-white/80 dark:text-slate-100" />
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Organize with categories and tags</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Brain className="h-5 w-5 text-primary-foreground/60" />
-              <span>AI-powered auto-tagging and descriptions</span>
+            <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
+              <Brain className="h-5 w-5 text-white/80 dark:text-slate-100" />
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">AI-powered auto-tagging and descriptions</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Sparkles className="h-5 w-5 text-primary-foreground/60" />
-              <span>Smart content analysis and suggestions</span>
+            <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
+              <Sparkles className="h-5 w-5 text-white/80 dark:text-slate-100" />
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Smart content analysis and suggestions</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-primary-foreground/60" />
-              <span>Secure with passcode protection</span>
+            <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm sm:col-span-2 dark:bg-white/10">
+              <Share className="h-5 w-5 text-white/80 dark:text-slate-100" />
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Shareable bookmark collections for your team</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm sm:col-span-2 dark:bg-white/10">
+              <Shield className="h-5 w-5 text-white/80 dark:text-slate-100" />
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Secure with passcode protection</span>
             </div>
           </div>
         </div>
