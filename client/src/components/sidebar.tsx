@@ -11,9 +11,14 @@ import {
   Settings,
   Globe,
   GripVertical,
+  Edit2,
+  Check,
+  X,
+  MoreVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 import type { Category, Bookmark } from '@shared/schema';
 import {
   AlertDialog,
@@ -24,10 +29,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { apiRequest } from '@/lib/queryClient';
 import { categorySlug } from '@/lib/slug';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -64,6 +75,7 @@ interface SortableCategoryItemProps {
   category: Category & { bookmarkCount: number };
   isActive: boolean;
   onDelete: (category: Category & { bookmarkCount: number }) => void;
+  onRename: (categoryId: number, newName: string) => Promise<void>;
   onClose: () => void;
   formatCount: (n: number | undefined) => number;
 }
@@ -72,9 +84,15 @@ function SortableCategoryItem({
   category,
   isActive,
   onDelete,
+  onRename,
   onClose,
   formatCount
 }: SortableCategoryItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(category.name);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const {
     attributes,
     listeners,
@@ -86,67 +104,199 @@ function SortableCategoryItem({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
+  };
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  // Sync editName with category.name when category changes
+  useEffect(() => {
+    if (!isEditing) {
+      setEditName(category.name);
+    }
+  }, [category.name, isEditing]);
+
+
+  const handleStartEdit = () => {
+    setIsEditing(true);
+    setEditName(category.name);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditName(category.name);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editName.trim() === category.name || !editName.trim()) {
+      handleCancelEdit();
+      return;
+    }
+
+    setIsRenaming(true);
+    try {
+      await onRename(category.id, editName.trim());
+      // Reset editing state after successful rename
+      setIsEditing(false);
+      // Update local state to prevent any race conditions
+      setEditName(editName.trim());
+    } catch (error) {
+      // Error handling is done in the parent component
+      console.error('Failed to rename category:', error);
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center rounded-md ${isActive ? 'bg-primary' : ''
-        } ${isDragging ? 'opacity-50' : ''}`}
+      className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ${isActive ? 'bg-primary' : ''
+        } ${isDragging ? 'opacity-60 scale-105 shadow-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
     >
-      <Link href={`/category/${categorySlug(category)}`} className="flex-1">
-        <Button
-          variant="ghost"
-          className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isActive
-            ? 'text-primary-foreground hover:bg-transparent'
-            : 'text-slate-900 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-            }`}
-          onClick={onClose}
-          data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-        >
-          <Folder size={16} />
-          <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight">
-            {category.name}
-          </span>
-          <span
-            className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isActive
-              ? 'bg-primary-foreground text-primary'
-              : 'bg-secondary text-secondary-foreground'
-              }`}
+      {/* Drag Handle - Always visible but subtle */}
+      {!isEditing && (
+        <div className="w-5 flex-shrink-0 flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 p-0 text-slate-300 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white transition-all duration-200 hover:scale-110 cursor-grab active:cursor-grabbing"
+            aria-label={`Drag to reorder ${category.name}`}
+            {...attributes}
+            {...listeners}
           >
-            {formatCount(category.bookmarkCount)}
-          </span>
-        </Button>
-      </Link>
-      <div className="flex items-center">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0 text-slate-400 hover:text-slate-600 dark:text-muted-foreground dark:hover:text-foreground"
-          aria-label={`Drag to reorder ${category.name}`}
-          {...attributes}
-          {...listeners}
+            <GripVertical size={14} />
+          </Button>
+        </div>
+      )}
+
+      {/* Folder Icon */}
+      <Folder size={16} className="shrink-0 mr-1 text-slate-600 dark:text-slate-400 mr-2" />
+
+      {/* Folder Name - Takes up most space */}
+      <div className="flex-1 min-w-0 flex items-center">
+        {isEditing ? (
+          <Input
+            ref={inputRef}
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSaveEdit}
+            className="w-full h-6 text-sm border-0 p-0 bg-transparent focus:ring-0 focus:ring-offset-0"
+            disabled={isRenaming}
+          />
+        ) : (
+          <Link href={`/category/${categorySlug(category)}`} className="block" onClick={onClose}>
+            <span className={`block whitespace-normal break-words hyphens-auto leading-tight text-sm ${isActive
+              ? 'text-primary-foreground'
+              : 'text-slate-900 dark:text-slate-100'
+              }`}>
+              {category.name}
+            </span>
+          </Link>
+        )}
+      </div>
+
+      {/* Badge Count */}
+      <div className="ml-1 flex-shrink-0">
+        <span
+          className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${isActive
+            ? 'bg-primary-foreground text-primary'
+            : 'bg-secondary text-secondary-foreground'
+            }`}
         >
-          <GripVertical size={16} />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0 text-slate-600 hover:text-destructive dark:text-muted-foreground dark:hover:text-destructive"
-          aria-label={`Delete ${category.name}`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onDelete(category);
-          }}
-          data-testid={`button-delete-category-${category.name
-            .toLowerCase()
-            .replace(/\s+/g, '-')}`}
-        >
-          <Trash2 size={16} />
-        </Button>
+          {formatCount(category.bookmarkCount)}
+        </span>
+      </div>
+
+      {/* More Menu or Edit Actions */}
+      <div className="ml-0 flex-shrink-0">
+        {isEditing ? (
+          <div className="flex items-center space-x-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+              aria-label="Save changes"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSaveEdit();
+              }}
+              disabled={isRenaming}
+              data-testid={`button-save-category-${category.id}`}
+            >
+              <Check size={14} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-slate-600 hover:text-slate-700 dark:text-muted-foreground dark:hover:text-foreground"
+              aria-label="Cancel editing"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleCancelEdit();
+              }}
+              disabled={isRenaming}
+              data-testid={`button-cancel-category-${category.id}`}
+            >
+              <X size={14} />
+            </Button>
+          </div>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 ml-0 text-slate-300 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white transition-colors"
+                aria-label={`More actions for ${category.name}`}
+              >
+                <MoreVertical size={14} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleStartEdit();
+                }}
+                className="cursor-pointer"
+              >
+                <Edit2 size={14} className="mr-2" />
+                Edit folder
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete(category);
+                }}
+                className="cursor-pointer text-destructive focus:text-destructive text-red-500"
+              >
+                <Trash2 size={14} className="mr-2" />
+                Delete folder
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   );
@@ -163,7 +313,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
   const [isProcessing, setIsProcessing] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -228,6 +382,26 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       toast({ variant: 'destructive', description: message });
     },
   });
+
+  const renameCategoryMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: number; name: string }) => {
+      return apiRequest('PATCH', `/api/categories/${id}`, { name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories?withCounts=true'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({ description: 'Folder renamed successfully' });
+    },
+    onError: (error: any) => {
+      const message = typeof error?.message === 'string' ? error.message : 'Failed to rename folder';
+      toast({ variant: 'destructive', description: message });
+      throw error; // Re-throw to handle in component
+    },
+  });
+
+  const handleRenameCategory = async (categoryId: number, newName: string) => {
+    await renameCategoryMutation.mutateAsync({ id: categoryId, name: newName });
+  };
 
   const handleDeleteCategory = (category: Category & { bookmarkCount: number }) => {
     if (category.bookmarkCount === 0) {
@@ -344,7 +518,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             <Link key={item.path} href={item.path}>
               <Button
                 variant={item.active ? 'default' : 'ghost'}
-                className={`w-full justify-start space-x-3 pr-2 ${item.active
+                className={`w-full justify-start space-x-1 pr-0.5 ${item.active
                   ? 'bg-primary text-primary-foreground'
                   : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
                   }`}
@@ -355,7 +529,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.count !== undefined && (
                   <span
-                    className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${item.active
+                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${item.active
                       ? 'bg-primary-foreground text-primary'
                       : 'bg-secondary text-secondary-foreground'
                       }`}
@@ -389,69 +563,81 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             <div className="space-y-1">
               {/* Hidden protected bookmarks (synthetic, non-deletable) */}
               <div
-                className={`group flex items-center rounded-md ${isCategoryActive('hidden') ? 'bg-primary' : ''
+                className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ml-0 mr-1 pl-2 ${isCategoryActive('hidden') ? 'bg-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                   }`}
               >
-                <Link href={`/category/hidden`} className="flex-1">
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('hidden')
-                      ? 'text-primary-foreground hover:bg-transparent'
-                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                      }`}
-                    onClick={onClose}
-                    data-testid={`folder-hidden`}
-                  >
-                    <Lock size={16} />
-                    <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-medium">
+                {/* Lock Icon */}
+                <Lock size={16} className="shrink-0 mr-2 text-slate-600 dark:text-slate-400" />
+
+                {/* Folder Name - Takes up most space */}
+                <div className="flex-1 min-w-0 flex items-center">
+                  <Link href={`/category/hidden`} className="block" onClick={onClose}>
+                    <span className={`block whitespace-normal break-words hyphens-auto leading-tight text-sm bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-medium ${isCategoryActive('hidden')
+                      ? 'text-primary-foreground'
+                      : 'text-slate-900 dark:text-slate-100'
+                      }`}>
                       Hidden
                     </span>
-                    <span
-                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('hidden')
-                        ? 'bg-primary-foreground text-primary'
-                        : 'bg-secondary text-secondary-foreground'
-                        }`}
-                    >
-                      {formatCount(hiddenCount)}
-                    </span>
-                  </Button>
-                </Link>
-                {/* Reserve space for delete icon to keep alignment with other rows */}
-                <div className="h-8 w-8 shrink-0" aria-hidden />
+                  </Link>
+                </div>
+
+                {/* Badge Count */}
+                <div className="ml-1 flex-shrink-0">
+                  <span
+                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${isCategoryActive('hidden')
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-secondary text-secondary-foreground'
+                      }`}
+                  >
+                    {formatCount(hiddenCount)}
+                  </span>
+                </div>
+
+                {/* Reserve space for more menu to keep alignment with other rows */}
+                <div className="ml-0 flex-shrink-0">
+                  <div className="h-5 w-5" aria-hidden />
+                </div>
               </div>
 
               {/* Default uncategorized folder (synthetic, non-deletable, pinned on top) */}
               <div
-                className={`group flex items-center rounded-md ${isCategoryActive('uncategorized') ? 'bg-primary' : ''
+                className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ml-0 mr-1 pl-2 ${isCategoryActive('uncategorized') ? 'bg-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
                   }`}
               >
-                <Link href={`/category/uncategorized`} className="flex-1">
-                  <Button
-                    variant="ghost"
-                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('uncategorized')
-                      ? 'text-primary-foreground hover:bg-transparent'
-                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                      }`}
-                    onClick={onClose}
-                    data-testid={`folder-uncategorized`}
-                  >
-                    <Folder size={16} />
-                    <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text text-transparent font-medium">
+                {/* Folder Icon */}
+                <Folder size={16} className="shrink-0 mr-2 text-slate-600 dark:text-slate-400" />
+
+                {/* Folder Name - Takes up most space */}
+                <div className="flex-1 min-w-0 flex items-center">
+                  <Link href={`/category/uncategorized`} className="block" onClick={onClose}>
+                    <span className={`block whitespace-normal break-words hyphens-auto leading-tight text-sm bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text font-medium ${isCategoryActive('uncategorized')
+                      ? 'text-primary-foreground'
+                      : 'text-slate-900 dark:text-slate-100'
+                      }`}>
                       Uncategorized
                     </span>
-                    <span
-                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('uncategorized')
-                        ? 'bg-primary-foreground text-primary'
-                        : 'bg-secondary text-secondary-foreground'
-                        }`}
-                    >
-                      {formatCount(uncategorizedCount)}
-                    </span>
-                  </Button>
-                </Link>
-                {/* Reserve space for delete icon to keep alignment with other rows */}
-                <div className="h-8 w-8 shrink-0" aria-hidden />
+                  </Link>
+                </div>
+
+                {/* Badge Count */}
+                <div className="ml-1 flex-shrink-0">
+                  <span
+                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${isCategoryActive('uncategorized')
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-secondary text-secondary-foreground'
+                      }`}
+                  >
+                    {formatCount(uncategorizedCount)}
+                  </span>
+                </div>
+
+                {/* Reserve space for more menu to keep alignment with other rows */}
+                <div className="ml-0 flex-shrink-0">
+                  <div className="h-5 w-5" aria-hidden />
+                </div>
               </div>
+
+              <Separator className="!my-4" />
 
               <DndContext
                 sensors={sensors}
@@ -468,6 +654,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                       category={category}
                       isActive={isCategoryActive(categorySlug(category))}
                       onDelete={handleDeleteCategory}
+                      onRename={handleRenameCategory}
                       onClose={onClose}
                       formatCount={formatCount}
                     />
@@ -530,3 +717,4 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     </>
   );
 }
+
