@@ -135,15 +135,15 @@ export interface IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string | null;
-        tags: string[] | null;
-        screenshotUrl?: string | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-        hasPasscode?: boolean;
-      }
+      name: string;
+      description: string | null;
+      url: string | null;
+      tags: string[] | null;
+      screenshotUrl?: string | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+      hasPasscode?: boolean;
+    }
     | undefined
   >;
 
@@ -788,6 +788,7 @@ export class DatabaseStorage implements IStorage {
         name: categories.name,
         parentId: categories.parentId,
         userId: categories.userId,
+        sortOrder: categories.sortOrder,
         createdAt: categories.createdAt,
         bookmarkCount: sql<number>`count(${bookmarks.id})::int`,
       })
@@ -798,7 +799,7 @@ export class DatabaseStorage implements IStorage {
       )
       .where(eq(categories.userId, userId))
       .groupBy(categories.id)
-      .orderBy(asc(categories.name));
+      .orderBy(asc(categories.sortOrder), asc(categories.name));
 
     return results;
   }
@@ -1033,15 +1034,15 @@ export class DatabaseStorage implements IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string | null;
-        tags: string[] | null;
-        screenshotUrl?: string | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-        hasPasscode?: boolean;
-      }
+      name: string;
+      description: string | null;
+      url: string | null;
+      tags: string[] | null;
+      screenshotUrl?: string | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+      hasPasscode?: boolean;
+    }
     | undefined
   > {
     const [result] = await db

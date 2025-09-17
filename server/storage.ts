@@ -171,6 +171,14 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     return this.categoryStorage.updateCategory(userId, id, category);
   }
 
+  async updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category> {
+    return this.categoryStorage.updateCategorySortOrder(userId, categoryId, sortOrder);
+  }
+
+  async updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]> {
+    return this.categoryStorage.updateCategoriesSortOrder(userId, sortOrders);
+  }
+
   async unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void> {
     return this.categoryStorage.unlinkCategoryBookmarks(userId, categoryId);
   }

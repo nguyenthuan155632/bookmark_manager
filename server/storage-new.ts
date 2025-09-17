@@ -171,6 +171,14 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     return this.categoryStorage.updateCategory(userId, id, category);
   }
 
+  async updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category> {
+    return this.categoryStorage.updateCategorySortOrder(userId, categoryId, sortOrder);
+  }
+
+  async updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]> {
+    return this.categoryStorage.updateCategoriesSortOrder(userId, sortOrders);
+  }
+
   async unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void> {
     return this.categoryStorage.unlinkCategoryBookmarks(userId, categoryId);
   }
@@ -230,15 +238,15 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string | null;
-        tags: string[] | null;
-        screenshotUrl?: string | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-        hasPasscode?: boolean;
-      }
+      name: string;
+      description: string | null;
+      url: string | null;
+      tags: string[] | null;
+      screenshotUrl?: string | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+      hasPasscode?: boolean;
+    }
     | undefined
   > {
     return this.bookmarkStorage.getSharedBookmark(shareId, options);

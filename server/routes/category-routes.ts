@@ -53,11 +53,48 @@ export function registerCategoryRoutes(app: Express) {
     }
   });
 
+  // Update multiple categories sort order (must come before /:id route)
+  app.patch('/api/categories/sort-order', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { sortOrders } = req.body;
+
+      if (!Array.isArray(sortOrders)) {
+        return res.status(400).json({ message: 'sortOrders must be an array' });
+      }
+
+      // Validate each sort order entry
+      for (const item of sortOrders) {
+        if (typeof item.id !== 'number' || typeof item.sortOrder !== 'number') {
+          return res.status(400).json({ message: 'Each sort order entry must have id and sortOrder as numbers' });
+        }
+        if (isNaN(item.id) || isNaN(item.sortOrder)) {
+          return res.status(400).json({ message: 'id and sortOrder must be valid numbers' });
+        }
+        if (item.id <= 0) {
+          return res.status(400).json({ message: 'id must be a positive number' });
+        }
+      }
+
+      const categories = await storage.updateCategoriesSortOrder(userId, sortOrders);
+      res.json(categories);
+    } catch (error) {
+      console.error('Error updating categories sort order:', error);
+      res.status(500).json({ message: 'Failed to update categories sort order' });
+    }
+  });
+
   app.patch('/api/categories/:id', requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
       const id = parseInt(req.params.id);
       const data = insertCategorySchema.partial().parse(req.body);
+
+      // Check if data is empty
+      if (Object.keys(data).length === 0) {
+        return res.status(400).json({ message: 'No valid fields to update' });
+      }
+
       const category = await storage.updateCategory(userId, id, data);
       res.json(category);
     } catch (error) {
@@ -122,4 +159,24 @@ export function registerCategoryRoutes(app: Express) {
       res.status(500).json({ message: 'Failed to delete category' });
     }
   });
+
+  // Update category sort order
+  app.patch('/api/categories/:id/sort-order', requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const id = parseInt(req.params.id);
+      const { sortOrder } = req.body;
+
+      if (typeof sortOrder !== 'number') {
+        return res.status(400).json({ message: 'sortOrder must be a number' });
+      }
+
+      const category = await storage.updateCategorySortOrder(userId, id, sortOrder);
+      res.json(category);
+    } catch (error) {
+      console.error('Error updating category sort order:', error);
+      res.status(500).json({ message: 'Failed to update category sort order' });
+    }
+  });
+
 }

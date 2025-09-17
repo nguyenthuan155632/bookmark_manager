@@ -96,6 +96,8 @@ export interface IStorage {
   getCategory(userId: string, id: number): Promise<Category | undefined>;
   createCategory(userId: string, category: InsertCategory): Promise<Category>;
   updateCategory(userId: string, id: number, category: Partial<InsertCategory>): Promise<Category>;
+  updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category>;
+  updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]>;
   unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void>;
   deleteBookmarksByCategory(userId: string, categoryId: number): Promise<number>;
   deleteCategory(userId: string, id: number): Promise<void>;
@@ -277,6 +279,8 @@ export abstract class BaseStorage implements IStorage {
     id: number,
     category: Partial<InsertCategory>,
   ): Promise<Category>;
+  abstract updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category>;
+  abstract updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]>;
   abstract unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void>;
   abstract deleteBookmarksByCategory(userId: string, categoryId: number): Promise<number>;
   abstract deleteCategory(userId: string, id: number): Promise<void>;

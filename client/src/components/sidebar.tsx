@@ -10,6 +10,7 @@ import {
   Lock,
   Settings,
   Globe,
+  GripVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +28,25 @@ import { apiRequest } from '@/lib/queryClient';
 import { categorySlug } from '@/lib/slug';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -40,6 +60,98 @@ interface SidebarProps {
   };
 }
 
+interface SortableCategoryItemProps {
+  category: Category & { bookmarkCount: number };
+  isActive: boolean;
+  onDelete: (category: Category & { bookmarkCount: number }) => void;
+  onClose: () => void;
+  formatCount: (n: number | undefined) => number;
+}
+
+function SortableCategoryItem({
+  category,
+  isActive,
+  onDelete,
+  onClose,
+  formatCount
+}: SortableCategoryItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group flex items-center rounded-md ${isActive ? 'bg-primary' : ''
+        } ${isDragging ? 'opacity-50' : ''}`}
+    >
+      <Link href={`/category/${categorySlug(category)}`} className="flex-1">
+        <Button
+          variant="ghost"
+          className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isActive
+            ? 'text-primary-foreground hover:bg-transparent'
+            : 'text-slate-900 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+            }`}
+          onClick={onClose}
+          data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
+        >
+          <Folder size={16} />
+          <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight">
+            {category.name}
+          </span>
+          <span
+            className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isActive
+              ? 'bg-primary-foreground text-primary'
+              : 'bg-secondary text-secondary-foreground'
+              }`}
+          >
+            {formatCount(category.bookmarkCount)}
+          </span>
+        </Button>
+      </Link>
+      <div className="flex items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0 text-slate-400 hover:text-slate-600 dark:text-muted-foreground dark:hover:text-foreground"
+          aria-label={`Drag to reorder ${category.name}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={16} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0 text-slate-600 hover:text-destructive dark:text-muted-foreground dark:hover:text-destructive"
+          aria-label={`Delete ${category.name}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete(category);
+          }}
+          data-testid={`button-delete-category-${category.name
+            .toLowerCase()
+            .replace(/\s+/g, '-')}`}
+        >
+          <Trash2 size={16} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps) {
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -49,6 +161,13 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     (Category & { bookmarkCount: number }) | null
   >(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const { data: categories = [] } = useQuery<(Category & { bookmarkCount: number })[]>({
     queryKey: ['/api/categories?withCounts=true'],
@@ -96,6 +215,20 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     },
   });
 
+  const updateSortOrderMutation = useMutation({
+    mutationFn: async (sortOrders: { id: number; sortOrder: number }[]) => {
+      return apiRequest('PATCH', '/api/categories/sort-order', { sortOrders });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories?withCounts=true'] });
+      toast({ description: 'Folder order updated' });
+    },
+    onError: (error: any) => {
+      const message = typeof error?.message === 'string' ? error.message : 'Failed to update folder order';
+      toast({ variant: 'destructive', description: message });
+    },
+  });
+
   const handleDeleteCategory = (category: Category & { bookmarkCount: number }) => {
     if (category.bookmarkCount === 0) {
       // Immediate delete, no confirmation
@@ -122,6 +255,24 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       console.error(err);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = categories.findIndex((category) => category.id === active.id);
+      const newIndex = categories.findIndex((category) => category.id === over?.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedCategories = arrayMove(categories, oldIndex, newIndex);
+        const sortOrders = reorderedCategories.map((category, index) => ({
+          id: category.id,
+          sortOrder: index,
+        }));
+        updateSortOrderMutation.mutate(sortOrders);
+      }
     }
   };
 
@@ -193,11 +344,10 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             <Link key={item.path} href={item.path}>
               <Button
                 variant={item.active ? 'default' : 'ghost'}
-                className={`w-full justify-start space-x-3 pr-2 ${
-                  item.active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                }`}
+                className={`w-full justify-start space-x-3 pr-2 ${item.active
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                  }`}
                 onClick={onClose}
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
@@ -205,11 +355,10 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.count !== undefined && (
                   <span
-                    className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
-                      item.active
-                        ? 'bg-primary-foreground text-primary'
-                        : 'bg-secondary text-secondary-foreground'
-                    }`}
+                    className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${item.active
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-secondary text-secondary-foreground'
+                      }`}
                   >
                     {formatCount(item.count)}
                   </span>
@@ -240,18 +389,16 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             <div className="space-y-1">
               {/* Hidden protected bookmarks (synthetic, non-deletable) */}
               <div
-                className={`group flex items-center rounded-md ${
-                  isCategoryActive('hidden') ? 'bg-primary' : ''
-                }`}
+                className={`group flex items-center rounded-md ${isCategoryActive('hidden') ? 'bg-primary' : ''
+                  }`}
               >
                 <Link href={`/category/hidden`} className="flex-1">
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${
-                      isCategoryActive('hidden')
-                        ? 'text-primary-foreground hover:bg-transparent'
-                        : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                    }`}
+                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('hidden')
+                      ? 'text-primary-foreground hover:bg-transparent'
+                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                      }`}
                     onClick={onClose}
                     data-testid={`folder-hidden`}
                   >
@@ -260,11 +407,10 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                       Hidden
                     </span>
                     <span
-                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
-                        isCategoryActive('hidden')
-                          ? 'bg-primary-foreground text-primary'
-                          : 'bg-secondary text-secondary-foreground'
-                      }`}
+                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('hidden')
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
+                        }`}
                     >
                       {formatCount(hiddenCount)}
                     </span>
@@ -276,18 +422,16 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
 
               {/* Default uncategorized folder (synthetic, non-deletable, pinned on top) */}
               <div
-                className={`group flex items-center rounded-md ${
-                  isCategoryActive('uncategorized') ? 'bg-primary' : ''
-                }`}
+                className={`group flex items-center rounded-md ${isCategoryActive('uncategorized') ? 'bg-primary' : ''
+                  }`}
               >
                 <Link href={`/category/uncategorized`} className="flex-1">
                   <Button
                     variant="ghost"
-                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${
-                      isCategoryActive('uncategorized')
-                        ? 'text-primary-foreground hover:bg-transparent'
-                        : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                    }`}
+                    className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${isCategoryActive('uncategorized')
+                      ? 'text-primary-foreground hover:bg-transparent'
+                      : 'text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
+                      }`}
                     onClick={onClose}
                     data-testid={`folder-uncategorized`}
                   >
@@ -296,11 +440,10 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                       Uncategorized
                     </span>
                     <span
-                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
-                        isCategoryActive('uncategorized')
-                          ? 'bg-primary-foreground text-primary'
-                          : 'bg-secondary text-secondary-foreground'
-                      }`}
+                      className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${isCategoryActive('uncategorized')
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
+                        }`}
                     >
                       {formatCount(uncategorizedCount)}
                     </span>
@@ -310,57 +453,27 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 <div className="h-8 w-8 shrink-0" aria-hidden />
               </div>
 
-              {categories.map((category) => (
-                <div
-                  key={category.id}
-                  className={`group flex items-center rounded-md ${
-                    isCategoryActive(categorySlug(category)) ? 'bg-primary' : ''
-                  }`}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={categories.map(c => c.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <Link href={`/category/${categorySlug(category)}`} className="flex-1">
-                    <Button
-                      variant="ghost"
-                      className={`w-full justify-start space-x-3 pr-0 hover:pr-2 ${
-                        isCategoryActive(categorySlug(category))
-                          ? 'text-primary-foreground hover:bg-transparent'
-                          : 'text-slate-900 hover:bg-slate-100 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground'
-                      }`}
-                      onClick={onClose}
-                      data-testid={`folder-${category.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      <Folder size={16} />
-                      <span className="flex-1 min-w-0 text-left whitespace-normal break-words hyphens-auto leading-tight">
-                        {category.name}
-                      </span>
-                      <span
-                        className={`text-xs w-5 h-5 rounded-full flex items-center justify-center ${
-                          isCategoryActive(categorySlug(category))
-                            ? 'bg-primary-foreground text-primary'
-                            : 'bg-secondary text-secondary-foreground'
-                        }`}
-                      >
-                        {formatCount(category.bookmarkCount)}
-                      </span>
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 text-slate-600 hover:text-destructive dark:text-muted-foreground dark:hover:text-destructive"
-                    aria-label={`Delete ${category.name}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleDeleteCategory(category);
-                    }}
-                    data-testid={`button-delete-category-${category.name
-                      .toLowerCase()
-                      .replace(/\s+/g, '-')}`}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              ))}
+                  {categories.map((category) => (
+                    <SortableCategoryItem
+                      key={category.id}
+                      category={category}
+                      isActive={isCategoryActive(categorySlug(category))}
+                      onDelete={handleDeleteCategory}
+                      onClose={onClose}
+                      formatCount={formatCount}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
 
               {categories.length === 0 && (
                 <p className="text-sm text-slate-600 dark:text-muted-foreground px-3 py-2">

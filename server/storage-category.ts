@@ -8,7 +8,7 @@ export class CategoryStorage {
       .select()
       .from(categories)
       .where(eq(categories.userId, userId))
-      .orderBy(asc(categories.name));
+      .orderBy(asc(categories.sortOrder), asc(categories.name));
   }
 
   async getCategoriesWithCounts(userId: string): Promise<(Category & { bookmarkCount: number })[]> {
@@ -18,6 +18,7 @@ export class CategoryStorage {
         name: categories.name,
         parentId: categories.parentId,
         userId: categories.userId,
+        sortOrder: categories.sortOrder,
         createdAt: categories.createdAt,
         bookmarkCount: sql<number>`count(${bookmarks.id})::int`,
       })
@@ -28,7 +29,7 @@ export class CategoryStorage {
       )
       .where(eq(categories.userId, userId))
       .groupBy(categories.id)
-      .orderBy(asc(categories.name));
+      .orderBy(asc(categories.sortOrder), asc(categories.name));
 
     return results;
   }
@@ -78,6 +79,38 @@ export class CategoryStorage {
       .where(and(eq(bookmarks.userId, userId), eq(bookmarks.categoryId, categoryId)))
       .returning({ id: bookmarks.id });
     return deleted.length;
+  }
+
+  async updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ sortOrder })
+      .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+      .returning();
+
+    if (!updatedCategory) {
+      throw new Error('Category not found');
+    }
+
+    return updatedCategory;
+  }
+
+  async updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]> {
+    const updatedCategories: Category[] = [];
+
+    for (const { id, sortOrder } of sortOrders) {
+      const [updatedCategory] = await db
+        .update(categories)
+        .set({ sortOrder })
+        .where(and(eq(categories.id, id), eq(categories.userId, userId)))
+        .returning();
+
+      if (updatedCategory) {
+        updatedCategories.push(updatedCategory);
+      }
+    }
+
+    return updatedCategories;
   }
 
   async deleteCategory(userId: string, id: number): Promise<void> {
