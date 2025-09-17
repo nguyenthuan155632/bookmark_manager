@@ -61,7 +61,7 @@ export interface IStorage {
       limit?: number;
       offset?: number;
     },
-  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]>;
+  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean; passcodeHash?: string | null })[]>;
   getBookmark(
     userId: string,
     id: number,
@@ -130,15 +130,15 @@ export interface IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string | null;
-        tags: string[] | null;
-        screenshotUrl?: string | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-        hasPasscode?: boolean;
-      }
+      name: string;
+      description: string | null;
+      url: string | null;
+      tags: string[] | null;
+      screenshotUrl?: string | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+      hasPasscode?: boolean;
+    }
     | undefined
   >;
 
@@ -309,15 +309,15 @@ export abstract class BaseStorage implements IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string | null;
-        tags: string[] | null;
-        screenshotUrl?: string | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-        hasPasscode?: boolean;
-      }
+      name: string;
+      description: string | null;
+      url: string | null;
+      tags: string[] | null;
+      screenshotUrl?: string | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+      hasPasscode?: boolean;
+    }
     | undefined
   >;
   abstract updateBookmarkSuggestedTags(

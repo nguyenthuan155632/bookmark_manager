@@ -626,15 +626,39 @@ export default function SettingsPage() {
                             // initialize mapping guesses
                             const guesses: Record<string, string> = {};
                             parsed.headers.forEach((h) => {
-                              const key = h.toLowerCase();
-                              if (key.includes('name') || key.includes('title'))
+                              const key = h.toLowerCase().trim();
+                              // Exact string matching for reliable column detection
+                              if (key === 'name' || key === 'title')
                                 guesses[h] = 'name';
-                              else if (key.includes('url') || key.includes('link'))
+                              else if (key === 'description' || key === 'desc')
+                                guesses[h] = 'description';
+                              else if (key === 'url' || key === 'link')
                                 guesses[h] = 'url';
-                              else if (key.includes('desc')) guesses[h] = 'description';
-                              else if (key.includes('tag')) guesses[h] = 'tags';
-                              else if (key.includes('fav')) guesses[h] = 'isFavorite';
-                              else if (key.includes('category') || key === 'folder')
+                              else if (key === 'suggestedtags' || key === 'suggested_tags')
+                                guesses[h] = 'suggestedTags';
+                              else if (key === 'tags')
+                                guesses[h] = 'tags';
+                              else if (key === 'isfavorite' || key === 'is_favorite' || key === 'favorite')
+                                guesses[h] = 'isFavorite';
+                              else if (key === 'categoryid' || key === 'category_id')
+                                guesses[h] = 'categoryId';
+                              else if (key === 'passcodehash' || key === 'passcode_hash')
+                                guesses[h] = 'passcodeHash';
+                              else if (key === 'screenshoturl' || key === 'screenshot_url')
+                                guesses[h] = 'screenshotUrl';
+                              else if (key === 'screenshotstatus' || key === 'screenshot_status')
+                                guesses[h] = 'screenshotStatus';
+                              else if (key === 'screenshotupdatedat' || key === 'screenshot_updated_at')
+                                guesses[h] = 'screenshotUpdatedAt';
+                              else if (key === 'linkstatus' || key === 'link_status')
+                                guesses[h] = 'linkStatus';
+                              else if (key === 'httpstatus' || key === 'http_status')
+                                guesses[h] = 'httpStatus';
+                              else if (key === 'lastlinkcheckat' || key === 'last_link_check_at')
+                                guesses[h] = 'lastLinkCheckAt';
+                              else if (key === 'linkfailcount' || key === 'link_fail_count')
+                                guesses[h] = 'linkFailCount';
+                              else if (key === 'category' || key === 'folder')
                                 guesses[h] = 'category';
                             });
                             setMapping(guesses);
@@ -679,10 +703,20 @@ export default function SettingsPage() {
                             >
                               <option value="">Ignore</option>
                               <option value="name">Name</option>
-                              <option value="url">URL</option>
                               <option value="description">Description</option>
+                              <option value="url">URL</option>
                               <option value="tags">Tags</option>
+                              <option value="suggestedTags">Suggested Tags</option>
                               <option value="isFavorite">Is Favorite</option>
+                              <option value="categoryId">Category ID</option>
+                              <option value="passcodeHash">Passcode Hash</option>
+                              <option value="screenshotUrl">Screenshot URL</option>
+                              <option value="screenshotStatus">Screenshot Status</option>
+                              <option value="screenshotUpdatedAt">Screenshot Updated At</option>
+                              <option value="linkStatus">Link Status</option>
+                              <option value="httpStatus">HTTP Status</option>
+                              <option value="lastLinkCheckAt">Last Link Check At</option>
+                              <option value="linkFailCount">Link Fail Count</option>
                               <option value="category">Category</option>
                             </select>
                           </div>
@@ -708,16 +742,30 @@ export default function SettingsPage() {
                             const data = csvRows
                               .map((row) => {
                                 const name = colIndex.name != null ? row[colIndex.name] : '';
+                                const description = colIndex.description != null ? row[colIndex.description] : '';
                                 const url = colIndex.url != null ? row[colIndex.url] : '';
-                                const description =
-                                  colIndex.description != null ? row[colIndex.description] : '';
                                 const tagsStr = colIndex.tags != null ? row[colIndex.tags] : '';
-                                const category =
-                                  colIndex.category != null ? row[colIndex.category] : '';
-                                const favStr =
-                                  colIndex.isFavorite != null ? row[colIndex.isFavorite] : '';
+                                const suggestedTagsStr = colIndex.suggestedTags != null ? row[colIndex.suggestedTags] : '';
+                                const category = colIndex.category != null ? row[colIndex.category] : '';
+                                const favStr = colIndex.isFavorite != null ? row[colIndex.isFavorite] : '';
+                                const categoryIdStr = colIndex.categoryId != null ? row[colIndex.categoryId] : '';
+                                const passcodeHash = colIndex.passcodeHash != null ? row[colIndex.passcodeHash] : '';
+                                const screenshotUrl = colIndex.screenshotUrl != null ? row[colIndex.screenshotUrl] : '';
+                                const screenshotStatus = colIndex.screenshotStatus != null ? row[colIndex.screenshotStatus] : '';
+                                const screenshotUpdatedAt = colIndex.screenshotUpdatedAt != null ? row[colIndex.screenshotUpdatedAt] : '';
+                                const linkStatus = colIndex.linkStatus != null ? row[colIndex.linkStatus] : '';
+                                const httpStatusStr = colIndex.httpStatus != null ? row[colIndex.httpStatus] : '';
+                                const lastLinkCheckAt = colIndex.lastLinkCheckAt != null ? row[colIndex.lastLinkCheckAt] : '';
+                                const linkFailCountStr = colIndex.linkFailCount != null ? row[colIndex.linkFailCount] : '';
+
                                 const tags = tagsStr
                                   ? tagsStr
+                                    .split(tagsDelimiter)
+                                    .map((t) => t.trim())
+                                    .filter(Boolean)
+                                  : [];
+                                const suggestedTags = suggestedTagsStr
+                                  ? suggestedTagsStr
                                     .split(tagsDelimiter)
                                     .map((t) => t.trim())
                                     .filter(Boolean)
@@ -725,7 +773,28 @@ export default function SettingsPage() {
                                 const isFavorite = ['1', 'true', 'yes', 'y'].includes(
                                   String(favStr).toLowerCase(),
                                 );
-                                return { name, url, description, tags, isFavorite, category };
+                                const categoryId = categoryIdStr ? parseInt(categoryIdStr, 10) : undefined;
+                                const httpStatus = httpStatusStr ? parseInt(httpStatusStr, 10) : undefined;
+                                const linkFailCount = linkFailCountStr ? parseInt(linkFailCountStr, 10) : undefined;
+
+                                return {
+                                  name,
+                                  description,
+                                  url,
+                                  tags,
+                                  suggestedTags,
+                                  isFavorite,
+                                  categoryId,
+                                  passcodeHash,
+                                  screenshotUrl,
+                                  screenshotStatus,
+                                  screenshotUpdatedAt,
+                                  linkStatus,
+                                  httpStatus,
+                                  lastLinkCheckAt,
+                                  linkFailCount,
+                                  category
+                                };
                               })
                               .filter((i) => i.name && i.url);
                             const scope = importCategoryId ? `?categoryId=${importCategoryId}` : '';

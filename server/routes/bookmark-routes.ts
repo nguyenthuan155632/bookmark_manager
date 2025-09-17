@@ -236,17 +236,48 @@ export function registerBookmarkRoutes(app: Express) {
 
       const all = await storage.getBookmarks(userId, { categoryId });
       if (format === 'csv') {
-        const header = ['name', 'url', 'description', 'tags', 'isFavorite', 'category'].join(',');
+        const header = [
+          'name',
+          'description',
+          'url',
+          'tags',
+          'suggestedTags',
+          'isFavorite',
+          'categoryId',
+          'passcodeHash',
+          'screenshotUrl',
+          'screenshotStatus',
+          'screenshotUpdatedAt',
+          'linkStatus',
+          'httpStatus',
+          'lastLinkCheckAt',
+          'linkFailCount',
+          'category'
+        ].join(',');
         const rows = all.map((b) => {
           const tags = (b.tags || []).join('|');
+          const suggestedTags = (b.suggestedTags || []).join('|');
           const cat = b.category?.name || '';
-          const esc = (v: string) => '"' + (v || '').replace(/"/g, '""') + '"';
+          const esc = (v: string | number | null | undefined) => {
+            if (v === null || v === undefined) return '""';
+            return '"' + String(v).replace(/"/g, '""') + '"';
+          };
           return [
             esc(b.name),
+            esc(b.description),
             esc(b.url),
-            esc(b.description || ''),
             esc(tags),
+            esc(suggestedTags),
             b.isFavorite ? '1' : '0',
+            esc(b.categoryId),
+            esc(b.passcodeHash),
+            esc(b.screenshotUrl),
+            esc(b.screenshotStatus),
+            esc(b.screenshotUpdatedAt?.toISOString()),
+            esc(b.linkStatus),
+            esc(b.httpStatus),
+            esc(b.lastLinkCheckAt?.toISOString()),
+            esc(b.linkFailCount),
             esc(cat),
           ].join(',');
         });
@@ -260,10 +291,20 @@ export function registerBookmarkRoutes(app: Express) {
         return res.json(
           all.map((b) => ({
             name: b.name,
-            url: b.url,
             description: b.description,
+            url: b.url,
             tags: b.tags,
+            suggestedTags: b.suggestedTags,
             isFavorite: b.isFavorite,
+            categoryId: b.categoryId,
+            passcodeHash: b.passcodeHash,
+            screenshotUrl: b.screenshotUrl,
+            screenshotStatus: b.screenshotStatus,
+            screenshotUpdatedAt: b.screenshotUpdatedAt,
+            linkStatus: b.linkStatus,
+            httpStatus: b.httpStatus,
+            lastLinkCheckAt: b.lastLinkCheckAt,
+            linkFailCount: b.linkFailCount,
             category: b.category?.name || null,
           })),
         );
@@ -758,8 +799,17 @@ export function registerBookmarkRoutes(app: Express) {
           url,
           description: item.description || null,
           tags: Array.isArray(item.tags) ? item.tags : [],
+          suggestedTags: Array.isArray(item.suggestedTags) ? item.suggestedTags : [],
           isFavorite: !!item.isFavorite,
           categoryId: categoryId === null ? null : categoryId,
+          passcodeHash: item.passcodeHash || null,
+          screenshotUrl: item.screenshotUrl || null,
+          screenshotStatus: item.screenshotStatus || 'idle',
+          screenshotUpdatedAt: item.screenshotUpdatedAt ? new Date(item.screenshotUpdatedAt) : null,
+          linkStatus: item.linkStatus || 'unknown',
+          httpStatus: item.httpStatus || null,
+          lastLinkCheckAt: item.lastLinkCheckAt ? new Date(item.lastLinkCheckAt) : null,
+          linkFailCount: item.linkFailCount || 0,
           userId, // ignored by server but typed in schema
         } as any);
         created++;

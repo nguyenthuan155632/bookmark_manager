@@ -36,7 +36,7 @@ export class BookmarkStorage {
       limit?: number;
       offset?: number;
     },
-  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]> {
+  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean; passcodeHash?: string | null })[]> {
     // Build conditions - always filter by userId first
     const conditions = [eq(bookmarks.userId, userId)];
 
@@ -227,6 +227,7 @@ export class BookmarkStorage {
         ...bookmarkData,
         category: row.category || undefined,
         hasPasscode: !!passcodeHash,
+        passcodeHash: passcodeHash, // Include passcodeHash for export
       };
     });
   }

@@ -91,7 +91,7 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
       limit?: number;
       offset?: number;
     },
-  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean })[]> {
+  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean; passcodeHash?: string | null })[]> {
     return this.bookmarkStorage.getBookmarks(userId, params);
   }
 
@@ -230,15 +230,15 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-        name: string;
-        description: string | null;
-        url: string | null;
-        tags: string[] | null;
-        screenshotUrl?: string | null;
-        createdAt: Date;
-        category?: { name: string } | null;
-        hasPasscode?: boolean;
-      }
+      name: string;
+      description: string | null;
+      url: string | null;
+      tags: string[] | null;
+      screenshotUrl?: string | null;
+      createdAt: Date;
+      category?: { name: string } | null;
+      hasPasscode?: boolean;
+    }
     | undefined
   > {
     return this.bookmarkStorage.getSharedBookmark(shareId, options);

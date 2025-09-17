@@ -402,9 +402,10 @@ Behavior
 
 ### Export/Import Notes
 
-- CSV export columns: `name, url, description, tags, isFavorite, category`
-- CSV import mapping supports fields above; tags delimiter default `|`; accepted favorites: `1/true/yes/y`
+- CSV export columns: `name, description, url, tags, suggestedTags, isFavorite, categoryId, passcodeHash, screenshotUrl, screenshotStatus, screenshotUpdatedAt, linkStatus, httpStatus, lastLinkCheckAt, linkFailCount, category`
+- CSV import mapping supports all fields above; tags delimiter default `|`; accepted favorites: `1/true/yes/y`
 - Optional target category can be applied to all imported rows
+- Categories are automatically created during import if they don't exist
 
 ---
 
