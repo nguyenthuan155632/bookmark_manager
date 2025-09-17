@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Memorize Bookmark (Dev)",
-  "version": "0.1.0",
-  "description": "Dev build: bookmark current page to your Memorize app.",
+  "version": "0.2.0",
+  "description": "Dev build: save and organize current page to Memorize Vault.",
   "action": {
     "default_title": "Save to Memorize",
     "default_popup": "popup.html",
@@ -11,9 +11,16 @@
       "32": "icon-32.png"
     }
   },
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://vensera.up.railway.app/*"],
-  "optional_host_permissions": ["http://localhost:4001/*"],
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://vensera.up.railway.app/*"
+  ],
+  "optional_host_permissions": [
+    "http://localhost:4001/*"
+  ],
   "icons": {
     "16": "icon-16.png",
     "32": "icon-32.png",

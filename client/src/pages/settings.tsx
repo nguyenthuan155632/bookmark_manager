@@ -314,7 +314,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex flex-col items-center space-y-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-primary mb-2">~13KiB</div>
+                    <div className="text-2xl font-bold text-primary mb-2">~16KiB</div>
                     <div className="text-sm text-muted-foreground">Lightweight & Fast</div>
                   </div>
                   <a

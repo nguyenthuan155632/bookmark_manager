@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Memorize Bookmark",
-  "version": "0.1.0",
-  "description": "Quickly bookmark the current page to your Memorize app.",
+  "version": "0.2.0",
+  "description": "Save and organize the current page to Memorize Vault with AI powered options.",
   "action": {
     "default_title": "Save to Memorize",
     "default_popup": "popup.html",
@@ -11,8 +11,13 @@
       "32": "icon-32.png"
     }
   },
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://vensera.up.railway.app/*"],
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://vensera.up.railway.app/*"
+  ],
   "icons": {
     "16": "icon-16.png",
     "32": "icon-32.png",
