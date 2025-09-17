@@ -60,8 +60,34 @@ async function deployFullTextSearch() {
       console.log('   ✅ Column is already tsvector type');
     }
 
-    // 3. Create or replace the search vector update function
-    console.log('3️⃣ Creating search vector update function...');
+    // 3. Create custom search rank function
+    console.log('3️⃣ Creating custom search rank function...');
+    await db.execute(sql`
+      CREATE OR REPLACE FUNCTION custom_search_rank(
+        search_vector tsvector,
+        query tsquery
+      ) RETURNS real AS $$
+      BEGIN
+        -- Try to use ts_rank if available
+        BEGIN
+          RETURN ts_rank(search_vector, query);
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- Fallback: simple scoring based on match count and position
+            RETURN CASE 
+              WHEN search_vector @@ query THEN 
+                -- Simple scoring: 0.5 base + 0.1 per word match
+                GREATEST(0.5, LEAST(1.0, 0.5 + (array_length(string_to_array(query::text, ' '), 1) * 0.1)))
+              ELSE 0.0
+            END;
+        END;
+      END;
+      $$ LANGUAGE plpgsql
+    `);
+    console.log('   ✅ Custom search rank function created');
+
+    // 4. Create or replace the search vector update function
+    console.log('4️⃣ Creating search vector update function...');
     await db.execute(sql`
       CREATE OR REPLACE FUNCTION update_bookmark_search_vector()
       RETURNS TRIGGER AS $$
@@ -78,8 +104,8 @@ async function deployFullTextSearch() {
     `);
     console.log('   ✅ Search vector update function created');
 
-    // 4. Create or replace the trigger
-    console.log('4️⃣ Creating search vector update trigger...');
+    // 5. Create or replace the trigger
+    console.log('5️⃣ Creating search vector update trigger...');
     await db.execute(sql`
       DROP TRIGGER IF EXISTS update_bookmark_search_vector_trigger ON bookmarks
     `);
@@ -92,22 +118,22 @@ async function deployFullTextSearch() {
     `);
     console.log('   ✅ Search vector update trigger created');
 
-    // 5. Create GIN index for full-text search
-    console.log('5️⃣ Creating GIN index for full-text search...');
+    // 6. Create GIN index for full-text search
+    console.log('6️⃣ Creating GIN index for full-text search...');
     await db.execute(sql`
       CREATE INDEX IF NOT EXISTS bookmarks_search_idx ON bookmarks USING gin(search_vector)
     `);
     console.log('   ✅ GIN index created');
 
-    // 6. Create user_id index for efficient filtering
-    console.log('6️⃣ Creating user_id index...');
+    // 7. Create user_id index for efficient filtering
+    console.log('7️⃣ Creating user_id index...');
     await db.execute(sql`
       CREATE INDEX IF NOT EXISTS bookmarks_user_id_idx ON bookmarks(user_id)
     `);
     console.log('   ✅ User ID index created');
 
-    // 7. Update existing records to populate search vectors
-    console.log('7️⃣ Updating existing records...');
+    // 8. Update existing records to populate search vectors
+    console.log('8️⃣ Updating existing records...');
     const updateResult = await db.execute(sql`
       UPDATE bookmarks 
       SET search_vector = to_tsvector('english', 
@@ -120,8 +146,8 @@ async function deployFullTextSearch() {
     `);
     console.log(`   ✅ Updated ${updateResult.rowCount || 0} existing records`);
 
-    // 8. Verify installation
-    console.log('8️⃣ Verifying installation...');
+    // 9. Verify installation
+    console.log('9️⃣ Verifying installation...');
     const verification = await db.execute(sql`
       SELECT 
         (SELECT COUNT(*) FROM bookmarks WHERE search_vector IS NOT NULL) as records_with_search_vector,
