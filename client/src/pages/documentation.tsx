@@ -542,6 +542,9 @@ export default function DocumentationPage() {
     setSelectedContent(contentId);
     // Update URL hash to reflect the selected content
     window.history.pushState(null, '', `#${contentId}`);
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const renderSection = (section: DocumentationSection, level = 0) => {
@@ -559,7 +562,7 @@ export default function DocumentationPage() {
     return (
       <div key={section.id} className="select-none">
         <div
-          className={`flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors ${level === 0 ? 'font-semibold text-slate-900 text-sm' : level === 1 ? 'font-medium text-sm text-slate-700' : 'text-sm text-slate-600'
+          className={`mt-1 flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors ${level === 0 ? 'font-semibold text-slate-900 text-sm' : level === 1 ? 'font-medium text-sm text-slate-700' : 'text-sm text-slate-600'
             } ${isSelected ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500' : ''}`}
           onClick={() => {
             if (hasChildren) {
@@ -714,7 +717,7 @@ export default function DocumentationPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <Link href="/">
+              <Link href="/" className="text-slate-900">
                 <Button variant="ghost" size="sm" className="px-2">
                   <ArrowLeft className="h-4 w-4" />
                   <span className="ml-1 hidden sm:inline">Home</span>
@@ -723,13 +726,29 @@ export default function DocumentationPage() {
               <div className="h-6 w-px bg-slate-300" />
               <h1 className="text-xl font-semibold text-slate-900">Documentation</h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 hidden sm:flex">
               <div className="text-sm text-slate-500">Signed in as {user?.username}</div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                onClick={() => setIsSidebarOpen(prev => !prev)}
                 className="lg:hidden"
+                aria-controls="documentation-sidebar"
+                aria-expanded={isSidebarOpen}
+                aria-label="Toggle table of contents"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-4 sm:hidden">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSidebarOpen(prev => !prev)}
+                className="lg:hidden"
+                aria-controls="documentation-sidebar"
+                aria-expanded={isSidebarOpen}
+                aria-label="Toggle table of contents"
               >
                 <Menu className="h-4 w-4" />
               </Button>
@@ -738,24 +757,29 @@ export default function DocumentationPage() {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {/* Documentation Sidebar */}
-        <div className={`${isSidebarOpen ? 'block' : 'hidden'} lg:block w-80 bg-white border-r border-slate-200 h-[calc(100vh-4rem)] overflow-y-auto`}>
-          <div className="p-6">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-2">Table of Contents</h2>
-              <p className="text-sm text-slate-600">Complete guide to all features</p>
-            </div>
-            <div className="space-y-0.5">
-              {documentationSections.map(section => renderSection(section))}
+        <aside
+          id="documentation-sidebar"
+          className={`fixed inset-x-4 top-20 bottom-4 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all duration-200 ease-in-out transform ${isSidebarOpen ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-2 opacity-0 pointer-events-none'} lg:static lg:inset-auto lg:z-auto lg:h-[calc(100vh-4rem)] lg:w-80 lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto lg:rounded-none lg:border-r lg:shadow-none`}
+        >
+          <div className="h-full overflow-y-auto">
+            <div className="p-5 sm:p-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-slate-900 mb-2">Table of Contents</h2>
+                <p className="text-sm text-slate-600">Complete guide to all features</p>
+              </div>
+              <div className="space-y-0.5">
+                {documentationSections.map(section => renderSection(section))}
+              </div>
             </div>
           </div>
-        </div>
+        </aside>
 
         {/* Documentation Content */}
-        <div className="flex-1 h-[calc(100vh-4rem)] overflow-y-auto bg-slate-50">
-          <div className="max-w-5xl mx-auto p-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 min-h-[800px]">
+        <div className="flex-1 bg-slate-50 min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-y-auto">
+          <div className="max-w-5xl w-full mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 lg:p-12 min-h-[400px]">
               {renderContent()}
             </div>
           </div>
@@ -767,6 +791,8 @@ export default function DocumentationPage() {
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
+          role="presentation"
+          aria-hidden="true"
         />
       )}
     </div>

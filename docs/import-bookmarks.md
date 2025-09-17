@@ -13,8 +13,6 @@ Learn how to import bookmarks from various sources and formats into Memorize Vau
 ### **File Formats**
 - **JSON**: Import from JSON export files
 - **CSV**: Import from CSV files
-- **HTML**: Import from HTML bookmark files
-- **XML**: Import from XML bookmark files
 
 ## Import Process
 

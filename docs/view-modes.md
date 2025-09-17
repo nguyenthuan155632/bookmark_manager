@@ -71,17 +71,8 @@ Memorize Vault offers two distinct viewing modes for your bookmarks, allowing yo
 
 ## Customization Options
 
-### Grid View Settings
-- **Card Size**: Adjustable card dimensions
-- **Thumbnail Quality**: High/low resolution options
-- **Spacing**: Control gaps between cards
-- **Columns**: Number of columns per row
-
 ### List View Settings
-- **Column Width**: Adjustable column sizes
 - **Sort Order**: Default sorting preference
-- **Visible Columns**: Show/hide specific information
-- **Row Height**: Compact or comfortable spacing
 
 ## Responsive Behavior
 

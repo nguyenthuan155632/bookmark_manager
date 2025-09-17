@@ -7,7 +7,7 @@ Memorize Vault allows you to export your bookmarks in multiple formats, making i
 ### JSON Format (Default)
 - **Complete data** including all metadata
 - **Structured format** for easy processing
-- **Includes** categories, tags, descriptions, and settings
+- **Includes** categories, tags, descriptions
 - **Best for** backups and data migration
 
 ### CSV Format
