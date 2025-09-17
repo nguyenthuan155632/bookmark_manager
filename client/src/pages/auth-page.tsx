@@ -71,7 +71,7 @@ export default function AuthPage() {
       />
       {/* Left Column - Auth Form */}
       <div className="order-1 w-full flex items-start justify-center px-4 py-6 sm:px-10 lg:flex-1 lg:py-10">
-        <Card className="relative w-full max-w-md overflow-hidden border border-emerald-200/70 bg-white/92 text-slate-900 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-colors duration-300 before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/92 before:via-slate-100/70 before:to-emerald-100/45 before:opacity-95 before:content-[''] after:pointer-events-none after:absolute after:-top-32 after:right-0 after:h-56 after:w-56 after:rounded-full after:bg-emerald-200/50 after:blur-3xl after:opacity-40 dark:border-emerald-500/25 dark:bg-slate-900/55 dark:text-slate-100 dark:before:from-white/12 dark:before:via-white/5 dark:before:to-emerald-400/12 dark:after:bg-emerald-500/25">
+        <Card className="relative w-full max-w-md overflow-hidden border border-emerald-200/70 bg-white/90 text-slate-900 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-colors duration-300 before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/90 before:via-slate-100/70 before:to-emerald-100/40 before:opacity-95 before:content-[''] after:pointer-events-none after:absolute after:-top-32 after:right-0 after:h-56 after:w-56 after:rounded-full after:bg-emerald-200/50 after:blur-3xl after:opacity-40 dark:border-emerald-500/25 dark:bg-slate-900/55 dark:text-slate-100 dark:before:from-white/12 dark:before:via-white/5 dark:before:to-emerald-400/12 dark:after:bg-emerald-500/25">
           <CardHeader className="relative z-10 space-y-1 pb-3 text-center">
             <CardTitle className="text-2xl font-semibold">
               {isRegisterMode ? 'Create Account' : 'Sign In'}
@@ -83,7 +83,7 @@ export default function AuthPage() {
           <CardContent className="relative z-10 space-y-4">
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-600/22 text-emerald-700 shadow-sm dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-100">
+                <span className="pointer-events-none absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-600/20 text-emerald-700 shadow-sm dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-100">
                   <User className="h-4 w-4" />
                 </span>
                 <Input
@@ -96,12 +96,12 @@ export default function AuthPage() {
                   placeholder="Username"
                   required
                   data-testid="input-username"
-                  className="pl-12 border-emerald-500/25 bg-white/96 text-slate-900 placeholder:text-slate-500 shadow-sm focus-visible:ring-emerald-500/50 focus-visible:ring-offset-0 dark:border-emerald-500/25 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus-visible:ring-emerald-400/50"
+                  className="pl-12 border-emerald-500/25 bg-white/95 text-slate-900 placeholder:text-slate-500 shadow-sm focus-visible:ring-emerald-500/50 focus-visible:ring-offset-0 dark:border-emerald-500/25 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus-visible:ring-emerald-400/50"
                 />
               </div>
 
               <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-600/22 text-emerald-700 shadow-sm dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-100">
+                <span className="pointer-events-none absolute left-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-600/20 text-emerald-700 shadow-sm dark:border-emerald-400/40 dark:bg-emerald-500/25 dark:text-emerald-100">
                   <Lock className="h-4 w-4" />
                 </span>
                 <Input
@@ -114,7 +114,7 @@ export default function AuthPage() {
                   minLength={4}
                   autoComplete={isRegisterMode ? 'new-password' : 'current-password'}
                   data-testid="input-password"
-                  className="pl-12 border-emerald-500/25 bg-white/96 text-slate-900 placeholder:text-slate-500 shadow-sm focus-visible:ring-emerald-500/50 focus-visible:ring-offset-0 dark:border-emerald-500/25 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus-visible:ring-emerald-400/50"
+                  className="pl-12 border-emerald-500/25 bg-white/95 text-slate-900 placeholder:text-slate-500 shadow-sm focus-visible:ring-emerald-500/50 focus-visible:ring-offset-0 dark:border-emerald-500/25 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus-visible:ring-emerald-400/50"
                 />
               </div>
 
