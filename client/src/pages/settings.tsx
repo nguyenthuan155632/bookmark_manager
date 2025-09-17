@@ -172,36 +172,65 @@ export default function SettingsPage() {
   const [tagsDelimiter, setTagsDelimiter] = useState<string>('|');
 
   function parseCsv(text: string): { headers: string[]; rows: string[][] } {
-    const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-    const out: string[][] = [];
-    const parseLine = (line: string): string[] => {
-      const res: string[] = [];
-      let cur = '';
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQuotes && line[i + 1] === '"') {
-            cur += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (ch === ',' && !inQuotes) {
-          res.push(cur);
-          cur = '';
+    const rows: string[][] = [];
+    let currentRow: string[] = [];
+    let currentField = '';
+    let inQuotes = false;
+    let i = 0;
+
+    while (i < text.length) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          // Escaped quote
+          currentField += '"';
+          i += 2;
         } else {
-          cur += ch;
+          // Toggle quote state
+          inQuotes = !inQuotes;
+          i++;
         }
+      } else if (char === ',' && !inQuotes) {
+        // Field separator
+        currentRow.push(currentField.trim());
+        currentField = '';
+        i++;
+      } else if ((char === '\n' || char === '\r') && !inQuotes) {
+        // Row separator (only when not in quotes)
+        currentRow.push(currentField.trim());
+        if (currentRow.length > 0 && currentRow.some(field => field.length > 0)) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentField = '';
+        // Skip \r\n sequence
+        if (char === '\r' && nextChar === '\n') {
+          i += 2;
+        } else {
+          i++;
+        }
+      } else {
+        currentField += char;
+        i++;
       }
-      res.push(cur);
-      return res.map((s) => s.trim());
-    };
-    const headers = parseLine(lines[0]).map((h) => h.replace(/^"|"$/g, ''));
-    for (let i = 1; i < lines.length; i++) {
-      out.push(parseLine(lines[i]).map((v) => v.replace(/^"|"$/g, '')));
     }
-    return { headers, rows: out };
+
+    // Add the last field and row
+    currentRow.push(currentField.trim());
+    if (currentRow.length > 0 && currentRow.some(field => field.length > 0)) {
+      rows.push(currentRow);
+    }
+
+    if (rows.length === 0) {
+      return { headers: [], rows: [] };
+    }
+
+    const headers = rows[0].map(h => h.replace(/^"|"$/g, ''));
+    const dataRows = rows.slice(1).map(row => row.map(v => v.replace(/^"|"$/g, '')));
+
+    return { headers, rows: dataRows };
   }
 
   // Stats for sidebar badges
@@ -229,7 +258,7 @@ export default function SettingsPage() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onCreateFolder={() => {}}
+        onCreateFolder={() => { }}
         stats={stats}
       />
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
@@ -617,9 +646,17 @@ export default function SettingsPage() {
                           try {
                             const data = JSON.parse(text);
                             const scope = importCategoryId ? `?categoryId=${importCategoryId}` : '';
-                            await apiRequest('POST', `/api/bookmarks/import${scope}`, data);
-                            toast({ description: 'Import completed' });
+                            const res = await apiRequest('POST', `/api/bookmarks/import${scope}`, data);
+                            const result = await res.json();
+
+                            let message = `Import completed: ${result.created} bookmarks imported`;
+                            if (result.categoriesCreated > 0) {
+                              message += `, ${result.categoriesCreated} categories created`;
+                            }
+                            toast({ description: message });
+
                             queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
+                            queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
                           } catch (err) {
                             toast({ variant: 'destructive', description: 'Invalid JSON file' });
                           }
@@ -681,9 +718,9 @@ export default function SettingsPage() {
                                   colIndex.isFavorite != null ? row[colIndex.isFavorite] : '';
                                 const tags = tagsStr
                                   ? tagsStr
-                                      .split(tagsDelimiter)
-                                      .map((t) => t.trim())
-                                      .filter(Boolean)
+                                    .split(tagsDelimiter)
+                                    .map((t) => t.trim())
+                                    .filter(Boolean)
                                   : [];
                                 const isFavorite = ['1', 'true', 'yes', 'y'].includes(
                                   String(favStr).toLowerCase(),
@@ -692,12 +729,20 @@ export default function SettingsPage() {
                               })
                               .filter((i) => i.name && i.url);
                             const scope = importCategoryId ? `?categoryId=${importCategoryId}` : '';
-                            await apiRequest('POST', `/api/bookmarks/import${scope}`, data);
+                            const res = await apiRequest('POST', `/api/bookmarks/import${scope}`, data);
+                            const result = await res.json();
                             setCsvHeaders(null);
                             setCsvRows([]);
                             setMapping({});
-                            toast({ description: 'CSV import completed' });
+
+                            let message = `CSV import completed: ${result.created} bookmarks imported`;
+                            if (result.categoriesCreated > 0) {
+                              message += `, ${result.categoriesCreated} categories created`;
+                            }
+                            toast({ description: message });
+
                             queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
+                            queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
                           }}
                         >
                           Import CSV

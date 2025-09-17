@@ -710,7 +710,10 @@ export function registerBookmarkRoutes(app: Express) {
         return res.status(400).json({ message: 'Expected an array of bookmarks' });
       }
       let created = 0;
+      let categoriesCreated = 0;
       const existingCats = await storage.getCategories(userId);
+      const categoryCache = new Map<string, number>(); // Cache for created categories
+
       for (const item of payload) {
         if (!item || typeof item !== 'object') continue;
         const name = (item.name || '').toString();
@@ -718,11 +721,37 @@ export function registerBookmarkRoutes(app: Express) {
         if (!name || !url) continue;
         let categoryId: number | null | undefined = targetCategoryId;
         if (item.category != null && item.category !== '') {
-          const found = existingCats.find(
-            (c) => c.name.toLowerCase() === String(item.category).toLowerCase(),
-          );
-          if (found) categoryId = found.id;
-          else if (categoryId === undefined) categoryId = undefined;
+          const categoryName = String(item.category).trim();
+          const categoryKey = categoryName.toLowerCase();
+
+          // Check cache first
+          if (categoryCache.has(categoryKey)) {
+            categoryId = categoryCache.get(categoryKey)!;
+          } else {
+            // Check existing categories
+            const found = existingCats.find(
+              (c) => c.name.toLowerCase() === categoryKey,
+            );
+            if (found) {
+              categoryId = found.id;
+              categoryCache.set(categoryKey, found.id);
+            } else {
+              // Create new category
+              try {
+                const newCategory = await storage.createCategory(userId, {
+                  name: categoryName,
+                });
+                categoryId = newCategory.id;
+                categoryCache.set(categoryKey, newCategory.id);
+                existingCats.push(newCategory); // Add to existing categories for future lookups
+                categoriesCreated++;
+              } catch (error) {
+                console.error(`Failed to create category "${categoryName}":`, error);
+                // Continue without category if creation fails
+                categoryId = undefined;
+              }
+            }
+          }
         }
         await storage.createBookmark(userId, {
           name,
@@ -735,7 +764,7 @@ export function registerBookmarkRoutes(app: Express) {
         } as any);
         created++;
       }
-      res.json({ created });
+      res.json({ created, categoriesCreated });
     } catch (error) {
       console.error('Import failed:', error);
       res.status(500).json({ message: 'Failed to import bookmarks' });
