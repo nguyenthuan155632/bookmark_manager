@@ -15,6 +15,7 @@ import {
   Check,
   X,
   MoreVertical,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -351,6 +352,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
     onSuccess: async (_res, variables) => {
       // Invalidate categories and stats
       queryClient.invalidateQueries({ queryKey: ['/api/categories?withCounts=true'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
       queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
       // If currently viewing this category, navigate home
@@ -483,6 +485,12 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       icon: Settings,
       label: 'Settings',
       active: isActive('/settings'),
+    },
+    {
+      path: '/documentation',
+      icon: BookOpen,
+      label: 'Documentation',
+      active: isActive('/documentation'),
     },
   ];
 

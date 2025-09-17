@@ -12,6 +12,7 @@ import { ProtectedRoute } from '@/lib/protected-route';
 import { ThemeProvider } from '@/components/theme-provider';
 import SettingsPage from '@/pages/settings';
 import DomainTagsPage from '@/pages/domain-tags';
+import DocumentationPage from '@/pages/documentation';
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/category/:slug" component={Bookmarks} />
       <ProtectedRoute path="/domain-tags" component={DomainTagsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/documentation" component={DocumentationPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/shared/:shareId" component={SharedBookmark} />
       <Route component={NotFound} />

@@ -249,8 +249,8 @@ function BookmarksContent() {
   const bookmarks = useMemo(() => {
     const flat = bookmarksPages?.pages
       ? ([] as (Bookmark & { category?: Category; hasPasscode?: boolean })[]).concat(
-          ...bookmarksPages.pages,
-        )
+        ...bookmarksPages.pages,
+      )
       : [];
     // Dedupe by id to avoid duplicate keys when re-fetches shift pages
     const seen = new Set<number>();
@@ -1258,27 +1258,25 @@ function BookmarksContent() {
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Bulk Check Links Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBulkCheckLinks}
-                disabled={bulkCheckLinksMutation.isPending}
-                className="flex items-center space-x-2"
-                data-testid="button-bulk-check-links"
-                title={
-                  selectedIds.length > 0
-                    ? `Check ${selectedIds.length} selected links`
-                    : 'Check all links'
-                }
-              >
-                {bulkCheckLinksMutation.isPending ? (
-                  <RefreshCw size={14} className="animate-spin" />
-                ) : (
-                  <Link size={14} />
-                )}
-                <span>{selectedIds.length > 0 ? `Check ${selectedIds.length}` : 'Check All'}</span>
-              </Button>
+              {/* Bulk Check Links Button - Only show when items are selected */}
+              {selectedIds.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBulkCheckLinks}
+                  disabled={bulkCheckLinksMutation.isPending}
+                  className="flex items-center space-x-2"
+                  data-testid="button-bulk-check-links"
+                  title={`Check ${selectedIds.length} selected links`}
+                >
+                  {bulkCheckLinksMutation.isPending ? (
+                    <RefreshCw size={14} className="animate-spin" />
+                  ) : (
+                    <Link size={14} />
+                  )}
+                  <span>Check status of {selectedIds.length} selected links</span>
+                </Button>
+              )}
 
               {selectedCategory === 'hidden' && lockedProtectedInView.length > 0 && (
                 <Button

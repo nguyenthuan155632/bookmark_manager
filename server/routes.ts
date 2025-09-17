@@ -14,6 +14,7 @@ import { registerPreferencesRoutes } from './routes/preferences-routes';
 import { registerScreenshotRoutes } from './routes/screenshot-routes';
 import { registerLinkCheckerRoutes } from './routes/link-checker-routes';
 import { registerDomainTagsRoutes } from './routes/domain-tags-routes';
+import { registerDocumentationRoutes } from './routes/documentation-routes';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first - this adds passport middleware and session support
@@ -55,6 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerScreenshotRoutes(app);
   registerLinkCheckerRoutes(app);
   registerDomainTagsRoutes(app);
+  registerDocumentationRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
