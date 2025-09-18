@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm';
 /**
  * Delete everything from database
  * No backup, no confirmation - just delete everything
- * 
+ *
  * Usage: npm run db:delete
  */
 async function deleteDatabase() {
@@ -40,7 +40,9 @@ async function deleteDatabase() {
     console.log('\n2️⃣ Dropping all functions and triggers...');
     await db.execute(sql`DROP FUNCTION IF EXISTS update_bookmark_search_vector() CASCADE`);
     await db.execute(sql`DROP FUNCTION IF EXISTS custom_search_rank(tsvector, tsquery) CASCADE`);
-    await db.execute(sql`DROP TRIGGER IF EXISTS update_bookmark_search_vector_trigger ON bookmarks CASCADE`);
+    await db.execute(
+      sql`DROP TRIGGER IF EXISTS update_bookmark_search_vector_trigger ON bookmarks CASCADE`,
+    );
     console.log('   ✅ Dropped custom functions and triggers');
 
     // Drop all indexes
@@ -96,7 +98,6 @@ async function deleteDatabase() {
     console.log('   2. npm run deploy:search    # Setup full-text search');
     console.log('   3. npm run seed             # Add sample data');
     console.log('   4. npm run dev              # Start development');
-
   } catch (error) {
     console.error('❌ Database deletion failed:', error);
     process.exit(1);

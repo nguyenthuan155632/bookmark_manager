@@ -5,12 +5,14 @@ Memorize Vault allows you to export your bookmarks in multiple formats, making i
 ## Export Formats
 
 ### JSON Format (Default)
+
 - **Complete data** including all metadata
 - **Structured format** for easy processing
 - **Includes** categories, tags, descriptions
 - **Best for** backups and data migration
 
 ### CSV Format
+
 - **Spreadsheet compatible** format
 - **Essential fields** only (name, URL, description, tags)
 - **Easy to open** in Excel, Google Sheets, etc.
@@ -19,12 +21,14 @@ Memorize Vault allows you to export your bookmarks in multiple formats, making i
 ## How to Export
 
 ### From the API
+
 1. **Make request** to `/api/bookmarks/export`
 2. **Add format parameter**: `?format=json` or `?format=csv`
 3. **Optional category filter**: `?categoryId=123`
 4. **Download** the response file
 
 ### Export All Bookmarks
+
 ```bash
 # JSON format (default)
 GET /api/bookmarks/export
@@ -34,6 +38,7 @@ GET /api/bookmarks/export?format=csv
 ```
 
 ### Export by Category
+
 ```bash
 # Export specific category
 GET /api/bookmarks/export?categoryId=123&format=json
@@ -45,6 +50,7 @@ GET /api/bookmarks/export?categoryId=uncategorized&format=csv
 ## Export Data Structure
 
 ### JSON Format Fields
+
 - **id**: Unique bookmark identifier
 - **name**: Bookmark title
 - **url**: Website URL
@@ -60,6 +66,7 @@ GET /api/bookmarks/export?categoryId=uncategorized&format=csv
 - **updatedAt**: Last update timestamp
 
 ### CSV Format Fields
+
 - **name**: Bookmark title
 - **url**: Website URL
 - **description**: Bookmark description
@@ -71,12 +78,14 @@ GET /api/bookmarks/export?categoryId=uncategorized&format=csv
 ## Category Filtering
 
 ### Available Filters
+
 - **All bookmarks**: No categoryId parameter
 - **Specific category**: Use numeric categoryId
 - **Uncategorized**: Use `categoryId=uncategorized`
 - **Null/None**: Use `categoryId=null`
 
 ### Filter Examples
+
 ```bash
 # All bookmarks
 GET /api/bookmarks/export
@@ -94,6 +103,7 @@ GET /api/bookmarks/export?categoryId=null
 ## Export Features
 
 ### Complete Data Export
+
 - **All bookmark fields** included
 - **Category information** preserved
 - **Tag data** maintained
@@ -101,12 +111,14 @@ GET /api/bookmarks/export?categoryId=null
 - **Metadata** preserved
 
 ### Selective Export
+
 - **Filter by category** for targeted exports
 - **Format selection** for different use cases
 - **Custom queries** for specific needs
 - **Batch processing** for large collections
 
 ### Data Integrity
+
 - **Original structure** maintained
 - **Relationships** preserved
 - **Encoding** handled properly
@@ -115,18 +127,21 @@ GET /api/bookmarks/export?categoryId=null
 ## Use Cases
 
 ### Backup and Restore
+
 - **Regular backups** of your bookmark collection
 - **Disaster recovery** in case of data loss
 - **Version control** of your bookmarks
 - **Migration safety** before major changes
 
 ### Data Migration
+
 - **Import to other systems** using JSON format
 - **Spreadsheet analysis** using CSV format
 - **Custom processing** with structured data
 - **Integration** with other tools
 
 ### Sharing and Collaboration
+
 - **Share collections** with colleagues
 - **Export subsets** for specific projects
 - **Format conversion** for different tools
@@ -135,18 +150,21 @@ GET /api/bookmarks/export?categoryId=null
 ## Best Practices
 
 ### Regular Exports
+
 - **Schedule regular backups** of your data
 - **Export before major changes** or updates
 - **Keep multiple export versions** for safety
 - **Test restore process** periodically
 
 ### Data Organization
+
 - **Use categories** to organize exports
 - **Clean up data** before exporting
 - **Remove duplicates** if necessary
 - **Verify export completeness**
 
 ### Security Considerations
+
 - **Protect exported files** with appropriate security
 - **Be aware** of sensitive information in descriptions
 - **Use secure storage** for backup files
@@ -155,18 +173,21 @@ GET /api/bookmarks/export?categoryId=null
 ## Troubleshooting
 
 ### Export Issues
+
 - **Check authentication** - must be logged in
 - **Verify permissions** for category access
 - **Large exports** may take time to process
 - **Network issues** may cause timeouts
 
 ### Format Problems
+
 - **CSV encoding** issues with special characters
 - **JSON parsing** errors in some applications
 - **Field mapping** problems in import tools
 - **Date format** differences across systems
 
 ### Data Missing
+
 - **Check category filters** are correct
 - **Verify bookmark visibility** settings
 - **Confirm export parameters** are valid
@@ -175,12 +196,14 @@ GET /api/bookmarks/export?categoryId=null
 ## Advanced Usage
 
 ### Custom Exports
+
 - **API integration** for automated exports
 - **Scheduled exports** using cron jobs
 - **Custom filtering** with query parameters
 - **Batch processing** for large collections
 
 ### Data Processing
+
 - **Parse JSON** with programming languages
 - **Import CSV** into databases
 - **Transform data** for specific needs

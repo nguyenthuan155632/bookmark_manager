@@ -92,7 +92,9 @@ export default function DomainTagsPage() {
       return response.json();
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasMore ? lastPage.pagination.offset + lastPage.pagination.limit : undefined;
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.offset + lastPage.pagination.limit
+        : undefined;
     },
     initialPageParam: 0,
   });
@@ -360,11 +362,21 @@ export default function DomainTagsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 sm:ml-4">
-                    <Button variant="outline" size="sm" onClick={() => setEditingDomain(domainTag)} className="flex-1 sm:flex-none">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingDomain(domainTag)}
+                      className="flex-1 sm:flex-none"
+                    >
                       <Edit className="h-4 w-4 sm:mr-0 mr-2" />
                       <span className="sm:hidden">Edit</span>
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(domainTag.id)} className="flex-1 sm:flex-none">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(domainTag.id)}
+                      className="flex-1 sm:flex-none"
+                    >
                       <Trash2 className="h-4 w-4 sm:mr-0 mr-2" />
                       <span className="sm:hidden">Delete</span>
                     </Button>

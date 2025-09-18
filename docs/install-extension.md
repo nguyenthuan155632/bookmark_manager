@@ -61,16 +61,19 @@ The Memorize Vault Chrome extension allows you to quickly save bookmarks from an
 ### Advanced Features
 
 **Custom Tags**
+
 - **Add Tags**: Type tags in the tags field, separated by commas
 - **Use Suggestions**: Click on suggested tags to add them quickly
 - **Mix Sources**: Combine domain tags with your own custom tags
 
 **Category Selection**
+
 - **Choose Folder**: Select from your existing categories
 - **Create New**: Create a new category directly from the extension
 - **Default Category**: Uses your default category if set in settings
 
 **Description**
+
 - **Add Context**: Write a description to explain why you saved the bookmark
 - **AI Generation**: Enable auto-description for AI-generated descriptions
 - **Personal Notes**: Add personal notes or reminders
@@ -86,18 +89,21 @@ The Memorize Vault Chrome extension allows you to quickly save bookmarks from an
 ### Available Settings
 
 **Auto-Fill Options**
+
 - **Auto-Fill Title**: Automatically fill the title field
 - **Auto-Fill URL**: Automatically fill the URL field
 - **Smart Tagging**: Enable automatic tag suggestions
 - **Category Default**: Set default category for new bookmarks
 
 **Display Options**
+
 - **Show Suggestions**: Display tag suggestions in the popup
 - **Show Categories**: Display category selection in the popup
 - **Compact Mode**: Use a more compact interface
 - **Theme**: Match extension theme to your browser theme
 
 **Integration Options**
+
 - **Auto-Open**: Automatically open the extension when clicking the icon
 - **Quick Save**: Enable one-click saving for frequently used settings
 - **Notifications**: Show notifications when bookmarks are saved
@@ -108,18 +114,21 @@ The Memorize Vault Chrome extension allows you to quickly save bookmarks from an
 ### Common Issues
 
 **Extension Not Appearing**
+
 - **Check Installation**: Verify the extension is installed in Chrome
 - **Pin Extension**: Make sure the extension is pinned to your toolbar
 - **Refresh Page**: Try refreshing the current page
 - **Restart Chrome**: Close and reopen Chrome if needed
 
 **Login Issues**
+
 - **Check Credentials**: Ensure you're using the correct username and password
 - **Check Connection**: Verify you have an internet connection
 - **Clear Cache**: Clear browser cache and try again
 - **Re-authenticate**: Sign out and sign back in
 
 **Save Failures**
+
 - **Check URL**: Ensure the URL is valid and accessible
 - **Check Permissions**: Verify the extension has necessary permissions
 - **Try Again**: Sometimes retrying resolves temporary issues
@@ -128,12 +137,14 @@ The Memorize Vault Chrome extension allows you to quickly save bookmarks from an
 ### Performance Issues
 
 **Slow Loading**
+
 - **Check Internet**: Ensure you have a stable internet connection
 - **Close Other Tabs**: Close unnecessary tabs to free up memory
 - **Update Extension**: Check for extension updates
 - **Restart Browser**: Restart Chrome if performance is poor
 
 **Memory Usage**
+
 - **Close Unused Extensions**: Disable other extensions you don't need
 - **Clear Browser Data**: Clear browsing data to free up space
 - **Update Chrome**: Ensure you're using the latest version of Chrome
@@ -150,11 +161,13 @@ The Memorize Vault Chrome extension allows you to quickly save bookmarks from an
 ### Permissions
 
 **Required Permissions**
+
 - **Active Tab**: Access to the current tab to get page information
 - **Storage**: Local storage for extension settings and preferences
 - **Web Request**: Ability to communicate with the Memorize Vault server
 
 **Optional Permissions**
+
 - **All Tabs**: Access to all tabs for advanced features (if enabled)
 - **Bookmarks**: Access to Chrome bookmarks for import features (if enabled)
 

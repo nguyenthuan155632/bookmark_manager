@@ -1,410 +1,424 @@
 <!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memorize Bookmark</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Memorize Bookmark</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
-      min-width: 360px;
-      margin: 0;
-      padding: 24px 18px;
-      background: radial-gradient(circle at -20% -20%, rgba(45, 212, 191, 0.28), transparent 55%),
-        radial-gradient(circle at 120% 0%, rgba(14, 165, 233, 0.22), transparent 65%),
-        linear-gradient(145deg, #0f172a, #1e293b 45%, #0f766e 100%);
-      color: #0f172a;
-      overflow-y: auto;
-      scrollbar-width: none;
-    }
-
-    body::-webkit-scrollbar {
-      display: none;
-    }
-
-    .container {
-      background: rgba(255, 255, 255, 0.18);
-      border-radius: 16px;
-      padding: 20px 20px 22px;
-      box-shadow: 0 32px 85px -36px rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(22px);
-      border: 1px solid rgba(255, 255, 255, 0.42);
-      outline: 1px solid rgba(14, 165, 233, 0.18);
-      outline-offset: 0;
-    }
-
-    @media (prefers-color-scheme: dark) {
       body {
-        background: radial-gradient(circle at -35% -30%, rgba(45, 212, 191, 0.22), transparent 55%),
-          radial-gradient(circle at 130% -20%, rgba(14, 165, 233, 0.2), transparent 65%),
-          linear-gradient(160deg, #020817, #0b1120 55%, #0f766e 115%);
-        color: #e2e8f0;
+        font-family:
+          'Inter',
+          -apple-system,
+          system-ui,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        min-width: 360px;
+        margin: 0;
+        padding: 24px 18px;
+        background:
+          radial-gradient(circle at -20% -20%, rgba(45, 212, 191, 0.28), transparent 55%),
+          radial-gradient(circle at 120% 0%, rgba(14, 165, 233, 0.22), transparent 65%),
+          linear-gradient(145deg, #0f172a, #1e293b 45%, #0f766e 100%);
+        color: #0f172a;
+        overflow-y: auto;
+        scrollbar-width: none;
+      }
+
+      body::-webkit-scrollbar {
+        display: none;
       }
 
       .container {
-        background: rgba(15, 23, 42, 0.28);
-        border-color: rgba(45, 212, 191, 0.35);
-        outline-color: rgba(45, 212, 191, 0.25);
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 16px;
+        padding: 20px 20px 22px;
+        box-shadow: 0 32px 85px -36px rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(22px);
+        border: 1px solid rgba(255, 255, 255, 0.42);
+        outline: 1px solid rgba(14, 165, 233, 0.18);
+        outline-offset: 0;
       }
-    }
 
-    h1 {
-      font-size: 17px;
-      font-weight: 700;
-      margin: 0;
-      color: inherit;
-    }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background:
+            radial-gradient(circle at -35% -30%, rgba(45, 212, 191, 0.22), transparent 55%),
+            radial-gradient(circle at 130% -20%, rgba(14, 165, 233, 0.2), transparent 65%),
+            linear-gradient(160deg, #020817, #0b1120 55%, #0f766e 115%);
+          color: #e2e8f0;
+        }
 
-    h2 {
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #0f172a;
-      margin: 0 0 12px;
-    }
+        .container {
+          background: rgba(15, 23, 42, 0.28);
+          border-color: rgba(45, 212, 191, 0.35);
+          outline-color: rgba(45, 212, 191, 0.25);
+        }
+      }
 
-    @media (prefers-color-scheme: dark) {
+      h1 {
+        font-size: 17px;
+        font-weight: 700;
+        margin: 0;
+        color: inherit;
+      }
+
       h2 {
-        color: #38bdf8;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #0f172a;
+        margin: 0 0 12px;
       }
-    }
 
-    .subhead {
-      color: #e5e5e5;
-      font-size: 12px;
-    }
+      @media (prefers-color-scheme: dark) {
+        h2 {
+          color: #38bdf8;
+        }
+      }
 
-    @media (prefers-color-scheme: dark) {
       .subhead {
-        color: #94a3b8;
+        color: #e5e5e5;
+        font-size: 12px;
       }
-    }
 
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-    }
+      @media (prefers-color-scheme: dark) {
+        .subhead {
+          color: #94a3b8;
+        }
+      }
 
-    .badge {
-      background: rgba(14, 165, 233, 0.12);
-      color: #00aaff;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 600;
-    }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
 
-    @media (prefers-color-scheme: dark) {
       .badge {
-        background: rgba(45, 212, 191, 0.16);
-        color: #5eead4;
+        background: rgba(14, 165, 233, 0.12);
+        color: #00aaff;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
       }
-    }
 
-    .section {
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 14px;
-      padding: 16px 18px 18px;
-      margin-top: 18px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(148, 163, 184, 0.12));
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-    }
+      @media (prefers-color-scheme: dark) {
+        .badge {
+          background: rgba(45, 212, 191, 0.16);
+          color: #5eead4;
+        }
+      }
 
-    @media (prefers-color-scheme: dark) {
       .section {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.55), rgba(15, 118, 110, 0.32));
-        border-color: rgba(148, 163, 184, 0.35);
-        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 14px;
+        padding: 16px 18px 18px;
+        margin-top: 18px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(148, 163, 184, 0.12));
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
       }
-    }
 
-    .row {
-      margin-bottom: 12px;
-    }
+      @media (prefers-color-scheme: dark) {
+        .section {
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.55), rgba(15, 118, 110, 0.32));
+          border-color: rgba(148, 163, 184, 0.35);
+          box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+        }
+      }
 
-    .row:last-child {
-      margin-bottom: 0;
-    }
+      .row {
+        margin-bottom: 12px;
+      }
 
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      font-size: 12px;
-      color: inherit;
-    }
+      .row:last-child {
+        margin-bottom: 0;
+      }
 
-    input[type='text'],
-    input[type='password'],
-    textarea,
-    select {
-      width: 100%;
-      padding: 9px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.38);
-      background: rgba(255, 255, 255, 0.72);
-      color: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(18px);
-      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: rgba(100, 116, 139, 0.9);
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      outline: none;
-      border-color: rgba(14, 165, 233, 0.75);
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 10px 24px -16px rgba(14, 165, 233, 0.35), 0 0 0 3px rgba(14, 165, 233, 0.18);
-    }
-
-    @media (prefers-color-scheme: dark) {
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        color: inherit;
+      }
 
       input[type='text'],
       input[type='password'],
       textarea,
       select {
-        background: rgba(15, 23, 42, 0.52);
-        border-color: rgba(45, 212, 191, 0.32);
+        width: 100%;
+        padding: 9px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.38);
+        background: rgba(255, 255, 255, 0.72);
+        color: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(18px);
+        transition:
+          border-color 0.18s ease,
+          box-shadow 0.18s ease,
+          background 0.18s ease;
       }
 
       input::placeholder,
       textarea::placeholder {
-        color: rgba(148, 163, 184, 0.9);
+        color: rgba(100, 116, 139, 0.9);
       }
 
       input:focus,
       textarea:focus,
       select:focus {
-        border-color: rgba(45, 212, 191, 0.55);
-        background: rgba(15, 23, 42, 0.72);
-        box-shadow: 0 12px 30px -18px rgba(45, 212, 191, 0.5), 0 0 0 3px rgba(45, 212, 191, 0.18);
+        outline: none;
+        border-color: rgba(14, 165, 233, 0.75);
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow:
+          0 10px 24px -16px rgba(14, 165, 233, 0.35),
+          0 0 0 3px rgba(14, 165, 233, 0.18);
       }
-    }
 
-    textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
+      @media (prefers-color-scheme: dark) {
+        input[type='text'],
+        input[type='password'],
+        textarea,
+        select {
+          background: rgba(15, 23, 42, 0.52);
+          border-color: rgba(45, 212, 191, 0.32);
+        }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: 18px;
-    }
+        input::placeholder,
+        textarea::placeholder {
+          color: rgba(148, 163, 184, 0.9);
+        }
 
-    button {
-      padding: 10px 18px;
-      border-radius: 999px;
-      border: 1px solid rgba(14, 165, 233, 0.45);
-      background: linear-gradient(140deg, rgba(2, 132, 199, 0.82), rgba(14, 165, 233, 0.9));
-      color: #fff;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      transition: transform 0.16s ease, box-shadow 0.16s ease;
-    }
+        input:focus,
+        textarea:focus,
+        select:focus {
+          border-color: rgba(45, 212, 191, 0.55);
+          background: rgba(15, 23, 42, 0.72);
+          box-shadow:
+            0 12px 30px -18px rgba(45, 212, 191, 0.5),
+            0 0 0 3px rgba(45, 212, 191, 0.18);
+        }
+      }
 
-    button:hover:not(:disabled) {
-      transform: translateY(-1.5px);
-      box-shadow: 0 18px 32px -20px rgba(2, 132, 199, 0.72);
-    }
+      textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
 
-    button.secondary {
-      background: rgba(255, 255, 255, 0.22);
-      color: #0f172a;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
-    }
+      .actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 18px;
+      }
 
-    @media (prefers-color-scheme: dark) {
+      button {
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(14, 165, 233, 0.45);
+        background: linear-gradient(140deg, rgba(2, 132, 199, 0.82), rgba(14, 165, 233, 0.9));
+        color: #fff;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.16s ease;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-1.5px);
+        box-shadow: 0 18px 32px -20px rgba(2, 132, 199, 0.72);
+      }
+
       button.secondary {
-        background: rgba(15, 23, 42, 0.46);
-        color: #5eead4;
-        border-color: rgba(45, 212, 191, 0.42);
+        background: rgba(255, 255, 255, 0.22);
+        color: #0f172a;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
       }
-    }
 
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      box-shadow: none;
-      transform: none;
-    }
+      @media (prefers-color-scheme: dark) {
+        button.secondary {
+          background: rgba(15, 23, 42, 0.46);
+          color: #5eead4;
+          border-color: rgba(45, 212, 191, 0.42);
+        }
+      }
 
-    .muted {
-      color: #e5e5e5;
-      font-size: 12px;
-    }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
 
-    .notes {
-      margin-top: 6px;
-    }
-
-    @media (prefers-color-scheme: dark) {
       .muted {
         color: #e5e5e5;
+        font-size: 12px;
       }
-    }
 
-    .checkbox {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-    }
+      .notes {
+        margin-top: 6px;
+      }
 
-    .checkbox input {
-      accent-color: #0ea5e9;
-    }
+      @media (prefers-color-scheme: dark) {
+        .muted {
+          color: #e5e5e5;
+        }
+      }
 
-    .feedback {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 12px;
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
-    }
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+      }
 
-    .feedback.error {
-      background: rgba(220, 38, 38, 0.08);
-      color: #991b1b;
-      border: 1px solid rgba(220, 38, 38, 0.2);
-    }
+      .checkbox input {
+        accent-color: #0ea5e9;
+      }
 
-    .feedback.success {
-      background: rgba(22, 163, 74, 0.08);
-      color: #166534;
-      border: 1px solid rgba(22, 163, 74, 0.2);
-    }
+      .feedback {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 12px;
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+      }
 
-    @media (prefers-color-scheme: dark) {
       .feedback.error {
-        background: rgba(248, 113, 113, 0.1);
-        color: #fca5a5;
-        border-color: rgba(248, 113, 113, 0.2);
+        background: rgba(220, 38, 38, 0.08);
+        color: #991b1b;
+        border: 1px solid rgba(220, 38, 38, 0.2);
       }
 
       .feedback.success {
-        background: rgba(34, 197, 94, 0.1);
-        color: #bbf7d0;
-        border-color: rgba(34, 197, 94, 0.2);
+        background: rgba(22, 163, 74, 0.08);
+        color: #166534;
+        border: 1px solid rgba(22, 163, 74, 0.2);
       }
-    }
 
-    .hidden {
-      display: none;
-    }
-  </style>
-</head>
+      @media (prefers-color-scheme: dark) {
+        .feedback.error {
+          background: rgba(248, 113, 113, 0.1);
+          color: #fca5a5;
+          border-color: rgba(248, 113, 113, 0.2);
+        }
 
-<body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1>Memorize Vault</h1>
-        <div class="subhead notes">Save the page you are viewing in two clicks.</div>
-      </div>
-      <span class="badge">Extension</span>
-    </div>
+        .feedback.success {
+          background: rgba(34, 197, 94, 0.1);
+          color: #bbf7d0;
+          border-color: rgba(34, 197, 94, 0.2);
+        }
+      }
 
-    <div id="baseUrlRow" class="section">
-      <h2>Connection</h2>
-      <div class="row">
-        <label for="baseUrl">Server URL</label>
-        <input id="baseUrl" type="text" placeholder="http://localhost:4001" />
-        <div class="muted notes">Where the Memorize Vault server is running.</div>
-      </div>
-    </div>
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
 
-    <div id="loginView" class="section">
-      <h2>Sign in</h2>
-      <div id="loginError" class="feedback error hidden"></div>
-      <div class="row">
-        <label for="username">Username</label>
-        <input id="username" type="text" placeholder="mem-user" />
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <h1>Memorize Vault</h1>
+          <div class="subhead notes">Save the page you are viewing in two clicks.</div>
+        </div>
+        <span class="badge">Extension</span>
       </div>
-      <div class="row">
-        <label for="password">Password</label>
-        <input id="password" type="password" placeholder="••••••" />
-      </div>
-      <div class="actions">
-        <button id="loginBtn">Sign in</button>
-      </div>
-    </div>
 
-    <div id="createView" class="section hidden">
-      <h2>New bookmark</h2>
-      <div id="createMsg" class="feedback success hidden"></div>
-      <div id="createError" class="feedback error hidden"></div>
-      <div class="row">
-        <label for="url">URL</label>
-        <input id="url" type="text" placeholder="https://example.com/article" />
-      </div>
-      <div class="row">
-        <label for="name">Name</label>
-        <input id="name" type="text" placeholder="Why this page matters" />
-      </div>
-      <div class="row">
-        <label for="description">Description</label>
-        <textarea id="description" placeholder="Quick summary for future you..."></textarea>
-      </div>
-      <div class="row">
-        <label for="tags">Tags</label>
-        <input id="tags" type="text" placeholder="research, inspiration, todo" />
-      </div>
-      <div class="row">
-        <label for="category">Folder (Category)</label>
-        <select id="category">
-          <option value="">Select a folder...</option>
-        </select>
-      </div>
-      <div class="row checkbox">
-        <input id="favorite" type="checkbox" />
-        <label for="favorite">Mark as favorite</label>
-      </div>
-      <div class="row checkbox">
-        <input id="autoTags" type="checkbox" />
-        <label for="autoTags">Auto-generate tags</label>
-      </div>
-      <div class="row checkbox">
-        <input id="autoDesc" type="checkbox" />
-        <label for="autoDesc">Auto-generate description</label>
-      </div>
-      <div class="row">
-        <label for="passcode">Passcode (optional)</label>
-        <input id="passcode" type="password" placeholder="Set a quick unlock code" />
-        <div class="muted notes">
-          Only you (or someone with this passcode) can open protected items from the extension.
+      <div id="baseUrlRow" class="section">
+        <h2>Connection</h2>
+        <div class="row">
+          <label for="baseUrl">Server URL</label>
+          <input id="baseUrl" type="text" placeholder="http://localhost:4001" />
+          <div class="muted notes">Where the Memorize Vault server is running.</div>
         </div>
       </div>
-      <div class="actions">
-        <button id="logoutBtn" class="secondary">Sign out</button>
-        <button id="createBtn">Save bookmark</button>
+
+      <div id="loginView" class="section">
+        <h2>Sign in</h2>
+        <div id="loginError" class="feedback error hidden"></div>
+        <div class="row">
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="mem-user" />
+        </div>
+        <div class="row">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="••••••" />
+        </div>
+        <div class="actions">
+          <button id="loginBtn">Sign in</button>
+        </div>
+      </div>
+
+      <div id="createView" class="section hidden">
+        <h2>New bookmark</h2>
+        <div id="createMsg" class="feedback success hidden"></div>
+        <div id="createError" class="feedback error hidden"></div>
+        <div class="row">
+          <label for="url">URL</label>
+          <input id="url" type="text" placeholder="https://example.com/article" />
+        </div>
+        <div class="row">
+          <label for="name">Name</label>
+          <input id="name" type="text" placeholder="Why this page matters" />
+        </div>
+        <div class="row">
+          <label for="description">Description</label>
+          <textarea id="description" placeholder="Quick summary for future you..."></textarea>
+        </div>
+        <div class="row">
+          <label for="tags">Tags</label>
+          <input id="tags" type="text" placeholder="research, inspiration, todo" />
+        </div>
+        <div class="row">
+          <label for="category">Folder (Category)</label>
+          <select id="category">
+            <option value="">Select a folder...</option>
+          </select>
+        </div>
+        <div class="row checkbox">
+          <input id="favorite" type="checkbox" />
+          <label for="favorite">Mark as favorite</label>
+        </div>
+        <div class="row checkbox">
+          <input id="autoTags" type="checkbox" />
+          <label for="autoTags">Auto-generate tags</label>
+        </div>
+        <div class="row checkbox">
+          <input id="autoDesc" type="checkbox" />
+          <label for="autoDesc">Auto-generate description</label>
+        </div>
+        <div class="row">
+          <label for="passcode">Passcode (optional)</label>
+          <input id="passcode" type="password" placeholder="Set a quick unlock code" />
+          <div class="muted notes">
+            Only you (or someone with this passcode) can open protected items from the extension.
+          </div>
+        </div>
+        <div class="actions">
+          <button id="logoutBtn" class="secondary">Sign out</button>
+          <button id="createBtn">Save bookmark</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script src="popup.js"></script>
-</body>
-
+    <script src="popup.js"></script>
+  </body>
 </html>

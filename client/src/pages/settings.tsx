@@ -9,7 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useTheme } from '@/lib/theme';
 import { apiRequest } from '@/lib/queryClient';
-import type { Category } from '@shared/schema';
+import {
+  PREFERENCE_AI_LANGUAGES,
+  PREFERENCE_AI_LANGUAGE_LABELS,
+} from '@shared/schema';
+import type { Category, PreferenceAiLanguage } from '@shared/schema';
 // import { formatDistanceToNow } from 'date-fns';
 import { Sidebar } from '@/components/sidebar';
 import { Switch } from '@/components/ui/switch';
@@ -50,6 +54,7 @@ export default function SettingsPage() {
     autoDescriptionEnabled?: boolean;
     aiDescriptionEnabled?: boolean;
     aiUsageLimit?: number | null;
+    defaultAiLanguage?: PreferenceAiLanguage;
   }>({ queryKey: ['/api/preferences'] });
 
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['/api/categories'] });
@@ -65,6 +70,7 @@ export default function SettingsPage() {
     aiTaggingEnabled?: boolean;
     autoDescriptionEnabled?: boolean;
     aiDescriptionEnabled?: boolean;
+    defaultAiLanguage?: PreferenceAiLanguage;
   };
 
   const updatePreferencesMutation = useMutation({
@@ -128,6 +134,11 @@ export default function SettingsPage() {
   const aiTaggingEnabled = preferences?.aiTaggingEnabled ?? false;
   const autoDescEnabled = preferences?.autoDescriptionEnabled ?? true;
   const aiDescEnabled = preferences?.aiDescriptionEnabled ?? false;
+  const defaultAiLanguage = (preferences?.defaultAiLanguage || 'en') as PreferenceAiLanguage;
+  const LANGUAGE_OPTIONS = PREFERENCE_AI_LANGUAGES.map((code) => ({
+    value: code,
+    label: PREFERENCE_AI_LANGUAGE_LABELS[code],
+  }));
   // const linkEnabled = preferences?.linkCheckEnabled ?? false;
   // const { data: linkStatus } = useQuery<{
   //   enabled: boolean;
@@ -200,7 +211,7 @@ export default function SettingsPage() {
       } else if ((char === '\n' || char === '\r') && !inQuotes) {
         // Row separator (only when not in quotes)
         currentRow.push(currentField.trim());
-        if (currentRow.length > 0 && currentRow.some(field => field.length > 0)) {
+        if (currentRow.length > 0 && currentRow.some((field) => field.length > 0)) {
           rows.push(currentRow);
         }
         currentRow = [];
@@ -219,7 +230,7 @@ export default function SettingsPage() {
 
     // Add the last field and row
     currentRow.push(currentField.trim());
-    if (currentRow.length > 0 && currentRow.some(field => field.length > 0)) {
+    if (currentRow.length > 0 && currentRow.some((field) => field.length > 0)) {
       rows.push(currentRow);
     }
 
@@ -227,8 +238,8 @@ export default function SettingsPage() {
       return { headers: [], rows: [] };
     }
 
-    const headers = rows[0].map(h => h.replace(/^"|"$/g, ''));
-    const dataRows = rows.slice(1).map(row => row.map(v => v.replace(/^"|"$/g, '')));
+    const headers = rows[0].map((h) => h.replace(/^"|"$/g, ''));
+    const dataRows = rows.slice(1).map((row) => row.map((v) => v.replace(/^"|"$/g, '')));
 
     return { headers, rows: dataRows };
   }
@@ -258,7 +269,7 @@ export default function SettingsPage() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onCreateFolder={() => { }}
+        onCreateFolder={() => {}}
         stats={stats}
       />
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
@@ -299,16 +310,20 @@ export default function SettingsPage() {
                   </div>
                   <div className="text-sm text-muted-foreground space-y-2">
                     <p>
-                      ✨ <strong>Supercharge your bookmarking workflow</strong> with our official Chrome extension.
+                      ✨ <strong>Supercharge your bookmarking workflow</strong> with our official
+                      Chrome extension.
                     </p>
                     <p>
-                      🎯 <strong>Save time and effort</strong> - no more switching tabs or copying URLs manually.
+                      🎯 <strong>Save time and effort</strong> - no more switching tabs or copying
+                      URLs manually.
                     </p>
                     <p>
-                      🔒 <strong>Secure and private</strong> - your data stays in your Memorize account.
+                      🔒 <strong>Secure and private</strong> - your data stays in your Memorize
+                      account.
                     </p>
                     <p>
-                      ⚡ <strong>Instant access</strong> - add bookmarks with categories, tags, and descriptions in seconds.
+                      ⚡ <strong>Instant access</strong> - add bookmarks with categories, tags, and
+                      descriptions in seconds.
                     </p>
                   </div>
                 </div>
@@ -693,17 +708,18 @@ export default function SettingsPage() {
                             parsed.headers.forEach((h) => {
                               const key = h.toLowerCase().trim();
                               // Exact string matching for reliable column detection
-                              if (key === 'name' || key === 'title')
-                                guesses[h] = 'name';
+                              if (key === 'name' || key === 'title') guesses[h] = 'name';
                               else if (key === 'description' || key === 'desc')
                                 guesses[h] = 'description';
-                              else if (key === 'url' || key === 'link')
-                                guesses[h] = 'url';
+                              else if (key === 'url' || key === 'link') guesses[h] = 'url';
                               else if (key === 'suggestedtags' || key === 'suggested_tags')
                                 guesses[h] = 'suggestedTags';
-                              else if (key === 'tags')
-                                guesses[h] = 'tags';
-                              else if (key === 'isfavorite' || key === 'is_favorite' || key === 'favorite')
+                              else if (key === 'tags') guesses[h] = 'tags';
+                              else if (
+                                key === 'isfavorite' ||
+                                key === 'is_favorite' ||
+                                key === 'favorite'
+                              )
                                 guesses[h] = 'isFavorite';
                               else if (key === 'categoryid' || key === 'category_id')
                                 guesses[h] = 'categoryId';
@@ -713,7 +729,10 @@ export default function SettingsPage() {
                                 guesses[h] = 'screenshotUrl';
                               else if (key === 'screenshotstatus' || key === 'screenshot_status')
                                 guesses[h] = 'screenshotStatus';
-                              else if (key === 'screenshotupdatedat' || key === 'screenshot_updated_at')
+                              else if (
+                                key === 'screenshotupdatedat' ||
+                                key === 'screenshot_updated_at'
+                              )
                                 guesses[h] = 'screenshotUpdatedAt';
                               else if (key === 'linkstatus' || key === 'link_status')
                                 guesses[h] = 'linkStatus';
@@ -735,7 +754,11 @@ export default function SettingsPage() {
                           try {
                             const data = JSON.parse(text);
                             const scope = importCategoryId ? `?categoryId=${importCategoryId}` : '';
-                            const res = await apiRequest('POST', `/api/bookmarks/import${scope}`, data);
+                            const res = await apiRequest(
+                              'POST',
+                              `/api/bookmarks/import${scope}`,
+                              data,
+                            );
                             const result = await res.json();
 
                             let message = `Import completed: ${result.created} bookmarks imported`;
@@ -807,40 +830,65 @@ export default function SettingsPage() {
                             const data = csvRows
                               .map((row) => {
                                 const name = colIndex.name != null ? row[colIndex.name] : '';
-                                const description = colIndex.description != null ? row[colIndex.description] : '';
+                                const description =
+                                  colIndex.description != null ? row[colIndex.description] : '';
                                 const url = colIndex.url != null ? row[colIndex.url] : '';
                                 const tagsStr = colIndex.tags != null ? row[colIndex.tags] : '';
-                                const suggestedTagsStr = colIndex.suggestedTags != null ? row[colIndex.suggestedTags] : '';
-                                const category = colIndex.category != null ? row[colIndex.category] : '';
-                                const favStr = colIndex.isFavorite != null ? row[colIndex.isFavorite] : '';
-                                const categoryIdStr = colIndex.categoryId != null ? row[colIndex.categoryId] : '';
-                                const passcodeHash = colIndex.passcodeHash != null ? row[colIndex.passcodeHash] : '';
-                                const screenshotUrl = colIndex.screenshotUrl != null ? row[colIndex.screenshotUrl] : '';
-                                const screenshotStatus = colIndex.screenshotStatus != null ? row[colIndex.screenshotStatus] : '';
-                                const screenshotUpdatedAt = colIndex.screenshotUpdatedAt != null ? row[colIndex.screenshotUpdatedAt] : '';
-                                const linkStatus = colIndex.linkStatus != null ? row[colIndex.linkStatus] : '';
-                                const httpStatusStr = colIndex.httpStatus != null ? row[colIndex.httpStatus] : '';
-                                const lastLinkCheckAt = colIndex.lastLinkCheckAt != null ? row[colIndex.lastLinkCheckAt] : '';
-                                const linkFailCountStr = colIndex.linkFailCount != null ? row[colIndex.linkFailCount] : '';
+                                const suggestedTagsStr =
+                                  colIndex.suggestedTags != null ? row[colIndex.suggestedTags] : '';
+                                const category =
+                                  colIndex.category != null ? row[colIndex.category] : '';
+                                const favStr =
+                                  colIndex.isFavorite != null ? row[colIndex.isFavorite] : '';
+                                const categoryIdStr =
+                                  colIndex.categoryId != null ? row[colIndex.categoryId] : '';
+                                const passcodeHash =
+                                  colIndex.passcodeHash != null ? row[colIndex.passcodeHash] : '';
+                                const screenshotUrl =
+                                  colIndex.screenshotUrl != null ? row[colIndex.screenshotUrl] : '';
+                                const screenshotStatus =
+                                  colIndex.screenshotStatus != null
+                                    ? row[colIndex.screenshotStatus]
+                                    : '';
+                                const screenshotUpdatedAt =
+                                  colIndex.screenshotUpdatedAt != null
+                                    ? row[colIndex.screenshotUpdatedAt]
+                                    : '';
+                                const linkStatus =
+                                  colIndex.linkStatus != null ? row[colIndex.linkStatus] : '';
+                                const httpStatusStr =
+                                  colIndex.httpStatus != null ? row[colIndex.httpStatus] : '';
+                                const lastLinkCheckAt =
+                                  colIndex.lastLinkCheckAt != null
+                                    ? row[colIndex.lastLinkCheckAt]
+                                    : '';
+                                const linkFailCountStr =
+                                  colIndex.linkFailCount != null ? row[colIndex.linkFailCount] : '';
 
                                 const tags = tagsStr
                                   ? tagsStr
-                                    .split(tagsDelimiter)
-                                    .map((t) => t.trim())
-                                    .filter(Boolean)
+                                      .split(tagsDelimiter)
+                                      .map((t) => t.trim())
+                                      .filter(Boolean)
                                   : [];
                                 const suggestedTags = suggestedTagsStr
                                   ? suggestedTagsStr
-                                    .split(tagsDelimiter)
-                                    .map((t) => t.trim())
-                                    .filter(Boolean)
+                                      .split(tagsDelimiter)
+                                      .map((t) => t.trim())
+                                      .filter(Boolean)
                                   : [];
                                 const isFavorite = ['1', 'true', 'yes', 'y'].includes(
                                   String(favStr).toLowerCase(),
                                 );
-                                const categoryId = categoryIdStr ? parseInt(categoryIdStr, 10) : undefined;
-                                const httpStatus = httpStatusStr ? parseInt(httpStatusStr, 10) : undefined;
-                                const linkFailCount = linkFailCountStr ? parseInt(linkFailCountStr, 10) : undefined;
+                                const categoryId = categoryIdStr
+                                  ? parseInt(categoryIdStr, 10)
+                                  : undefined;
+                                const httpStatus = httpStatusStr
+                                  ? parseInt(httpStatusStr, 10)
+                                  : undefined;
+                                const linkFailCount = linkFailCountStr
+                                  ? parseInt(linkFailCountStr, 10)
+                                  : undefined;
 
                                 return {
                                   name,
@@ -858,12 +906,16 @@ export default function SettingsPage() {
                                   httpStatus,
                                   lastLinkCheckAt,
                                   linkFailCount,
-                                  category
+                                  category,
                                 };
                               })
                               .filter((i) => i.name && i.url);
                             const scope = importCategoryId ? `?categoryId=${importCategoryId}` : '';
-                            const res = await apiRequest('POST', `/api/bookmarks/import${scope}`, data);
+                            const res = await apiRequest(
+                              'POST',
+                              `/api/bookmarks/import${scope}`,
+                              data,
+                            );
                             const result = await res.json();
                             setCsvHeaders(null);
                             setCsvRows([]);
@@ -1100,6 +1152,36 @@ export default function SettingsPage() {
                       title={!autoDescEnabled ? 'Enable Auto-description first' : undefined}
                       aria-label="Toggle AI for descriptions"
                     />
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                  <div className="sm:col-span-2">
+                    <div className="font-medium">Default AI language</div>
+                    <div className="text-sm text-muted-foreground">
+                      Applied when a bookmark does not specify its own language.
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end">
+                    <Select
+                      value={defaultAiLanguage}
+                      onValueChange={(value) =>
+                        updatePreferencesMutation.mutate({
+                          defaultAiLanguage: value as PreferenceAiLanguage,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LANGUAGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

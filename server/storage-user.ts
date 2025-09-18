@@ -84,11 +84,18 @@ export class UserStorage {
     const existingPreferences = await this.getUserPreferences(userId);
 
     if (existingPreferences) {
+      const updatePayload: Record<string, unknown> = { ...preferences };
+      for (const key of Object.keys(updatePayload)) {
+        if (updatePayload[key] === undefined) {
+          delete updatePayload[key];
+        }
+      }
+
       // Update existing record
       const [updatedPreferences] = await db
         .update(userPreferences)
         .set({
-          ...preferences,
+          ...updatePayload,
           updatedAt: new Date(),
         })
         .where(eq(userPreferences.id, existingPreferences.id))
@@ -103,6 +110,7 @@ export class UserStorage {
           theme: preferences.theme || 'light',
           viewMode: preferences.viewMode || 'grid',
           aiUsageLimit: preferences.aiUsageLimit ?? 50,
+          defaultAiLanguage: preferences.defaultAiLanguage || 'en',
         })
         .returning();
       return newPreferences;

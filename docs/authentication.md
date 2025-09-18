@@ -93,17 +93,21 @@ Memorize Vault uses a secure authentication system to protect your bookmark data
 ### Common Issues
 
 **Forgot Password**
+
 - Contact support at nt.apple.it@gmail.com for password reset assistance
 
 **Username Not Remembered**
+
 - Clear browser data and try again
 - Check if cookies are enabled
 
 **Session Expired**
+
 - Simply sign in again
 - Consider increasing session timeout in settings
 
 **Login Fails**
+
 - Verify username and password are correct
 - Check for typos in username (case-sensitive)
 - Ensure caps lock is not enabled

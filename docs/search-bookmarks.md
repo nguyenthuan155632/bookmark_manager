@@ -33,7 +33,7 @@ Memorize Vault provides powerful search capabilities to help you quickly find th
 **Advanced Search**
 
 - **Boolean Operators**: Use AND, OR, NOT operators
-- **Wildcards**: Use * for wildcard searches
+- **Wildcards**: Use \* for wildcard searches
 - **Exact Matches**: Use quotes for exact phrase matching
 - **Case Sensitivity**: Search is case-insensitive
 
@@ -154,7 +154,8 @@ Memorize Vault provides powerful search capabilities to help you quickly find th
 - **Combinations**: Combine operators (e.g., "react AND (tutorial OR guide)")
 
 **Wildcard Searches**
-- **Asterisk (*)**: Match any characters (e.g., "dev*" matches "development")
+
+- **Asterisk (\*)**: Match any characters (e.g., "dev\*" matches "development")
 - **Question Mark (?)**: Match single character (e.g., "dev?" matches "dev1")
 - **Multiple Wildcards**: Use multiple wildcards in one search
 - **Pattern Matching**: Create complex search patterns

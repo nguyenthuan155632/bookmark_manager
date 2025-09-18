@@ -81,7 +81,11 @@ export class CategoryStorage {
     return deleted.length;
   }
 
-  async updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category> {
+  async updateCategorySortOrder(
+    userId: string,
+    categoryId: number,
+    sortOrder: number,
+  ): Promise<Category> {
     const [updatedCategory] = await db
       .update(categories)
       .set({ sortOrder })
@@ -95,7 +99,10 @@ export class CategoryStorage {
     return updatedCategory;
   }
 
-  async updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]> {
+  async updateCategoriesSortOrder(
+    userId: string,
+    sortOrders: { id: number; sortOrder: number }[],
+  ): Promise<Category[]> {
     const updatedCategories: Category[] = [];
 
     for (const { id, sortOrder } of sortOrders) {

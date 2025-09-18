@@ -3,8 +3,13 @@ import { X, Plus, Lock, Sparkles, Globe } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { insertBookmarkSchema } from '@shared/schema';
-import type { InsertBookmark, Category } from '@shared/schema';
+import {
+  insertBookmarkSchema,
+  BOOKMARK_LANGUAGES,
+  BOOKMARK_LANGUAGE_LABELS,
+  PREFERENCE_AI_LANGUAGE_LABELS,
+} from '@shared/schema';
+import type { Category, BookmarkLanguage, PreferenceAiLanguage } from '@shared/schema';
 import { z } from 'zod';
 
 import {
@@ -57,6 +62,11 @@ const createFormSchema = () => {
 
 type FormData = z.infer<typeof insertBookmarkSchema> & { tagInput?: string };
 
+const LANGUAGE_OPTIONS = BOOKMARK_LANGUAGES.map((code) => ({
+  value: code,
+  label: BOOKMARK_LANGUAGE_LABELS[code as BookmarkLanguage],
+}));
+
 interface AddBookmarkModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -86,9 +96,13 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     autoTagSuggestionsEnabled?: boolean;
     autoDescriptionEnabled?: boolean;
     aiUsageLimit?: number | null;
+    defaultAiLanguage?: PreferenceAiLanguage;
   }>({
     queryKey: ['/api/preferences'],
   });
+
+  const accountDefaultLanguage = (preferences?.defaultAiLanguage || 'en') as PreferenceAiLanguage;
+  const accountDefaultLabel = PREFERENCE_AI_LANGUAGE_LABELS[accountDefaultLanguage];
 
   const form = useForm<FormData & { removeVerify?: string }>({
     resolver: zodResolver(createFormSchema()),
@@ -101,6 +115,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       tags: [],
       tagInput: '',
       passcode: '',
+      language: undefined,
       removeVerify: '',
     },
   });
@@ -169,6 +184,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         tags: editingBookmark.tags || [],
         tagInput: '',
         passcode: '', // Always start with empty passcode for security
+        language: editingBookmark?.language || undefined,
       });
       setTags(editingBookmark.tags || []);
       setSuggestedTags((editingBookmark as any)?.suggestedTags || []);
@@ -184,6 +200,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
         tags: [],
         tagInput: '',
         passcode: '',
+        language: undefined,
       });
       setTags([]);
       setSuggestedTags([]);
@@ -201,7 +218,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
   }, [isOpen, preferences?.aiUsageLimit]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertBookmark) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const url = editingBookmark ? `/api/bookmarks/${editingBookmark.id}` : '/api/bookmarks';
       const method = editingBookmark ? 'PATCH' : 'POST';
       return await apiRequest(method, url, data);
@@ -342,17 +359,25 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
 
   // Mutation to create or update domain tags automatically
   const createOrUpdateDomainTagMutation = useMutation({
-    mutationFn: async (data: { domain: string; tags: string[]; category?: string; description?: string }) => {
+    mutationFn: async (data: {
+      domain: string;
+      tags: string[];
+      category?: string;
+      description?: string;
+    }) => {
       // Add timeout to prevent hanging
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
       try {
         // First, check if domain tag already exists
-        const checkResponse = await fetch(`/api/domain-tags/suggest?url=${encodeURIComponent(`https://${data.domain}`)}`, {
-          credentials: 'include',
-          signal: controller.signal,
-        });
+        const checkResponse = await fetch(
+          `/api/domain-tags/suggest?url=${encodeURIComponent(`https://${data.domain}`)}`,
+          {
+            credentials: 'include',
+            signal: controller.signal,
+          },
+        );
 
         if (checkResponse.ok) {
           const existingData = await checkResponse.json();
@@ -363,9 +388,12 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             const newTags = Array.from(new Set([...existingTags, ...data.tags])); // Merge and deduplicate
 
             // Find the domain tag ID by searching for it
-            const searchResponse = await fetch(`/api/domain-tags?search=${encodeURIComponent(data.domain)}&limit=1`, {
-              credentials: 'include',
-            });
+            const searchResponse = await fetch(
+              `/api/domain-tags?search=${encodeURIComponent(data.domain)}&limit=1`,
+              {
+                credentials: 'include',
+              },
+            );
 
             if (searchResponse.ok) {
               const searchData = await searchResponse.json();
@@ -511,11 +539,15 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     try {
       setIsGeneratingDescription(true);
       setSuggestedDescription('');
-      const body = {
+      const selectedLanguage = form.getValues('language');
+      const body: Record<string, unknown> = {
         url: currentUrl,
         name: form.getValues('name') || '',
         description: form.getValues('description') || '',
       };
+      if (selectedLanguage) {
+        body.language = selectedLanguage;
+      }
       const res = await apiRequest('POST', '/api/bookmarks/preview-auto-description', body);
       const data = await res.json();
       const desc = (data?.suggestedDescription || '').trim();
@@ -634,7 +666,9 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       // protected → unprotected: no validation needed (will be set to null)
     }
 
-    const bookmarkData: InsertBookmark = {
+    const selectedLanguage = form.getValues('language');
+
+    const bookmarkData: Record<string, any> = {
       name: data.name,
       description: data.description || null,
       url: data.url,
@@ -642,6 +676,11 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
       isFavorite: data.isFavorite || false,
       tags: tags,
     };
+    if (selectedLanguage !== undefined) {
+      bookmarkData.language = selectedLanguage;
+    } else {
+      bookmarkData.language = null;
+    }
 
     // Handle passcode logic based on scenario
     if (isProtected) {
@@ -741,6 +780,50 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="language" className="text-sm font-medium">
+              Description language
+            </Label>
+            <Select
+              value={form.watch('language') ?? 'default'}
+              onValueChange={(value) => {
+                if (value === 'default') {
+                  form.setValue('language', undefined, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                } else {
+                  form.setValue('language', value as BookmarkLanguage, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }
+              }}
+            >
+              <SelectTrigger id="language" data-testid="select-language">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">
+                  Use account default ({accountDefaultLabel})
+                </SelectItem>
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              AI descriptions follow your account default (auto detects the site language if selected).
+            </p>
+            {form.formState.errors.language && (
+              <p className="text-sm text-destructive" data-testid="error-language">
+                {form.formState.errors.language.message}
+              </p>
+            )}
+          </div>
+
           <MarkdownEditor
             id="description"
             value={form.watch('description') || ''}
@@ -799,8 +882,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                               form.setValue(
                                 'description',
                                 (form.getValues('description') || '').trim() +
-                                (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') +
-                                suggestedDescription,
+                                  (form.getValues('description')?.endsWith('\n') ? '' : '\n\n') +
+                                  suggestedDescription,
                               )
                             }
                             className="text-xs"

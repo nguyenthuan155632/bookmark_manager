@@ -23,12 +23,14 @@ Bookmarks are the core of Memorize Vault. This guide covers everything you need 
 ### Required Fields
 
 **Name**
+
 - **Purpose**: Descriptive title for your bookmark
 - **Tips**: Use clear, descriptive names that you'll recognize later
 - **Character Limit**: 255 characters maximum
 - **Examples**: "React Documentation", "Best CSS Practices", "Project Ideas"
 
 **URL**
+
 - **Purpose**: The web address of the bookmark
 - **Format**: Must be a valid URL (http:// or https://)
 - **Validation**: System validates URL format automatically
@@ -37,12 +39,14 @@ Bookmarks are the core of Memorize Vault. This guide covers everything you need 
 ### Optional Fields
 
 **Description**
+
 - **Purpose**: Detailed information about the bookmark
 - **Use Cases**: Explain why you saved it, key points, or context
 - **Character Limit**: No strict limit, but keep it reasonable
 - **AI Generation**: Can be auto-generated using AI features
 
 **Tags**
+
 - **Purpose**: Keywords for organization and search
 - **Format**: Comma-separated list of tags
 - **Examples**: "javascript, tutorial, beginner", "design, inspiration, portfolio"
@@ -50,18 +54,21 @@ Bookmarks are the core of Memorize Vault. This guide covers everything you need 
 - **Domain Tags**: AI can suggest tags based on the website domain
 
 **Category**
+
 - **Purpose**: Organize bookmarks into folders
 - **Options**: Select from existing categories or create new ones
 - **Default**: Can set a default category in settings
 - **Hierarchical**: Categories can be nested (parent-child relationships)
 
 **Favorite**
+
 - **Purpose**: Mark important bookmarks for quick access
 - **Access**: Favorites appear in the "Favorites" section
 - **Visual Indicator**: Star icon shows in bookmark cards
 - **Quick Toggle**: Can be changed after creation
 
 **Passcode Protection**
+
 - **Purpose**: Secure sensitive bookmarks with a password
 - **Access**: Requires passcode or account password to view
 - **Storage**: Passcode is hashed and stored securely
@@ -72,18 +79,21 @@ Bookmarks are the core of Memorize Vault. This guide covers everything you need 
 ### AI-Powered Features
 
 **Auto-Tagging**
+
 - **Enable**: Toggle in bookmark form or settings
 - **Process**: AI analyzes the webpage content and suggests relevant tags
 - **Benefits**: Saves time and ensures consistent tagging
 - **Customization**: Can be enabled/disabled per bookmark or globally
 
 **Auto-Description**
+
 - **Enable**: Toggle in bookmark form or settings
 - **Process**: AI generates a description based on webpage content
 - **Benefits**: Provides context without manual effort
 - **Overwrite**: Can overwrite existing descriptions or add to empty ones
 
 **Domain Tags**
+
 - **Automatic**: Suggests tags based on the website domain
 - **Database**: Uses a curated database of domain-specific tags
 - **Examples**: GitHub → "development, code", YouTube → "video, tutorial"
@@ -92,18 +102,21 @@ Bookmarks are the core of Memorize Vault. This guide covers everything you need 
 ### Bulk Operations
 
 **Selecting Multiple Bookmarks**
+
 1. **Enable Bulk Mode**: Click the bulk selection button
 2. **Select Bookmarks**: Click checkboxes on individual bookmarks
 3. **Select All**: Use "Select All" button to select all visible bookmarks
 4. **Perform Actions**: Move, delete, or check links for selected bookmarks
 
 **Bulk Move to Category**
+
 1. **Select Bookmarks**: Choose multiple bookmarks
 2. **Click Move**: Use the bulk action toolbar
 3. **Choose Category**: Select destination category
 4. **Confirm**: Confirm the move operation
 
 **Bulk Delete**
+
 1. **Select Bookmarks**: Choose bookmarks to delete
 2. **Click Delete**: Use the bulk action toolbar
 3. **Confirm Deletion**: Confirm you want to delete the selected bookmarks
@@ -139,16 +152,19 @@ Bookmarks are the core of Memorize Vault. This guide covers everything you need 
 ### Common Issues
 
 **URL Not Valid**
+
 - **Check Format**: Ensure URL starts with http:// or https://
 - **Copy Complete URL**: Make sure you copied the entire URL
 - **Remove Extra Characters**: Check for trailing spaces or characters
 
 **Tags Not Saving**
+
 - **Check Format**: Use comma-separated format
 - **Character Limits**: Avoid extremely long tag names
 - **Special Characters**: Avoid special characters that might cause issues
 
 **Category Not Available**
+
 - **Create Category**: Create the category first before assigning bookmarks
 - **Check Spelling**: Ensure category name is spelled correctly
 - **Refresh Page**: Try refreshing if categories don't appear

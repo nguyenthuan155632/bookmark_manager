@@ -5,6 +5,7 @@ The Hidden folder is a special category that automatically contains all your pro
 ## What is the Hidden Folder?
 
 The Hidden folder is a synthetic category that:
+
 - **Automatically populated** with bookmarks that have passcode protection
 - **Cannot be deleted** or modified like regular categories
 - **Visually distinct** with a special gradient design and lock icon
@@ -13,12 +14,14 @@ The Hidden folder is a synthetic category that:
 ## Accessing the Hidden Folder
 
 ### From the Sidebar
+
 1. **Navigate** to the sidebar on the left
 2. **Look for** the "Hidden" folder with a lock icon
 3. **Click** on the Hidden folder to view protected bookmarks
 4. **Badge count** shows the number of protected bookmarks
 
 ### Visual Indicators
+
 - **Lock Icon**: Indicates this is a secure folder
 - **Gradient Text**: Special amber-to-red gradient styling
 - **Badge Count**: Shows number of protected bookmarks
@@ -27,11 +30,13 @@ The Hidden folder is a synthetic category that:
 ## How Bookmarks Get to Hidden Folder
 
 ### Automatic Assignment
+
 - **Any bookmark** with a passcode is automatically included
 - **No manual action** required - happens automatically
 - **Real-time updates** when you add/remove passcodes
 
 ### Creating Protected Bookmarks
+
 1. **Create bookmark** normally
 2. **Set a passcode** during creation
 3. **Bookmark appears** in Hidden folder automatically
@@ -40,12 +45,14 @@ The Hidden folder is a synthetic category that:
 ## Managing Hidden Bookmarks
 
 ### Viewing Protected Bookmarks
+
 - **Click Hidden folder** to see all protected bookmarks
 - **Standard bookmark cards** with lock indicators
 - **Passcode required** to view details
 - **Full functionality** available (edit, delete, etc.)
 
 ### Removing from Hidden Folder
+
 - **Remove passcode** from bookmark settings
 - **Bookmark disappears** from Hidden folder
 - **Remains in** original category (if assigned)
@@ -54,12 +61,14 @@ The Hidden folder is a synthetic category that:
 ## Security Features
 
 ### Access Control
+
 - **Passcode required** to view bookmark details
 - **Account password** can also unlock protected bookmarks
 - **Session-based** access for convenience
 - **Automatic lock** after session expires
 
 ### Visual Security
+
 - **Lock icons** on bookmark cards
 - **Distinct styling** for protected items
 - **Clear indicators** of protection status
@@ -68,12 +77,14 @@ The Hidden folder is a synthetic category that:
 ## Best Practices
 
 ### Organization
+
 - **Use passcodes** for sensitive information
 - **Combine with categories** for better organization
 - **Regular review** of protected bookmarks
 - **Remove protection** when no longer needed
 
 ### Security
+
 - **Strong passcodes** (4-64 characters)
 - **Unique passcodes** for different bookmarks
 - **Regular updates** of passcodes
@@ -82,18 +93,21 @@ The Hidden folder is a synthetic category that:
 ## Troubleshooting
 
 ### Hidden Folder Not Showing
+
 - **Check** if you have any protected bookmarks
 - **Verify** passcodes are set correctly
 - **Refresh** the page to update counts
 - **Clear cache** if issues persist
 
 ### Can't Access Protected Bookmarks
+
 - **Enter correct passcode** when prompted
 - **Use account password** as alternative
 - **Check** if bookmark still has protection
 - **Contact support** if issues persist
 
 ### Missing Bookmarks
+
 - **Verify** passcode is still set
 - **Check** if bookmark was deleted
 - **Look** in original category
@@ -102,12 +116,14 @@ The Hidden folder is a synthetic category that:
 ## Tips and Tricks
 
 ### Quick Access
+
 - **Pin Hidden folder** for easy access
 - **Use search** to find specific protected bookmarks
 - **Keyboard shortcuts** for faster navigation
 - **Bookmark details** show protection status
 
 ### Organization
+
 - **Combine categories** with protection
 - **Use descriptive names** for protected bookmarks
 - **Regular cleanup** of old protected items

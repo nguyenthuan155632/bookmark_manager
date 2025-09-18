@@ -36,7 +36,9 @@ export class BookmarkStorage {
       limit?: number;
       offset?: number;
     },
-  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean; passcodeHash?: string | null })[]> {
+  ): Promise<
+    (Bookmark & { category?: Category; hasPasscode?: boolean; passcodeHash?: string | null })[]
+  > {
     // Build conditions - always filter by userId first
     const conditions = [eq(bookmarks.userId, userId)];
 
@@ -112,6 +114,7 @@ export class BookmarkStorage {
         id: bookmarks.id,
         name: bookmarks.name,
         description: bookmarks.description,
+        language: bookmarks.language,
         url: bookmarks.url,
         tags: bookmarks.tags,
         suggestedTags: bookmarks.suggestedTags,
@@ -134,7 +137,7 @@ export class BookmarkStorage {
         // Add search relevance score when searching (with robust fallback for missing ts_rank)
         ...(params?.search
           ? {
-            searchRank: sql<number>`
+              searchRank: sql<number>`
             CASE 
               WHEN ${bookmarks.searchVector} IS NOT NULL AND ${bookmarks.searchVector} @@ plainto_tsquery('english', ${params.search}) 
               THEN COALESCE(
@@ -152,7 +155,7 @@ export class BookmarkStorage {
               ELSE 0.1  -- Low score for other matches
             END
           `.as('search_rank'),
-          }
+            }
           : {}),
       })
       .from(bookmarks)
@@ -241,6 +244,7 @@ export class BookmarkStorage {
         id: bookmarks.id,
         name: bookmarks.name,
         description: bookmarks.description,
+        language: bookmarks.language,
         url: bookmarks.url,
         tags: bookmarks.tags,
         suggestedTags: bookmarks.suggestedTags,
@@ -284,8 +288,15 @@ export class BookmarkStorage {
   ): Promise<Bookmark & { hasPasscode?: boolean }> {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
+    const { language: incomingLanguage, ...restWithoutLanguage } = bookmarkWithoutPasscode as any;
+    const normalizedLanguage =
+      typeof incomingLanguage === 'string' && incomingLanguage && incomingLanguage !== 'auto'
+        ? incomingLanguage
+        : 'en';
+
     let bookmarkData: InsertBookmarkInternal = {
-      ...bookmarkWithoutPasscode,
+      ...restWithoutLanguage,
+      language: normalizedLanguage,
       userId, // Add userId from authenticated user
     };
 
@@ -317,9 +328,14 @@ export class BookmarkStorage {
   ): Promise<Bookmark & { hasPasscode?: boolean }> {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
+    const { language: updateLanguage, ...restUpdate } = bookmarkWithoutPasscode as any;
     let updateData: Partial<InsertBookmarkInternal> = {
-      ...bookmarkWithoutPasscode,
+      ...restUpdate,
     };
+
+    if (updateLanguage !== null && updateLanguage !== undefined) {
+      updateData.language = updateLanguage === 'auto' ? 'en' : updateLanguage;
+    }
 
     // Hash passcode if provided and not null/undefined
     if (passcode !== undefined) {
@@ -414,6 +430,7 @@ export class BookmarkStorage {
         screenshotUrl: orig.screenshotUrl,
         screenshotStatus: orig.screenshotStatus,
         screenshotUpdatedAt: orig.screenshotUpdatedAt,
+        language: orig.language,
         linkStatus: orig.linkStatus,
         httpStatus: orig.httpStatus,
         lastLinkCheckAt: orig.lastLinkCheckAt,
@@ -621,15 +638,15 @@ export class BookmarkStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-      name: string;
-      description: string | null;
-      url: string | null;
-      tags: string[] | null;
-      screenshotUrl?: string | null;
-      createdAt: Date;
-      category?: { name: string } | null;
-      hasPasscode?: boolean;
-    }
+        name: string;
+        description: string | null;
+        url: string | null;
+        tags: string[] | null;
+        screenshotUrl?: string | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+        hasPasscode?: boolean;
+      }
     | undefined
   > {
     const [result] = await db

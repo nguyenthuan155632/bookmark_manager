@@ -118,6 +118,7 @@ async function main() {
       categoryId: category ? category.id : null,
       isShared: Math.random() < 0.1, // ~10% shared
       passcode: null, // not protected by default
+      language: 'en',
     } as InsertBookmark;
 
     await storage.createBookmark(user.id, bookmark);

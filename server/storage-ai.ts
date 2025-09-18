@@ -1,4 +1,11 @@
-import { bookmarks, domainTags, type Bookmark } from '@shared/schema';
+import {
+  bookmarks,
+  domainTags,
+  type Bookmark,
+  BOOKMARK_LANGUAGES,
+  BOOKMARK_LANGUAGE_LABELS,
+  type BookmarkLanguage,
+} from '@shared/schema';
 import { db, eq, and, logAI, OpenAI } from './storage-base';
 
 export class AIStorage {
@@ -425,7 +432,7 @@ export class AIStorage {
     url: string,
     name?: string,
     description?: string,
-    opts?: { userId?: string },
+    opts?: { userId?: string; language?: string },
   ): Promise<string | undefined> {
     try {
       // If description already exists and is non-empty, prefer returning it
@@ -434,14 +441,29 @@ export class AIStorage {
       // Provider and preference checks (OpenRouter only)
       const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
       let useAI = !!openRouterKey;
-      if (useAI && opts?.userId) {
+      let prefs: any | undefined;
+      if (opts?.userId) {
         try {
-          const prefs = await this.getUserPreferences(opts.userId);
-          if (prefs) {
-            if (prefs.aiDescriptionEnabled === false) useAI = false;
-          }
+          prefs = await this.getUserPreferences(opts.userId);
+          if (prefs && prefs.aiDescriptionEnabled === false) useAI = false;
         } catch (_e) {
           void _e;
+        }
+      }
+
+      const requestedLanguage = opts?.language?.trim().toLowerCase() || '';
+      const normalizedLanguage = requestedLanguage.split('-')[0];
+      let targetLanguage: BookmarkLanguage | undefined;
+      if (normalizedLanguage) {
+        if ((BOOKMARK_LANGUAGES as readonly string[]).includes(normalizedLanguage)) {
+          targetLanguage = normalizedLanguage as BookmarkLanguage;
+        }
+      }
+      if (!targetLanguage && prefs?.defaultAiLanguage && prefs.defaultAiLanguage !== 'auto') {
+        const prefLanguage = String(prefs.defaultAiLanguage).trim().toLowerCase();
+        const prefNormalized = prefLanguage.split('-')[0];
+        if ((BOOKMARK_LANGUAGES as readonly string[]).includes(prefNormalized)) {
+          targetLanguage = prefNormalized as BookmarkLanguage;
         }
       }
 
@@ -505,6 +527,12 @@ export class AIStorage {
             minChars + 100,
             Math.min(maxChars - 20, Math.floor((minChars + maxChars) / 2)),
           );
+          const languageGuidance = targetLanguage
+            ? `- Language: write in ${BOOKMARK_LANGUAGE_LABELS[targetLanguage]} (${targetLanguage}).`
+            : '- Language: match the language of Title/Hints if present.';
+          const userLanguageNote = targetLanguage
+            ? `Preferred language: ${BOOKMARK_LANGUAGE_LABELS[targetLanguage]} (${targetLanguage}).`
+            : 'Preferred language: Match the language of Title/Hints if present.';
           const sys = isMarkdown
             ? `You are a clear, neutral technical writer. Produce a comprehensive Markdown overview of a web page.
 - Target length: aim for about ${targetLen} characters (never exceed ${maxChars}).
@@ -512,7 +540,7 @@ export class AIStorage {
 - Tone: informative and neutral (no hype, no emojis, no exclamations).
 - Content: focus on purpose, primary topics and capabilities, typical use cases, and audience. Prefer concrete nouns over vague phrasing.
 - Grounding: base only on provided inputs (URL, Title, Hints/metadata). Do not invent specific features that are not implied.
-- Language: match the language of Title/Hints if present.`
+${languageGuidance}`
             : `You are a concise, neutral copywriter.
 Write a clear, specific multi-sentence summary of a web page:
 - Target length: ~${targetLen} characters; NEVER exceed ${maxChars}.
@@ -521,8 +549,8 @@ Write a clear, specific multi-sentence summary of a web page:
 - Style: do NOT repeat the title; avoid "this website/page"; use the subject directly.
 - Output: plain text only.
 - Grounding: base only on the provided inputs; do not invent details not implied by them.
-- Language: write in the same language as the Title/Hints if present.`;
-          const user = `Inputs\n- URL: ${url}\n- Title: ${name || metaTitle || ''}\n- Hints: ${description || metaDesc || ''}\nTask\nWrite ${isMarkdown ? 'a Markdown document' : 'a description'} that fits the constraints above. If information is sparse, keep it accurate and grounded in the domain/path without fabricating specifics. Length between ${minChars} and ${maxChars} characters.`;
+${languageGuidance}`;
+          const user = `Inputs\n- URL: ${url}\n- Title: ${name || metaTitle || ''}\n- Hints: ${description || metaDesc || ''}\nTask\nWrite ${isMarkdown ? 'a Markdown document' : 'a description'} that fits the constraints above. If information is sparse, keep it accurate and grounded in the domain/path without fabricating specifics. Length between ${minChars} and ${maxChars} characters.\n${userLanguageNote}`;
 
           const callChat = async (retries = 5) => {
             let wait = 500;

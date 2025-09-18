@@ -1,6 +1,49 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { ArrowLeft, BookOpen, ChevronRight, ChevronDown, FileText, Home, Star, Folder, Settings, Share, Lock, Search, Grid, List, Plus, Trash2, Edit, Eye, Download, Upload, Brain, Link as LinkIcon, Camera, Shield, Users, Globe, Tag, Filter, SortAsc, SortDesc, RefreshCw, CheckCircle, XCircle, AlertCircle, HelpCircle, Zap, Target, Clock, BarChart3, Palette, User, Key, Database, Wifi, Smartphone, Monitor, Chrome, Menu } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  ChevronRight,
+  ChevronDown,
+  FileText,
+  Home,
+  Star,
+  Folder,
+  Settings,
+  Share,
+  Lock,
+  Search,
+  Grid,
+  Plus,
+  Trash2,
+  Edit,
+  Eye,
+  Download,
+  Upload,
+  Brain,
+  Link as LinkIcon,
+  Camera,
+  Shield,
+  Users,
+  Globe,
+  Tag,
+  Filter,
+  SortAsc,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  HelpCircle,
+  Zap,
+  Target,
+  Clock,
+  Palette,
+  User,
+  Key,
+  Database,
+  Monitor,
+  Chrome,
+  Menu,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/lib/seo';
 import { useAuth } from '@/hooks/use-auth';
@@ -27,21 +70,21 @@ const documentationSections: DocumentationSection[] = [
         id: 'overview',
         title: 'Overview',
         icon: Home,
-        content: 'overview'
+        content: 'overview',
       },
       {
         id: 'authentication',
         title: 'Authentication',
         icon: User,
-        content: 'authentication'
+        content: 'authentication',
       },
       {
         id: 'first-bookmark',
         title: 'Creating Your First Bookmark',
         icon: Plus,
-        content: 'first-bookmark'
-      }
-    ]
+        content: 'first-bookmark',
+      },
+    ],
   },
   {
     id: 'core-features',
@@ -57,33 +100,33 @@ const documentationSections: DocumentationSection[] = [
             id: 'create-bookmark',
             title: 'Creating Bookmarks',
             icon: Plus,
-            content: 'create-bookmark'
+            content: 'create-bookmark',
           },
           {
             id: 'edit-bookmark',
             title: 'Editing Bookmarks',
             icon: Edit,
-            content: 'edit-bookmark'
+            content: 'edit-bookmark',
           },
           {
             id: 'delete-bookmark',
             title: 'Deleting Bookmarks',
             icon: Trash2,
-            content: 'delete-bookmark'
+            content: 'delete-bookmark',
           },
           {
             id: 'view-bookmark',
             title: 'Viewing Bookmarks',
             icon: Eye,
-            content: 'view-bookmark'
+            content: 'view-bookmark',
           },
           {
             id: 'favorite-bookmarks',
             title: 'Favorites',
             icon: Star,
-            content: 'favorite-bookmarks'
-          }
-        ]
+            content: 'favorite-bookmarks',
+          },
+        ],
       },
       {
         id: 'categories',
@@ -94,27 +137,27 @@ const documentationSections: DocumentationSection[] = [
             id: 'create-category',
             title: 'Creating Categories',
             icon: Plus,
-            content: 'create-category'
+            content: 'create-category',
           },
           {
             id: 'edit-category',
             title: 'Editing Categories',
             icon: Edit,
-            content: 'edit-category'
+            content: 'edit-category',
           },
           {
             id: 'delete-category',
             title: 'Deleting Categories',
             icon: Trash2,
-            content: 'delete-category'
+            content: 'delete-category',
           },
           {
             id: 'reorder-categories',
             title: 'Reordering Categories',
             icon: SortAsc,
-            content: 'reorder-categories'
-          }
-        ]
+            content: 'reorder-categories',
+          },
+        ],
       },
       {
         id: 'search-filter',
@@ -125,35 +168,35 @@ const documentationSections: DocumentationSection[] = [
             id: 'search-bookmarks',
             title: 'Searching Bookmarks',
             icon: Search,
-            content: 'search-bookmarks'
+            content: 'search-bookmarks',
           },
           {
             id: 'filter-by-category',
             title: 'Filter by Category',
             icon: Filter,
-            content: 'filter-by-category'
+            content: 'filter-by-category',
           },
           {
             id: 'filter-by-tags',
             title: 'Filter by Tags',
             icon: Tag,
-            content: 'filter-by-tags'
+            content: 'filter-by-tags',
           },
           {
             id: 'filter-by-status',
             title: 'Filter by Link Status',
             icon: CheckCircle,
-            content: 'filter-by-status'
+            content: 'filter-by-status',
           },
           {
             id: 'sort-bookmarks',
             title: 'Sorting Bookmarks',
             icon: SortAsc,
-            content: 'sort-bookmarks'
-          }
-        ]
-      }
-    ]
+            content: 'sort-bookmarks',
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'advanced-features',
@@ -169,27 +212,27 @@ const documentationSections: DocumentationSection[] = [
             id: 'bulk-select',
             title: 'Selecting Multiple Bookmarks',
             icon: CheckCircle,
-            content: 'bulk-select'
+            content: 'bulk-select',
           },
           {
             id: 'bulk-delete',
             title: 'Bulk Delete',
             icon: Trash2,
-            content: 'bulk-delete'
+            content: 'bulk-delete',
           },
           {
             id: 'bulk-move',
             title: 'Bulk Move to Category',
             icon: Folder,
-            content: 'bulk-move'
+            content: 'bulk-move',
           },
           {
             id: 'bulk-check-links',
             title: 'Bulk Link Checking',
             icon: LinkIcon,
-            content: 'bulk-check-links'
-          }
-        ]
+            content: 'bulk-check-links',
+          },
+        ],
       },
       {
         id: 'ai-features',
@@ -200,21 +243,21 @@ const documentationSections: DocumentationSection[] = [
             id: 'auto-tagging',
             title: 'Auto Tagging',
             icon: Tag,
-            content: 'auto-tagging'
+            content: 'auto-tagging',
           },
           {
             id: 'auto-description',
             title: 'Auto Description',
             icon: FileText,
-            content: 'auto-description'
+            content: 'auto-description',
           },
           {
             id: 'domain-tags',
             title: 'Domain Tags',
             icon: Globe,
-            content: 'domain-tags'
-          }
-        ]
+            content: 'domain-tags',
+          },
+        ],
       },
       {
         id: 'link-management',
@@ -225,21 +268,21 @@ const documentationSections: DocumentationSection[] = [
             id: 'link-checking',
             title: 'Link Checking',
             icon: CheckCircle,
-            content: 'link-checking'
+            content: 'link-checking',
           },
           {
             id: 'broken-links',
             title: 'Broken Link Detection',
             icon: XCircle,
-            content: 'broken-links'
+            content: 'broken-links',
           },
           {
             id: 'link-status',
             title: 'Link Status Indicators',
             icon: AlertCircle,
-            content: 'link-status'
-          }
-        ]
+            content: 'link-status',
+          },
+        ],
       },
       {
         id: 'screenshots',
@@ -250,17 +293,17 @@ const documentationSections: DocumentationSection[] = [
             id: 'auto-screenshots',
             title: 'Automatic Screenshots',
             icon: Camera,
-            content: 'auto-screenshots'
+            content: 'auto-screenshots',
           },
           {
             id: 'screenshot-status',
             title: 'Screenshot Status',
             icon: CheckCircle,
-            content: 'screenshot-status'
-          }
-        ]
-      }
-    ]
+            content: 'screenshot-status',
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'security-privacy',
@@ -276,15 +319,15 @@ const documentationSections: DocumentationSection[] = [
             id: 'create-protected',
             title: 'Creating Protected Bookmarks',
             icon: Lock,
-            content: 'create-protected'
+            content: 'create-protected',
           },
           {
             id: 'unlock-protected',
             title: 'Unlocking Protected Bookmarks',
             icon: Key,
-            content: 'unlock-protected'
+            content: 'unlock-protected',
           },
-        ]
+        ],
       },
       {
         id: 'sharing',
@@ -295,11 +338,11 @@ const documentationSections: DocumentationSection[] = [
             id: 'share-bookmark',
             title: 'Sharing Bookmarks',
             icon: Share,
-            content: 'share-bookmark'
+            content: 'share-bookmark',
           },
-        ]
-      }
-    ]
+        ],
+      },
+    ],
   },
   {
     id: 'data-management',
@@ -315,17 +358,17 @@ const documentationSections: DocumentationSection[] = [
             id: 'export-bookmarks',
             title: 'Exporting Bookmarks',
             icon: Download,
-            content: 'export-bookmarks'
+            content: 'export-bookmarks',
           },
           {
             id: 'import-bookmarks',
             title: 'Importing Bookmarks',
             icon: Upload,
-            content: 'import-bookmarks'
-          }
-        ]
-      }
-    ]
+            content: 'import-bookmarks',
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'customization',
@@ -341,15 +384,15 @@ const documentationSections: DocumentationSection[] = [
             id: 'themes',
             title: 'Light & Dark Themes',
             icon: Monitor,
-            content: 'themes'
+            content: 'themes',
           },
           {
             id: 'view-modes',
             title: 'Grid & List Views',
             icon: Grid,
-            content: 'view-modes'
-          }
-        ]
+            content: 'view-modes',
+          },
+        ],
       },
       {
         id: 'settings',
@@ -360,23 +403,23 @@ const documentationSections: DocumentationSection[] = [
             id: 'user-preferences',
             title: 'User Preferences',
             icon: User,
-            content: 'user-preferences'
+            content: 'user-preferences',
           },
           {
             id: 'default-category',
             title: 'Default Category',
             icon: Folder,
-            content: 'default-category'
+            content: 'default-category',
           },
           {
             id: 'session-timeout',
             title: 'Session Timeout',
             icon: Clock,
-            content: 'session-timeout'
-          }
-        ]
-      }
-    ]
+            content: 'session-timeout',
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'extensions',
@@ -392,17 +435,17 @@ const documentationSections: DocumentationSection[] = [
             id: 'install-extension',
             title: 'Installing the Extension',
             icon: Chrome,
-            content: 'install-extension'
+            content: 'install-extension',
           },
           {
             id: 'extension-usage',
             title: 'Using the Extension',
             icon: Plus,
-            content: 'extension-usage'
-          }
-        ]
-      }
-    ]
+            content: 'extension-usage',
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'troubleshooting',
@@ -413,22 +456,22 @@ const documentationSections: DocumentationSection[] = [
         id: 'common-issues',
         title: 'Common Issues',
         icon: AlertCircle,
-        content: 'common-issues'
+        content: 'common-issues',
       },
       {
         id: 'performance',
         title: 'Performance Tips',
         icon: Zap,
-        content: 'performance'
+        content: 'performance',
       },
       {
         id: 'support',
         title: 'Getting Support',
         icon: Users,
-        content: 'support'
-      }
-    ]
-  }
+        content: 'support',
+      },
+    ],
+  },
 ];
 
 interface DocumentationContent {
@@ -437,22 +480,24 @@ interface DocumentationContent {
 
 export default function DocumentationPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set([
-    'getting-started',
-    'core-features',
-    'bookmarks',
-    'categories',
-    'search-filter',
-    'ai-features',
-    'link-management',
-    'visual-features',
-    'data-management',
-    'sharing-collaboration',
-    'settings',
-    'extensions',
-    'chrome-extension',
-    'troubleshooting'
-  ]));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set([
+      'getting-started',
+      'core-features',
+      'bookmarks',
+      'categories',
+      'search-filter',
+      'ai-features',
+      'link-management',
+      'visual-features',
+      'data-management',
+      'sharing-collaboration',
+      'settings',
+      'extensions',
+      'chrome-extension',
+      'troubleshooting',
+    ]),
+  );
   const [selectedContent, setSelectedContent] = useState<string>('overview');
   const [content, setContent] = useState<DocumentationContent>({});
   const { user } = useAuth();
@@ -501,7 +546,11 @@ export default function DocumentationPage() {
 
   // Function to expand parent sections for a given content ID
   const expandParentSections = (contentId: string) => {
-    const findParentSections = (sections: DocumentationSection[], targetId: string, parentIds: string[] = []): string[] => {
+    const findParentSections = (
+      sections: DocumentationSection[],
+      targetId: string,
+      parentIds: string[] = [],
+    ): string[] => {
       for (const section of sections) {
         if (section.content === targetId) {
           return parentIds;
@@ -518,16 +567,16 @@ export default function DocumentationPage() {
 
     const parentIds = findParentSections(documentationSections, contentId);
     if (parentIds.length > 0) {
-      setExpandedSections(prev => {
+      setExpandedSections((prev) => {
         const newSet = new Set(prev);
-        parentIds.forEach(id => newSet.add(id));
+        parentIds.forEach((id) => newSet.add(id));
         return newSet;
       });
     }
   };
 
   const toggleSection = (sectionId: string) => {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(sectionId)) {
         newSet.delete(sectionId);
@@ -553,16 +602,24 @@ export default function DocumentationPage() {
     const Icon = section.icon;
 
     // Check if this section or any of its children is selected
-    const isSelected = selectedContent === section.id ||
-      (hasChildren && section.children?.some(child =>
-        child.content === selectedContent ||
-        (child.children && child.children.some(grandChild => grandChild.content === selectedContent))
-      ));
+    const isSelected =
+      selectedContent === section.id ||
+      (hasChildren &&
+        section.children?.some(
+          (child) =>
+            child.content === selectedContent ||
+            (child.children &&
+              child.children.some((grandChild) => grandChild.content === selectedContent)),
+        ));
 
     return (
       <div key={section.id} className="select-none">
         <div
-          className={`mt-1 flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors ${level === 0 ? 'font-semibold text-slate-900 text-sm' : level === 1 ? 'font-medium text-sm text-slate-700' : 'text-sm text-slate-600'
+          className={`mt-1 flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors ${level === 0
+            ? 'font-semibold text-slate-900 text-sm'
+            : level === 1
+              ? 'font-medium text-sm text-slate-700'
+              : 'text-sm text-slate-600'
             } ${isSelected ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500' : ''}`}
           onClick={() => {
             if (hasChildren) {
@@ -586,9 +643,7 @@ export default function DocumentationPage() {
           <span className="truncate">{section.title}</span>
         </div>
         {hasChildren && isExpanded && (
-          <div>
-            {section.children!.map(child => renderSection(child, level + 1))}
-          </div>
+          <div>{section.children!.map((child) => renderSection(child, level + 1))}</div>
         )}
       </div>
     );
@@ -609,44 +664,20 @@ export default function DocumentationPage() {
               </h1>
             ),
             h2: ({ children }) => (
-              <h2 className="text-2xl font-semibold mb-3 mt-5 text-slate-800">
-                {children}
-              </h2>
+              <h2 className="text-2xl font-semibold mb-3 mt-5 text-slate-800">{children}</h2>
             ),
             h3: ({ children }) => (
-              <h3 className="text-xl font-medium mb-2 mt-4 text-slate-700">
-                {children}
-              </h3>
+              <h3 className="text-xl font-medium mb-2 mt-4 text-slate-700">{children}</h3>
             ),
             h4: ({ children }) => (
-              <h4 className="text-lg font-medium mb-2 mt-3 text-slate-700">
-                {children}
-              </h4>
+              <h4 className="text-lg font-medium mb-2 mt-3 text-slate-700">{children}</h4>
             ),
-            p: ({ children }) => (
-              <p className="mb-4 text-slate-600 leading-relaxed">
-                {children}
-              </p>
-            ),
-            ul: ({ children }) => (
-              <ul className="ml-6 mb-4 space-y-2">
-                {children}
-              </ul>
-            ),
-            ol: ({ children }) => (
-              <ol className="ml-6 mb-4 space-y-2">
-                {children}
-              </ol>
-            ),
-            li: ({ children }) => (
-              <li className="text-slate-600 leading-relaxed">
-                {children}
-              </li>
-            ),
+            p: ({ children }) => <p className="mb-4 text-slate-600 leading-relaxed">{children}</p>,
+            ul: ({ children }) => <ul className="ml-6 mb-4 space-y-2">{children}</ul>,
+            ol: ({ children }) => <ol className="ml-6 mb-4 space-y-2">{children}</ol>,
+            li: ({ children }) => <li className="text-slate-600 leading-relaxed">{children}</li>,
             strong: ({ children }) => (
-              <strong className="font-semibold text-slate-800">
-                {children}
-              </strong>
+              <strong className="font-semibold text-slate-800">{children}</strong>
             ),
             code: ({ children, className }) => {
               const isInline = !className;
@@ -655,9 +686,7 @@ export default function DocumentationPage() {
                   {children}
                 </code>
               ) : (
-                <code className={className}>
-                  {children}
-                </code>
+                <code className={className}>{children}</code>
               );
             },
             pre: ({ children }) => (
@@ -682,9 +711,7 @@ export default function DocumentationPage() {
             ),
             table: ({ children }) => (
               <div className="overflow-x-auto mb-4">
-                <table className="min-w-full border border-slate-200 rounded-lg">
-                  {children}
-                </table>
+                <table className="min-w-full border border-slate-200 rounded-lg">{children}</table>
               </div>
             ),
             th: ({ children }) => (
@@ -693,9 +720,7 @@ export default function DocumentationPage() {
               </th>
             ),
             td: ({ children }) => (
-              <td className="border border-slate-200 px-4 py-2 text-slate-600">
-                {children}
-              </td>
+              <td className="border border-slate-200 px-4 py-2 text-slate-600">{children}</td>
             ),
           }}
         >
@@ -731,7 +756,7 @@ export default function DocumentationPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsSidebarOpen(prev => !prev)}
+                onClick={() => setIsSidebarOpen((prev) => !prev)}
                 className="lg:hidden"
                 aria-controls="documentation-sidebar"
                 aria-expanded={isSidebarOpen}
@@ -744,7 +769,7 @@ export default function DocumentationPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsSidebarOpen(prev => !prev)}
+                onClick={() => setIsSidebarOpen((prev) => !prev)}
                 className="lg:hidden"
                 aria-controls="documentation-sidebar"
                 aria-expanded={isSidebarOpen}
@@ -770,7 +795,7 @@ export default function DocumentationPage() {
                 <p className="text-sm text-slate-600">Complete guide to all features</p>
               </div>
               <div className="space-y-0.5">
-                {documentationSections.map(section => renderSection(section))}
+                {documentationSections.map((section) => renderSection(section))}
               </div>
             </div>
           </div>

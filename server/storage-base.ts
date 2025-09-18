@@ -61,7 +61,9 @@ export interface IStorage {
       limit?: number;
       offset?: number;
     },
-  ): Promise<(Bookmark & { category?: Category; hasPasscode?: boolean; passcodeHash?: string | null })[]>;
+  ): Promise<
+    (Bookmark & { category?: Category; hasPasscode?: boolean; passcodeHash?: string | null })[]
+  >;
   getBookmark(
     userId: string,
     id: number,
@@ -97,7 +99,10 @@ export interface IStorage {
   createCategory(userId: string, category: InsertCategory): Promise<Category>;
   updateCategory(userId: string, id: number, category: Partial<InsertCategory>): Promise<Category>;
   updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category>;
-  updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]>;
+  updateCategoriesSortOrder(
+    userId: string,
+    sortOrders: { id: number; sortOrder: number }[],
+  ): Promise<Category[]>;
   unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void>;
   deleteBookmarksByCategory(userId: string, categoryId: number): Promise<number>;
   deleteCategory(userId: string, id: number): Promise<void>;
@@ -132,15 +137,15 @@ export interface IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-      name: string;
-      description: string | null;
-      url: string | null;
-      tags: string[] | null;
-      screenshotUrl?: string | null;
-      createdAt: Date;
-      category?: { name: string } | null;
-      hasPasscode?: boolean;
-    }
+        name: string;
+        description: string | null;
+        url: string | null;
+        tags: string[] | null;
+        screenshotUrl?: string | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+        hasPasscode?: boolean;
+      }
     | undefined
   >;
 
@@ -165,7 +170,7 @@ export interface IStorage {
     url: string,
     name?: string,
     description?: string,
-    opts?: { userId?: string },
+    opts?: { userId?: string; language?: string },
   ): Promise<string | undefined>;
 
   // Screenshot methods
@@ -279,8 +284,15 @@ export abstract class BaseStorage implements IStorage {
     id: number,
     category: Partial<InsertCategory>,
   ): Promise<Category>;
-  abstract updateCategorySortOrder(userId: string, categoryId: number, sortOrder: number): Promise<Category>;
-  abstract updateCategoriesSortOrder(userId: string, sortOrders: { id: number; sortOrder: number }[]): Promise<Category[]>;
+  abstract updateCategorySortOrder(
+    userId: string,
+    categoryId: number,
+    sortOrder: number,
+  ): Promise<Category>;
+  abstract updateCategoriesSortOrder(
+    userId: string,
+    sortOrders: { id: number; sortOrder: number }[],
+  ): Promise<Category[]>;
   abstract unlinkCategoryBookmarks(userId: string, categoryId: number): Promise<void>;
   abstract deleteBookmarksByCategory(userId: string, categoryId: number): Promise<number>;
   abstract deleteCategory(userId: string, id: number): Promise<void>;
@@ -313,15 +325,15 @@ export abstract class BaseStorage implements IStorage {
     options?: { full?: boolean },
   ): Promise<
     | {
-      name: string;
-      description: string | null;
-      url: string | null;
-      tags: string[] | null;
-      screenshotUrl?: string | null;
-      createdAt: Date;
-      category?: { name: string } | null;
-      hasPasscode?: boolean;
-    }
+        name: string;
+        description: string | null;
+        url: string | null;
+        tags: string[] | null;
+        screenshotUrl?: string | null;
+        createdAt: Date;
+        category?: { name: string } | null;
+        hasPasscode?: boolean;
+      }
     | undefined
   >;
   abstract updateBookmarkSuggestedTags(

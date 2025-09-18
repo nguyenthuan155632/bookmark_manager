@@ -25,12 +25,14 @@ Categories are the primary way to organize your bookmarks in Memorize Vault. The
 ### Best Practices
 
 **Descriptive Names**
+
 - **Clear Purpose**: Use names that clearly indicate the category's purpose
 - **Consistent Style**: Maintain consistent naming conventions
 - **Avoid Abbreviations**: Use full words instead of abbreviations
 - **Consider Future Use**: Think about how the category might be used later
 
 **Examples of Good Names**
+
 - "Web Development"
 - "Design Resources"
 - "Research Papers"
@@ -38,6 +40,7 @@ Categories are the primary way to organize your bookmarks in Memorize Vault. The
 - "Learning Materials"
 
 **Examples of Poor Names**
+
 - "Stuff"
 - "Misc"
 - "Temp"
@@ -47,12 +50,14 @@ Categories are the primary way to organize your bookmarks in Memorize Vault. The
 ### Naming Conventions
 
 **Hierarchical Naming**
+
 - **Use Dots**: Use dots to create hierarchy (e.g., "Web.JavaScript", "Web.CSS")
 - **Consistent Structure**: Maintain consistent structure across categories
 - **Logical Grouping**: Group related categories together
 - **Easy Navigation**: Make it easy to find categories
 
 **Length Considerations**
+
 - **Not Too Long**: Avoid extremely long category names
 - **Not Too Short**: Ensure names are descriptive enough
 - **Character Limit**: Stay within reasonable character limits
@@ -63,12 +68,14 @@ Categories are the primary way to organize your bookmarks in Memorize Vault. The
 ### Planning Your Structure
 
 **Top-Level Categories**
+
 - **Major Topics**: Create categories for major topics or areas
 - **Project-Based**: Organize by projects or clients
 - **Subject-Based**: Organize by subject matter or discipline
 - **Time-Based**: Organize by time periods or phases
 
 **Sub-Categories**
+
 - **Nested Structure**: Create sub-categories for more specific organization
 - **Logical Hierarchy**: Ensure sub-categories make logical sense
 - **Not Too Deep**: Avoid creating too many levels of nesting
@@ -77,6 +84,7 @@ Categories are the primary way to organize your bookmarks in Memorize Vault. The
 ### Examples of Good Structures
 
 **Subject-Based Organization**
+
 ```
 Web Development
 ├── Frontend
@@ -93,6 +101,7 @@ Web Development
 ```
 
 **Project-Based Organization**
+
 ```
 Projects
 ├── Client A
@@ -113,6 +122,7 @@ Projects
 ### Editing Categories
 
 **Rename Category**
+
 1. **Hover Over Category**: Hover over the category in the sidebar
 2. **Click More Menu**: Click the three-dot menu
 3. **Select Edit**: Click "Edit folder"
@@ -120,6 +130,7 @@ Projects
 5. **Save Changes**: Click the checkmark to save
 
 **Edit Category Details**
+
 1. **Open Category**: Click on the category to open it
 2. **Click Edit**: Click the edit button
 3. **Modify Details**: Change name, description, or other details
@@ -128,12 +139,14 @@ Projects
 ### Deleting Categories
 
 **Delete Empty Category**
+
 1. **Hover Over Category**: Hover over the category in the sidebar
 2. **Click More Menu**: Click the three-dot menu
 3. **Select Delete**: Click "Delete folder"
 4. **Confirm Deletion**: Confirm you want to delete the category
 
 **Delete Category with Bookmarks**
+
 1. **Move Bookmarks**: First move all bookmarks to other categories
 2. **Delete Category**: Then delete the empty category
 3. **Orphan Bookmarks**: Bookmarks without categories go to "Uncategorized"
@@ -141,12 +154,14 @@ Projects
 ### Reordering Categories
 
 **Drag and Drop**
+
 1. **Enable Drag Mode**: Categories are draggable by default
 2. **Drag Category**: Click and drag the category to new position
 3. **Drop in Position**: Release to place category in new position
 4. **Auto-Save**: Changes are saved automatically
 
 **Keyboard Navigation**
+
 1. **Focus Category**: Use arrow keys to focus on category
 2. **Move Up/Down**: Use keyboard shortcuts to move categories
 3. **Confirm Position**: Press Enter to confirm new position
@@ -157,12 +172,14 @@ Projects
 ### Bookmark Counts
 
 **Automatic Counting**
+
 - **Live Updates**: Counts update automatically when bookmarks are added/removed
 - **Visual Indicators**: Counts are displayed next to category names
 - **Accurate Counts**: Counts reflect the actual number of bookmarks
 - **Real-Time Sync**: Counts sync across all views
 
 **Count Display**
+
 - **Sidebar**: Counts shown in sidebar next to category names
 - **Category View**: Counts shown when viewing category contents
 - **Search Results**: Counts shown in search results
@@ -171,12 +188,14 @@ Projects
 ### Category Colors
 
 **Visual Distinction**
+
 - **Color Coding**: Use colors to distinguish between categories
 - **Consistent Colors**: Maintain consistent colors for related categories
 - **Accessibility**: Ensure colors are accessible and readable
 - **Custom Themes**: Colors adapt to light/dark themes
 
 **Color Options**
+
 - **Default Colors**: System provides default color options
 - **Custom Colors**: Create custom colors for specific categories
 - **Color Groups**: Group related categories with similar colors
@@ -187,12 +206,14 @@ Projects
 ### Organization Strategy
 
 **Start Simple**
+
 - **Begin with Few Categories**: Start with a small number of broad categories
 - **Add as Needed**: Add new categories as your collection grows
 - **Regular Review**: Periodically review and reorganize categories
 - **User Feedback**: Consider how you actually use your bookmarks
 
 **Maintain Consistency**
+
 - **Naming Conventions**: Use consistent naming conventions
 - **Structure Patterns**: Maintain consistent structure patterns
 - **Regular Cleanup**: Regularly clean up unused categories
@@ -201,12 +222,14 @@ Projects
 ### Category Management
 
 **Regular Maintenance**
+
 - **Review Categories**: Periodically review your category structure
 - **Merge Similar**: Merge similar or overlapping categories
 - **Split Large**: Split categories that become too large
 - **Archive Old**: Archive or delete unused categories
 
 **User Experience**
+
 - **Easy Navigation**: Make categories easy to navigate
 - **Logical Grouping**: Group related categories together
 - **Clear Names**: Use clear, descriptive category names
@@ -217,18 +240,21 @@ Projects
 ### Common Issues
 
 **Can't Create Category**
+
 - **Check Permissions**: Ensure you have permission to create categories
 - **Check Name**: Ensure category name is valid and not too long
 - **Try Again**: Wait a moment and try again
 - **Contact Support**: Reach out if issues persist
 
 **Category Not Appearing**
+
 - **Refresh Page**: Try refreshing the browser page
 - **Check Sidebar**: Look in the sidebar for the new category
 - **Try Again**: Try creating the category again
 - **Check Filters**: Ensure no filters are hiding the category
 
 **Can't Edit Category**
+
 - **Check Permissions**: Ensure you have permission to edit categories
 - **Try Again**: Wait a moment and try again
 - **Refresh Page**: Try refreshing the browser page
@@ -237,12 +263,14 @@ Projects
 ### Performance Issues
 
 **Slow Category Loading**
+
 - **Check Connection**: Verify internet connection
 - **Close Tabs**: Close unnecessary browser tabs
 - **Clear Cache**: Clear browser cache and cookies
 - **Try Again**: Wait a moment and try again
 
 **Category Operations Failing**
+
 - **Check Selection**: Verify your selection is correct
 - **Try Again**: Retry the operation
 - **Reduce Batch Size**: Try with smaller batches

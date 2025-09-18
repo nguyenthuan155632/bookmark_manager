@@ -10,7 +10,7 @@ export function registerDocumentationRoutes(app: Express) {
       const content: Record<string, string> = {};
 
       // Read all markdown files from the docs directory
-      const files = readdirSync(docsPath).filter(file => file.endsWith('.md'));
+      const files = readdirSync(docsPath).filter((file) => file.endsWith('.md'));
 
       for (const file of files) {
         const filePath = join(docsPath, file);

@@ -249,8 +249,8 @@ function BookmarksContent() {
   const bookmarks = useMemo(() => {
     const flat = bookmarksPages?.pages
       ? ([] as (Bookmark & { category?: Category; hasPasscode?: boolean })[]).concat(
-        ...bookmarksPages.pages,
-      )
+          ...bookmarksPages.pages,
+        )
       : [];
     // Dedupe by id to avoid duplicate keys when re-fetches shift pages
     const seen = new Set<number>();

@@ -5,12 +5,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Extension Features
 
 ### **Quick Save**
+
 - **One-Click Save**: Save current page with single click
 - **Auto-Fill**: Automatically fill bookmark information
 - **Category Selection**: Choose category during save
 - **Tag Addition**: Add tags while saving
 
 ### **Bookmark Management**
+
 - **View Bookmarks**: Access your bookmark collection
 - **Edit Bookmarks**: Modify saved bookmarks
 - **Delete Bookmarks**: Remove unwanted bookmarks
@@ -19,12 +21,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Installing the Extension
 
 ### **Chrome Web Store**
+
 1. **Visit Chrome Web Store** and search for Memorize Vault
 2. **Click Add to Chrome** button
 3. **Confirm installation** when prompted
 4. **Extension appears** in browser toolbar
 
 ### **Manual Installation**
+
 1. **Download extension** file from website
 2. **Open Chrome** and go to Extensions page
 3. **Enable Developer Mode** in extensions settings
@@ -33,12 +37,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Using Quick Save
 
 ### **Basic Save**
+
 1. **Navigate to webpage** you want to bookmark
 2. **Click extension icon** in toolbar
 3. **Review bookmark information** in popup
 4. **Click Save** to add bookmark
 
 ### **Advanced Save**
+
 - **Edit Title**: Modify bookmark title before saving
 - **Add Description**: Add description for bookmark
 - **Select Category**: Choose category for bookmark
@@ -48,12 +54,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Extension Interface
 
 ### **Popup Window**
+
 - **Bookmark Form**: Form for entering bookmark details
 - **Category Dropdown**: Select category for bookmark
 - **Tag Input**: Add tags to bookmark
 - **Save Button**: Save bookmark to collection
 
 ### **Toolbar Icon**
+
 - **Extension Status**: Shows if extension is active
 - **Quick Actions**: Access to common actions
 - **Notification Badge**: Shows number of unsaved bookmarks
@@ -62,12 +70,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Extension Settings
 
 ### **General Settings**
+
 - **Auto-Save**: Automatically save bookmarks
 - **Default Category**: Set default category for new bookmarks
 - **Default Tags**: Set default tags for new bookmarks
 - **Notification Settings**: Configure notification preferences
 
 ### **Advanced Settings**
+
 - **API Endpoint**: Set API endpoint for extension
 - **Authentication**: Configure authentication settings
 - **Sync Settings**: Configure data synchronization
@@ -76,12 +86,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Keyboard Shortcuts
 
 ### **Quick Actions**
+
 - **Ctrl+Shift+S**: Quick save current page
 - **Ctrl+Shift+B**: Open bookmark manager
 - **Ctrl+Shift+E**: Edit last saved bookmark
 - **Ctrl+Shift+D**: Delete last saved bookmark
 
 ### **Navigation**
+
 - **Ctrl+Shift+O**: Open extension options
 - **Ctrl+Shift+H**: Open extension help
 - **Ctrl+Shift+R**: Refresh extension data
@@ -90,12 +102,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Best Practices
 
 ### **Efficient Usage**
+
 - **Use Quick Save**: Save bookmarks quickly while browsing
 - **Add Descriptions**: Add meaningful descriptions
 - **Use Categories**: Organize bookmarks with categories
 - **Add Tags**: Use tags for better organization
 
 ### **Extension Maintenance**
+
 - **Keep Updated**: Keep extension updated to latest version
 - **Check Settings**: Regularly check extension settings
 - **Clear Data**: Clear extension data if needed
@@ -104,12 +118,14 @@ Learn how to use the Memorize Vault browser extension to quickly save and manage
 ## Troubleshooting
 
 ### **Common Issues**
+
 - **Extension Not Working**: Check if extension is enabled
 - **Save Fails**: Check internet connection and API settings
 - **Data Not Syncing**: Verify authentication and sync settings
 - **Performance Issues**: Clear extension data and restart
 
 ### **Performance Tips**
+
 - **Limit Data**: Don't save too many bookmarks at once
 - **Use Filters**: Use filters to manage large collections
 - **Clear Cache**: Clear extension cache if needed

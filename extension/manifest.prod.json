@@ -11,13 +11,8 @@
       "32": "icon-32.png"
     }
   },
-  "permissions": [
-    "storage",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "https://vensera.up.railway.app/*"
-  ],
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://vensera.up.railway.app/*"],
   "icons": {
     "16": "icon-16.png",
     "32": "icon-32.png",

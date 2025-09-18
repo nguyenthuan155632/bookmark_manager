@@ -1,5 +1,6 @@
 import type { Express } from 'express';
 import { z } from 'zod';
+import { bookmarkLanguageEnum } from '@shared/schema';
 import { storage } from '../storage';
 import { requireAuth } from '../auth';
 import {
@@ -17,9 +18,19 @@ export function registerAiRoutes(app: Express) {
         url: z.string().url('Please provide a valid URL'),
         name: z.string().optional(),
         description: z.string().optional(),
+        language: bookmarkLanguageEnum.nullable().optional(),
       });
-      const { url, name, description } = previewSchema.parse(req.body);
+      const { url, name, description, language } = previewSchema.parse(req.body);
       const userId = getUserId(req);
+      const userPreferences = userId ? await storage.getUserPreferences(userId) : undefined;
+      const preferredLanguage = language ?? undefined;
+      const preferenceLanguage = userPreferences?.defaultAiLanguage;
+      const effectivePreference =
+        preferenceLanguage && preferenceLanguage !== 'auto' ? preferenceLanguage : undefined;
+      const languageForGeneration =
+        preferredLanguage ??
+        effectivePreference ??
+        (preferenceLanguage === 'auto' ? undefined : 'en');
       const decision = await getAiChargeDecision(userId, 'desc');
       let usageRemaining: number | null = decision.remaining;
       if (decision.shouldCharge) {
@@ -38,7 +49,7 @@ export function registerAiRoutes(app: Express) {
         url,
         name || '',
         description || undefined,
-        { userId },
+        { userId, language: languageForGeneration },
       );
       res.json({ suggestedDescription, remainingAiUsage: usageRemaining });
     } catch (error) {
@@ -89,11 +100,21 @@ export function registerAiRoutes(app: Express) {
         usageRemaining = usage.remaining;
       }
 
+      const userPreferences = await storage.getUserPreferences(userId);
+      const preferenceLanguage = userPreferences?.defaultAiLanguage;
+      const effectivePreference =
+        preferenceLanguage && preferenceLanguage !== 'auto' ? preferenceLanguage : undefined;
       const suggestedDescription = await storage.generateAutoDescription(
         bookmark.url,
         bookmark.name,
         bookmark.description || undefined,
-        { userId },
+        {
+          userId,
+          language:
+            bookmark.language ||
+            effectivePreference ||
+            (preferenceLanguage === 'auto' ? undefined : 'en'),
+        },
       );
 
       if (!suggestedDescription) {

@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm';
 /**
  * Complete database initialization
  * Sets up everything from scratch: schema, extensions, full-text search, etc.
- * 
+ *
  * Usage: npm run db:init
  */
 async function initDatabase() {
@@ -52,8 +52,9 @@ async function initDatabase() {
     console.log('   6. npm run dev           # Start development');
 
     console.log('\n💡 Or run the complete setup:');
-    console.log('   npm run db:delete && npm run db:push && npm run deploy:search && npm run seed && npm run seed:domain-tags');
-
+    console.log(
+      '   npm run db:delete && npm run db:push && npm run deploy:search && npm run seed && npm run seed:domain-tags',
+    );
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
     process.exit(1);

@@ -66,7 +66,9 @@ export function registerCategoryRoutes(app: Express) {
       // Validate each sort order entry
       for (const item of sortOrders) {
         if (typeof item.id !== 'number' || typeof item.sortOrder !== 'number') {
-          return res.status(400).json({ message: 'Each sort order entry must have id and sortOrder as numbers' });
+          return res
+            .status(400)
+            .json({ message: 'Each sort order entry must have id and sortOrder as numbers' });
         }
         if (isNaN(item.id) || isNaN(item.sortOrder)) {
           return res.status(400).json({ message: 'id and sortOrder must be valid numbers' });
@@ -178,5 +180,4 @@ export function registerCategoryRoutes(app: Express) {
       res.status(500).json({ message: 'Failed to update category sort order' });
     }
   });
-
 }

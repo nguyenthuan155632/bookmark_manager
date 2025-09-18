@@ -172,7 +172,9 @@ export default function AuthPage() {
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Memorize</h1>
           </div>
 
-          <h2 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">Organize Your Digital Life</h2>
+          <h2 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
+            Organize Your Digital Life
+          </h2>
 
           <p className="mt-6 text-base text-white/80 sm:text-lg dark:text-slate-200">
             Keep all your important bookmarks organized, searchable, and secure in one place. Let AI
@@ -182,27 +184,39 @@ export default function AuthPage() {
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
               <Search className="h-5 w-5 text-white/80 dark:text-slate-100" />
-              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Powerful search and filtering</span>
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">
+                Powerful search and filtering
+              </span>
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
               <Users className="h-5 w-5 text-white/80 dark:text-slate-100" />
-              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Organize with categories and tags</span>
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">
+                Organize with categories and tags
+              </span>
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
               <Brain className="h-5 w-5 text-white/80 dark:text-slate-100" />
-              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">AI-powered auto-tagging and descriptions</span>
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">
+                AI-powered auto-tagging and descriptions
+              </span>
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm dark:bg-white/10">
               <Sparkles className="h-5 w-5 text-white/80 dark:text-slate-100" />
-              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Smart content analysis and suggestions</span>
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">
+                Smart content analysis and suggestions
+              </span>
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm sm:col-span-2 dark:bg-white/10">
               <Share className="h-5 w-5 text-white/80 dark:text-slate-100" />
-              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Shareable bookmark collections for your team</span>
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">
+                Shareable bookmark collections for your team
+              </span>
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-white/15 px-3 py-2 backdrop-blur-sm sm:col-span-2 dark:bg-white/10">
               <Shield className="h-5 w-5 text-white/80 dark:text-slate-100" />
-              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">Secure with passcode protection</span>
+              <span className="text-sm text-white/90 sm:text-base dark:text-slate-100/90">
+                Secure with passcode protection
+              </span>
             </div>
           </div>
         </div>

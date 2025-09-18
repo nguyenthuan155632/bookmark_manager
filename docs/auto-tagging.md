@@ -115,18 +115,21 @@ Memorize Vault's AI-powered auto-tagging feature automatically suggests relevant
 ### Common Issues
 
 **No Suggestions Appearing**
+
 - **Check URL**: Ensure the URL is valid and accessible
 - **Wait for Processing**: AI analysis may take a few seconds
 - **Check Settings**: Ensure auto-tagging is enabled
 - **Try Refresh**: Refresh the page and try again
 
 **Poor Quality Suggestions**
+
 - **Content Issues**: Some content may not be suitable for AI analysis
 - **Domain Mappings**: Check if domain-specific mappings need updating
 - **Manual Override**: Always review and customize suggestions
 - **Feedback**: Report poor suggestions to help improve the system
 
 **Performance Issues**
+
 - **Too Many Tags**: Don't add too many tags to a single bookmark
 - **Complex Content**: Very complex or technical content may take longer to analyze
 - **Network Issues**: Slow internet may affect AI processing speed
