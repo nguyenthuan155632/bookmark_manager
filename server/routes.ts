@@ -15,6 +15,7 @@ import { registerScreenshotRoutes } from './routes/screenshot-routes';
 import { registerLinkCheckerRoutes } from './routes/link-checker-routes';
 import { registerDomainTagsRoutes } from './routes/domain-tags-routes';
 import { registerDocumentationRoutes } from './routes/documentation-routes';
+import { registerBookmarkDiscoveryRoutes } from './routes/bookmark-discovery-routes';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication first - this adds passport middleware and session support
@@ -48,6 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register all route modules
   registerAuthRoutes(app);
+  registerBookmarkDiscoveryRoutes(app); // Must be before bookmark routes to avoid conflicts
   registerBookmarkRoutes(app);
   registerAiRoutes(app);
   registerCategoryRoutes(app);
@@ -57,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerLinkCheckerRoutes(app);
   registerDomainTagsRoutes(app);
   registerDocumentationRoutes(app);
-
+  
   const httpServer = createServer(app);
   return httpServer;
 }

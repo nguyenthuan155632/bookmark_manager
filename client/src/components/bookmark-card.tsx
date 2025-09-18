@@ -439,13 +439,15 @@ export function BookmarkCard({
           <img
             ref={imageRef}
             src={currentScreenshotUrl}
-            alt={`Screenshot of ${bookmark.name}`}
+            alt={`Screenshot preview for ${bookmark.name} - ${bookmark.description || 'bookmark preview'}`}
             className={`w-full h-full object-cover transition-opacity duration-300 ${
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             loading="lazy"
+            fetchPriority="low"
+            decoding="async"
             data-testid={`thumbnail-image-${bookmark.id}`}
           />
           {currentScreenshotStatus === 'pending' && (

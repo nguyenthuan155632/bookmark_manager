@@ -339,6 +339,12 @@ export function registerBookmarkRoutes(app: Express) {
     try {
       const userId = getUserId(req);
       const id = parseInt(req.params.id);
+
+      // Validate that ID is a valid integer
+      if (isNaN(id)) {
+        return res.status(400).json({ message: 'Invalid bookmark ID' });
+      }
+
       const bookmark = await storage.getBookmark(userId, id);
 
       if (!bookmark) {

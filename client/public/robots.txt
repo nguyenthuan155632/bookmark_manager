@@ -1,8 +1,38 @@
 User-agent: *
 Allow: /
+Allow: /discover/
+Allow: /discover/category/
 
-# Disallow private API routes
+# Block API routes
 Disallow: /api/
+Disallow: /auth/
+Disallow: /settings/
 
+# Block dynamic user-specific content
+Disallow: /shared/
+Disallow: /domain-tags/
+
+# Block authenticated bookmark pages (search engines can't access)
+Disallow: /bookmarks/
+Disallow: /favorites/
+Disallow: /category/
+
+# Crawl delay (respectful crawling)
+Crawl-delay: 1
+
+# Sitemap location
 Sitemap: /sitemap.xml
+
+# Additional directives
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
 

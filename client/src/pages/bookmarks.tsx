@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { generateBookmarksSchema, generateBreadcrumbSchema } from '@/lib/structured-data';
 import {
   Menu,
   Search,
@@ -1009,6 +1010,15 @@ function BookmarksContent() {
           return `${name}`;
         })()}
         description="Browse, search, and manage your bookmarks. Filter by tags and status, with thumbnails and link health checks."
+        structuredData={[
+          generateBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: 'Bookmarks', url: '/bookmarks' },
+            ...(selectedCategory && selectedCategory !== 'all' ? [{ name: selectedCategory, url: `/bookmarks/${selectedCategory}` }] : [])
+          ]),
+          generateBookmarksSchema(bookmarks)
+        ]}
+        pageType="bookmarks"
       />
       <Sidebar
         isOpen={isSidebarOpen}

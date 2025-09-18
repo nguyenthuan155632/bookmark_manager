@@ -200,9 +200,11 @@ export function SharedBookmark() {
                       {/* eslint-disable-next-line jsx-a11y/alt-text */}
                       <img
                         src={bookmark.screenshotUrl}
-                        alt={bookmark.name}
+                        alt={`Screenshot of ${bookmark.name} - ${bookmark.description || 'shared bookmark preview'}`}
                         className="w-full h-auto object-cover"
                         loading="lazy"
+                        decoding="async"
+                        fetchPriority="low"
                         data-testid="shared-bookmark-screenshot"
                       />
                     </div>
