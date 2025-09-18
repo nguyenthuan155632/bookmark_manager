@@ -1,7 +1,7 @@
 import { Router, type Express } from 'express';
 import { db } from '../db';
 import { bookmarks, categories } from '@shared/schema';
-import { sql, eq, and, desc, isNull, isNotNull, or } from 'drizzle-orm';
+import { sql, eq, and, desc, isNull, or } from 'drizzle-orm';
 
 // Generate bookmarks schema for SEO
 const generateBookmarksSchema = (bookmarks: any[]) => ({
@@ -49,6 +49,7 @@ router.get('/discovery', async (req, res) => {
         id: bookmarks.id,
         name: bookmarks.name,
         description: bookmarks.description,
+        shareId: bookmarks.shareId,
         url: bookmarks.url,
         createdAt: bookmarks.createdAt,
         updatedAt: bookmarks.updatedAt,
@@ -90,7 +91,7 @@ router.get('/discovery', async (req, res) => {
       .groupBy(categories.id, categories.name)
       .orderBy(desc(sql`count(${bookmarks.id})`));
 
-    
+
     // Generate SEO-friendly response
     const seoData = {
       title: 'Discover Bookmarks - Memorize Vault',
@@ -133,6 +134,7 @@ router.get('/discovery/category/:slug', async (req, res) => {
         id: bookmarks.id,
         name: bookmarks.name,
         description: bookmarks.description,
+        shareId: bookmarks.shareId,
         url: bookmarks.url,
         createdAt: bookmarks.createdAt,
         updatedAt: bookmarks.updatedAt,

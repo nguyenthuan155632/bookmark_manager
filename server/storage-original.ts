@@ -25,6 +25,7 @@ import ConnectPgSimple from 'connect-pg-simple';
 import session from 'express-session';
 import crypto from 'crypto';
 import OpenAI from 'openai';
+import { customAlphabet } from 'nanoid';
 
 const DEBUG_AI = process.env.DEBUG_AI;
 const logAI = (...args: any[]) => {
@@ -35,6 +36,32 @@ const logAI = (...args: any[]) => {
     // ignore logging errors
   }
 };
+
+const SHARE_ID_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+const SHARE_ID_RANDOM_LENGTH = 6;
+const MAX_SHARE_ID_LENGTH = 160;
+const shareIdSegment = customAlphabet(SHARE_ID_ALPHABET, SHARE_ID_RANDOM_LENGTH);
+
+function slugifyForShare(input: string): string {
+  return (input || '')
+    .toString()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
+function buildShareSlug(name?: string, bookmarkId?: number): string {
+  const fallback = bookmarkId ? `bookmark-${bookmarkId}` : 'bookmark';
+  const source = name?.trim() ? name : fallback;
+  const baseSlug = slugifyForShare(source);
+  const randomSegment = shareIdSegment();
+  const availableLength = Math.max(0, MAX_SHARE_ID_LENGTH - SHARE_ID_RANDOM_LENGTH - 1);
+  const trimmedBase = baseSlug.slice(0, availableLength);
+  return trimmedBase ? `${trimmedBase}-${randomSegment}` : randomSegment;
+}
 
 function normalizeBookmarkLanguage(input: unknown): BookmarkLanguage {
   if (typeof input !== 'string') return 'auto';
@@ -142,7 +169,7 @@ export interface IStorage {
   ): Promise<UserPreferences>;
 
   // Bookmark sharing methods
-  generateShareId(): string;
+  generateShareId(name?: string, bookmarkId?: number): string;
   setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
   getSharedBookmark(
     shareId: string,
@@ -1024,8 +1051,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Bookmark sharing methods
-  generateShareId(): string {
-    return crypto.randomUUID();
+  generateShareId(name?: string, bookmarkId?: number): string {
+    return buildShareSlug(name, bookmarkId);
   }
 
   async setBookmarkSharing(
@@ -1033,8 +1060,42 @@ export class DatabaseStorage implements IStorage {
     bookmarkId: number,
     isShared: boolean,
   ): Promise<Bookmark> {
-    // If enabling sharing, generate a shareId; if disabling, set to null
-    const shareId = isShared ? this.generateShareId() : null;
+    const [targetBookmark] = await db
+      .select({ id: bookmarks.id, name: bookmarks.name })
+      .from(bookmarks)
+      .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)))
+      .limit(1);
+
+    if (!targetBookmark) {
+      throw new Error('Bookmark not found');
+    }
+
+    let shareId: string | null = null;
+
+    if (isShared) {
+      let attempt = 0;
+      const maxAttempts = 5;
+
+      while (attempt < maxAttempts) {
+        const candidate = this.generateShareId(targetBookmark.name, targetBookmark.id);
+        const [existing] = await db
+          .select({ id: bookmarks.id })
+          .from(bookmarks)
+          .where(eq(bookmarks.shareId, candidate))
+          .limit(1);
+
+        if (!existing) {
+          shareId = candidate;
+          break;
+        }
+
+        attempt += 1;
+      }
+
+      if (!shareId) {
+        throw new Error('Could not generate unique share URL');
+      }
+    }
 
     const [updatedBookmark] = await db
       .update(bookmarks)

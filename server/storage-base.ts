@@ -130,7 +130,7 @@ export interface IStorage {
   ): Promise<UserPreferences>;
 
   // Bookmark sharing methods
-  generateShareId(): string;
+  generateShareId(name?: string, bookmarkId?: number): string;
   setBookmarkSharing(userId: string, bookmarkId: number, isShared: boolean): Promise<Bookmark>;
   getSharedBookmark(
     shareId: string,
@@ -314,7 +314,7 @@ export abstract class BaseStorage implements IStorage {
     userId: string,
     preferences: Partial<InsertUserPreferences>,
   ): Promise<UserPreferences>;
-  abstract generateShareId(): string;
+  abstract generateShareId(name?: string, bookmarkId?: number): string;
   abstract setBookmarkSharing(
     userId: string,
     bookmarkId: number,

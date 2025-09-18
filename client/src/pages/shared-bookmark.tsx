@@ -204,7 +204,6 @@ export function SharedBookmark() {
                         className="w-full h-auto object-cover"
                         loading="lazy"
                         decoding="async"
-                        fetchPriority="low"
                         data-testid="shared-bookmark-screenshot"
                       />
                     </div>

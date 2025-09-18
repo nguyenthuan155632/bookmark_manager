@@ -228,8 +228,8 @@ export class DatabaseStorage extends BaseStorage implements IStorage {
   }
 
   // Bookmark sharing methods - delegate to BookmarkStorage
-  generateShareId(): string {
-    return this.bookmarkStorage.generateShareId();
+  generateShareId(name?: string, bookmarkId?: number): string {
+    return this.bookmarkStorage.generateShareId(name, bookmarkId);
   }
 
   async setBookmarkSharing(

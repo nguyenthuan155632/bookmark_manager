@@ -440,13 +440,11 @@ export function BookmarkCard({
             ref={imageRef}
             src={currentScreenshotUrl}
             alt={`Screenshot preview for ${bookmark.name} - ${bookmark.description || 'bookmark preview'}`}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             onLoad={handleImageLoad}
             onError={handleImageError}
             loading="lazy"
-            fetchPriority="low"
             decoding="async"
             data-testid={`thumbnail-image-${bookmark.id}`}
           />
@@ -521,11 +519,9 @@ export function BookmarkCard({
   return (
     <Card
       ref={cardRef}
-      className={`group hover:shadow-md transition-shadow ${
-        isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
-      } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${
-        bulkMode ? 'cursor-pointer' : ''
-      }`}
+      className={`group hover:shadow-md transition-shadow ${isProtected ? 'border-muted-foreground/20 bg-muted/20' : ''
+        } ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''} ${bulkMode ? 'cursor-pointer' : ''
+        }`}
       onClick={bulkMode ? () => onSelect?.(bookmark.id, !isSelected) : undefined}
       data-testid={`bookmark-card-${bookmark.id}`}
     >
@@ -732,9 +728,8 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
-                bookmark.isShared ? 'text-blue-500' : ''
-              }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${bookmark.isShared ? 'text-blue-500' : ''
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 onShare?.(bookmark);
@@ -781,9 +776,8 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${
-                generateScreenshotMutation.isPending ? 'animate-pulse' : ''
-              }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 ${generateScreenshotMutation.isPending ? 'animate-pulse' : ''
+                }`}
               onClick={handleGenerateScreenshot}
               disabled={
                 generateScreenshotMutation.isPending ||
@@ -807,9 +801,8 @@ export function BookmarkCard({
             <Button
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${
-                checkLinkMutation.isPending ? 'animate-pulse' : ''
-              }`}
+              className={`h-8 w-8 p-0 text-muted-foreground hover:text-green-500 ${checkLinkMutation.isPending ? 'animate-pulse' : ''
+                }`}
               onClick={handleCheckLink}
               disabled={checkLinkMutation.isPending || isProtected}
               title={checkLinkMutation.isPending ? 'Checking link...' : 'Check link now'}

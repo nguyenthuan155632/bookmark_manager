@@ -168,7 +168,7 @@ export const bookmarks = pgTable(
     userId: varchar('user_id').notNull(),
     passcodeHash: text('passcode_hash'),
     isShared: boolean('is_shared').default(false),
-    shareId: varchar('share_id', { length: 36 }).unique(),
+    shareId: varchar('share_id', { length: 160 }).unique(),
     screenshotUrl: text('screenshot_url'),
     screenshotStatus: varchar('screenshot_status', { length: 16 }).default('idle'),
     screenshotUpdatedAt: timestamp('screenshot_updated_at'),

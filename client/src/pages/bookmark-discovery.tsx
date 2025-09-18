@@ -6,12 +6,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ExternalLink, Star, Folder, TrendingUp, Users, Globe } from 'lucide-react';
+import { ExternalLink, Star, Folder, TrendingUp, Users, Globe, Eye } from 'lucide-react';
 
 interface Bookmark {
   id: number;
   name: string;
   description?: string;
+  shareId?: string | null;
   url: string;
   createdAt: string;
   screenshotUrl?: string;
@@ -290,16 +291,28 @@ export default function BookmarkDiscovery() {
                     </Link>
                   )}
 
-                  {/* Visit Button */}
-                  <a
-                    href={bookmark.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                  >
-                    <span>Visit</span>
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    {bookmark.shareId && (
+                      <Link
+                        to={`/shared/${bookmark.shareId}`}
+                        className="flex-1 inline-flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                        aria-label={`View shared details for ${bookmark.name}`}
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>Details</span>
+                      </Link>
+                    )}
+                    <a
+                      href={bookmark.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    >
+                      <span>Visit</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
                 </CardContent>
               </Card>
             ))}
