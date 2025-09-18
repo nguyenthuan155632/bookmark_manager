@@ -45,7 +45,9 @@ async function processAiFeaturesInBackground(
             const preferenceLanguage = preferences?.defaultAiLanguage;
             const resolvedLanguage =
               language ||
-              (preferenceLanguage && preferenceLanguage !== 'auto' ? preferenceLanguage : undefined);
+              (preferenceLanguage && preferenceLanguage !== 'auto'
+                ? preferenceLanguage
+                : undefined);
             const languageForGeneration =
               resolvedLanguage ?? (preferenceLanguage === 'auto' ? undefined : 'en');
             const suggested = await storage.generateAutoDescription(
@@ -852,8 +854,9 @@ export function registerBookmarkRoutes(app: Express) {
           suggestedTags: Array.isArray(item.suggestedTags) ? item.suggestedTags : [],
           isFavorite: !!item.isFavorite,
           categoryId: categoryId === null ? null : categoryId,
-          language:
-            ((item.language as string | null | undefined) || fallbackLanguage || 'en') as BookmarkLanguage,
+          language: ((item.language as string | null | undefined) ||
+            fallbackLanguage ||
+            'en') as BookmarkLanguage,
           passcodeHash: item.passcodeHash || null,
           screenshotUrl: item.screenshotUrl || null,
           screenshotStatus: item.screenshotStatus || 'idle',

@@ -179,8 +179,9 @@ function SortableCategoryItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ${isActive ? 'bg-primary' : ''
-        } ${isDragging ? 'opacity-60 scale-105 shadow-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'} ${isEditing ? 'cursor-default' : 'cursor-pointer'}
+      className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ${
+        isActive ? 'bg-primary' : ''
+      } ${isDragging ? 'opacity-60 scale-105 shadow-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'} ${isEditing ? 'cursor-default' : 'cursor-pointer'}
         text-slate-900 dark:text-slate-100 hover:text-inherit focus:text-inherit active:text-inherit dark:hover:text-inherit dark:focus:text-inherit dark:active:text-inherit
         }`}
       onClick={handleRowClick}
@@ -236,10 +237,11 @@ function SortableCategoryItem({
       {/* Badge Count */}
       <div className="ml-1 flex-shrink-0">
         <span
-          className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${isActive
-            ? 'bg-primary-foreground text-primary'
-            : 'bg-secondary text-secondary-foreground'
-            }`}
+          className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${
+            isActive
+              ? 'bg-primary-foreground text-primary'
+              : 'bg-secondary text-secondary-foreground'
+          }`}
         >
           {formatCount(category.bookmarkCount)}
         </span>
@@ -553,10 +555,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             const button = (
               <Button
                 variant={item.active ? 'default' : 'ghost'}
-                className={`w-full justify-start space-x-1 pr-0.5 ${item.active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-slate-800 dark:text-secondary-foreground hover:text-current dark:hover:text-current'
-                  }`}
+                className={`w-full justify-start space-x-1 pr-0.5 ${
+                  item.active
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-slate-800 dark:text-secondary-foreground hover:text-current dark:hover:text-current'
+                }`}
                 onClick={() => {
                   if (!item.external) onClose();
                 }}
@@ -566,10 +569,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.count !== undefined && (
                   <span
-                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${item.active
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-secondary text-secondary-foreground'
-                      }`}
+                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${
+                      item.active
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
+                    }`}
                   >
                     {formatCount(item.count)}
                   </span>
@@ -620,10 +624,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
             <div className="space-y-1">
               {/* Hidden protected bookmarks (synthetic, non-deletable) */}
               <div
-                className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ml-0 mr-1 pl-2 ${isCategoryActive('hidden')
-                  ? 'bg-primary'
-                  : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  } cursor-pointer`}
+                className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ml-0 mr-1 pl-2 ${
+                  isCategoryActive('hidden')
+                    ? 'bg-primary'
+                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                } cursor-pointer`}
                 role="button"
                 tabIndex={0}
                 onClick={() => {
@@ -645,10 +650,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 {/* Folder Name - Takes up most space */}
                 <div className="flex-1 min-w-0 flex items-center">
                   <span
-                    className={`block whitespace-normal break-words hyphens-auto leading-tight text-sm bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-medium ${isCategoryActive('hidden')
-                      ? 'text-primary-foreground'
-                      : 'text-slate-900 dark:text-slate-100'
-                      }`}
+                    className={`block whitespace-normal break-words hyphens-auto leading-tight text-sm bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent font-medium ${
+                      isCategoryActive('hidden')
+                        ? 'text-primary-foreground'
+                        : 'text-slate-900 dark:text-slate-100'
+                    }`}
                   >
                     Hidden
                   </span>
@@ -657,10 +663,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 {/* Badge Count */}
                 <div className="ml-1 flex-shrink-0">
                   <span
-                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${isCategoryActive('hidden')
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-secondary text-secondary-foreground'
-                      }`}
+                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${
+                      isCategoryActive('hidden')
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
+                    }`}
                   >
                     {formatCount(hiddenCount)}
                   </span>
@@ -674,10 +681,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
 
               {/* Default uncategorized folder (synthetic, non-deletable, pinned on top) */}
               <div
-                className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ml-0 mr-1 pl-2 ${isCategoryActive('uncategorized')
-                  ? 'bg-primary'
-                  : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  } cursor-pointer`}
+                className={`group flex items-center rounded-md px-0.5 py-0.5 transition-all duration-200 ease-in-out ml-0 mr-1 pl-2 ${
+                  isCategoryActive('uncategorized')
+                    ? 'bg-primary'
+                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                } cursor-pointer`}
                 role="button"
                 tabIndex={0}
                 onClick={() => {
@@ -699,10 +707,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 {/* Folder Name - Takes up most space */}
                 <div className="flex-1 min-w-0 flex items-center">
                   <span
-                    className={`block whitespace-normal break-words hyphens-auto leading-tight text-sm bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text font-medium ${isCategoryActive('uncategorized')
-                      ? 'text-primary-foreground'
-                      : 'text-slate-900 dark:text-slate-100'
-                      }`}
+                    className={`block whitespace-normal break-words hyphens-auto leading-tight text-sm bg-gradient-to-r from-blue-400 via-blue-500 to-indigo-500 bg-clip-text font-medium ${
+                      isCategoryActive('uncategorized')
+                        ? 'text-primary-foreground'
+                        : 'text-slate-900 dark:text-slate-100'
+                    }`}
                   >
                     Uncategorized
                   </span>
@@ -711,10 +720,11 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
                 {/* Badge Count */}
                 <div className="ml-1 flex-shrink-0">
                   <span
-                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${isCategoryActive('uncategorized')
-                      ? 'bg-primary-foreground text-primary'
-                      : 'bg-secondary text-secondary-foreground'
-                      }`}
+                    className={`text-xs w-6 h-6 rounded-full flex items-center justify-center ${
+                      isCategoryActive('uncategorized')
+                        ? 'bg-primary-foreground text-primary'
+                        : 'bg-secondary text-secondary-foreground'
+                    }`}
                   >
                     {formatCount(uncategorizedCount)}
                   </span>

@@ -613,12 +613,13 @@ export default function DocumentationPage() {
     return (
       <div key={section.id} className="select-none">
         <div
-          className={`mt-1 flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors ${level === 0
-            ? 'font-semibold text-slate-900 text-sm'
-            : level === 1
-              ? 'font-medium text-sm text-slate-700'
-              : 'text-sm text-slate-600'
-            } ${isSelected ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500' : ''}`}
+          className={`mt-1 flex items-center gap-2 py-2 px-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors ${
+            level === 0
+              ? 'font-semibold text-slate-900 text-sm'
+              : level === 1
+                ? 'font-medium text-sm text-slate-700'
+                : 'text-sm text-slate-600'
+          } ${isSelected ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-500' : ''}`}
           onClick={() => {
             if (hasChildren) {
               toggleSection(section.id);

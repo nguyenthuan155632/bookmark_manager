@@ -159,7 +159,7 @@ async function loadState() {
 
   let base = stored.memorizeBaseUrl;
   if (!base) {
-    base = isDev ? 'http://localhost:4001' : 'https://vensera.up.railway.app';
+    base = isDev ? 'http://localhost:4001' : 'https://memorize.click';
     await chrome.storage.local.set({ memorizeBaseUrl: base });
   }
   els.baseUrl.value = base;

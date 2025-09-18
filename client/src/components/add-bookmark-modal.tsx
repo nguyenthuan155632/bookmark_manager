@@ -804,9 +804,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
                 <SelectValue placeholder="Select language" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="default">
-                  Use account default ({accountDefaultLabel})
-                </SelectItem>
+                <SelectItem value="default">Use account default ({accountDefaultLabel})</SelectItem>
                 {LANGUAGE_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -815,7 +813,8 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              AI descriptions follow your account default (auto detects the site language if selected).
+              AI descriptions follow your account default (auto detects the site language if
+              selected).
             </p>
             {form.formState.errors.language && (
               <p className="text-sm text-destructive" data-testid="error-language">

@@ -9,10 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useTheme } from '@/lib/theme';
 import { apiRequest } from '@/lib/queryClient';
-import {
-  PREFERENCE_AI_LANGUAGES,
-  PREFERENCE_AI_LANGUAGE_LABELS,
-} from '@shared/schema';
+import { PREFERENCE_AI_LANGUAGES, PREFERENCE_AI_LANGUAGE_LABELS } from '@shared/schema';
 import type { Category, PreferenceAiLanguage } from '@shared/schema';
 // import { formatDistanceToNow } from 'date-fns';
 import { Sidebar } from '@/components/sidebar';

@@ -504,7 +504,8 @@ function CreateDomainTagDialog({ onSave }: { onSave: (data: Partial<DomainTag>) 
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="domain">Domain</Label><span className="text-red-500">*</span>
+          <Label htmlFor="domain">Domain</Label>
+          <span className="text-red-500">*</span>
           <Input
             id="domain"
             value={formData.domain}
@@ -651,7 +652,8 @@ function EditDomainTagDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="domain">Domain</Label><span className="text-red-500">*</span>
+            <Label htmlFor="domain">Domain</Label>
+            <span className="text-red-500">*</span>
             <Input
               id="domain"
               value={formData.domain}

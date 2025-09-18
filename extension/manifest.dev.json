@@ -12,7 +12,7 @@
     }
   },
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://vensera.up.railway.app/*"],
+  "host_permissions": ["https://memorize.click/*"],
   "optional_host_permissions": ["http://localhost:4001/*"],
   "icons": {
     "16": "icon-16.png",
