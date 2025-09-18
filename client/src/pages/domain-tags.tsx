@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Plus, Edit, Trash2, Globe, Tag, Filter, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 interface DomainTag {
   id: number;
@@ -51,6 +52,23 @@ interface Category {
   count: number;
 }
 
+const normalizeDomainInput = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error('Invalid domain');
+  }
+
+  const candidate = trimmed.includes('://') ? trimmed : `https://${trimmed}`;
+  const url = new URL(candidate);
+  const hostname = url.hostname.toLowerCase();
+
+  if (!hostname || hostname.includes(' ') || !hostname.includes('.')) {
+    throw new Error('Invalid domain');
+  }
+
+  return hostname;
+};
+
 export default function DomainTagsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -59,6 +77,8 @@ export default function DomainTagsPage() {
   const [editingDomain, setEditingDomain] = useState<DomainTag | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isAdmin = useMemo(() => user?.username === 'vensera', [user?.username]);
 
   // Fetch domain tags with infinite query for pagination
   const {
@@ -84,6 +104,8 @@ export default function DomainTagsPage() {
       if (showInactive) params.set('isActive', 'false');
       params.set('limit', '20');
       params.set('offset', (pageParam as number).toString());
+      params.set('sortBy', 'createdAt');
+      params.set('sortOrder', 'desc');
 
       const response = await fetch(`/api/domain-tags?${params.toString()}`, {
         credentials: 'include',
@@ -217,7 +239,8 @@ export default function DomainTagsPage() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold">Domain Tags</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Manage domain-to-tags mappings for automatic bookmark tagging
+            Contribute domain-to-tag mappings so the community gets better automatic tagging.
+            Everyone can add domains; only admins moderate existing entries.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -361,26 +384,28 @@ export default function DomainTagsPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 sm:ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingDomain(domainTag)}
-                      className="flex-1 sm:flex-none"
-                    >
-                      <Edit className="h-4 w-4 sm:mr-0 mr-2" />
-                      <span className="sm:hidden">Edit</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(domainTag.id)}
-                      className="flex-1 sm:flex-none"
-                    >
-                      <Trash2 className="h-4 w-4 sm:mr-0 mr-2" />
-                      <span className="sm:hidden">Delete</span>
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-2 sm:ml-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingDomain(domainTag)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Edit className="h-4 w-4 sm:mr-0 mr-2" />
+                        <span className="sm:hidden">Edit</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(domainTag.id)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Trash2 className="h-4 w-4 sm:mr-0 mr-2" />
+                        <span className="sm:hidden">Delete</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -444,6 +469,18 @@ function CreateDomainTagDialog({ onSave }: { onSave: (data: Partial<DomainTag>) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    let normalizedDomain: string;
+    try {
+      normalizedDomain = normalizeDomainInput(formData.domain);
+    } catch {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a valid URL (e.g., https://example.com).',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (formData.tags.length === 0) {
       toast({
         title: 'Validation Error',
@@ -452,7 +489,9 @@ function CreateDomainTagDialog({ onSave }: { onSave: (data: Partial<DomainTag>) 
       });
       return;
     }
-    onSave(formData);
+    const payload = { ...formData, domain: normalizedDomain };
+    setFormData(payload);
+    onSave(payload);
   };
 
   return (
@@ -465,7 +504,7 @@ function CreateDomainTagDialog({ onSave }: { onSave: (data: Partial<DomainTag>) 
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="domain">Domain</Label>
+          <Label htmlFor="domain">Domain</Label><span className="text-red-500">*</span>
           <Input
             id="domain"
             value={formData.domain}
@@ -577,6 +616,19 @@ function EditDomainTagDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    let normalizedDomain: string;
+    try {
+      normalizedDomain = normalizeDomainInput(formData.domain);
+    } catch {
+      toast({
+        title: 'Validation Error',
+        description: 'Please enter a valid URL (e.g., https://example.com).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (formData.tags.length === 0) {
       toast({
         title: 'Validation Error',
@@ -585,7 +637,9 @@ function EditDomainTagDialog({
       });
       return;
     }
-    onSave(formData);
+    const payload = { ...formData, domain: normalizedDomain };
+    setFormData(payload);
+    onSave(payload);
   };
 
   return (
@@ -597,7 +651,7 @@ function EditDomainTagDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="domain">Domain</Label>
+            <Label htmlFor="domain">Domain</Label><span className="text-red-500">*</span>
             <Input
               id="domain"
               value={formData.domain}

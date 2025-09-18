@@ -46,7 +46,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/lib/seo';
-import { useAuth } from '@/hooks/use-auth';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -500,7 +499,6 @@ export default function DocumentationPage() {
   );
   const [selectedContent, setSelectedContent] = useState<string>('overview');
   const [content, setContent] = useState<DocumentationContent>({});
-  const { user } = useAuth();
 
   // No need for stats query in documentation page
 
@@ -752,7 +750,6 @@ export default function DocumentationPage() {
               <h1 className="text-xl font-semibold text-slate-900">Documentation</h1>
             </div>
             <div className="flex items-center gap-4 hidden sm:flex">
-              <div className="text-sm text-slate-500">Signed in as {user?.username}</div>
               <Button
                 variant="outline"
                 size="sm"

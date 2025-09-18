@@ -22,7 +22,7 @@ function Router() {
       <ProtectedRoute path="/category/:slug" component={Bookmarks} />
       <ProtectedRoute path="/domain-tags" component={DomainTagsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/documentation" component={DocumentationPage} />
+      <Route path="/documentation" component={DocumentationPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/shared/:shareId" component={SharedBookmark} />
       <Route component={NotFound} />
