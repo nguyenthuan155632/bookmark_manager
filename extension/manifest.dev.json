@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Memorize Bookmark (Dev)",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dev build: save and organize current page to Memorize Vault.",
   "action": {
     "default_title": "Save to Memorize",

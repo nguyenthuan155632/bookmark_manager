@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.1 - 2025-09-18
+
+- Refreshed small UI with checkboxes's alignment.
+- Add the link to offical website.
+
 ## 0.2.0 - 2025-09-17
 
 - Refreshed popup to UI 2.0 with glassmorphism styling, improved typography, and dark-mode tweaks.

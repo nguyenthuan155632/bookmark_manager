@@ -43,8 +43,7 @@ async function processAiFeaturesInBackground(
 
             const preferences = await storage.getUserPreferences(userId);
             const preferenceLanguage = preferences?.defaultAiLanguage;
-            const resolvedLanguage =
-              language && language !== 'auto' ? language : undefined;
+            const resolvedLanguage = language && language !== 'auto' ? language : undefined;
             const preferenceFallback =
               preferenceLanguage === 'auto' ? undefined : preferenceLanguage;
             const languageForGeneration = resolvedLanguage ?? preferenceFallback;

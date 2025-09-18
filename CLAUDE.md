@@ -14,6 +14,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Database Operations
 
 - `npm run db:push` - Push database schema changes using Drizzle Kit
+- `npm run db:reset:dev` - Complete database reset for development (delete, push, init, search, seed)
+- `npm run db:reset:prod` - Complete database reset for production (delete, push, init, search)
+- `npm run seed` - Seed database with initial data
+- `npm run deploy:search` - Deploy full-text search functionality
+
+### Code Quality
+
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Run ESLint with automatic fixes
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting with Prettier
+- `npm run ci` - Run all CI checks (type check, lint, format, test)
+
+### Testing
+
+- `npm run test` - Run tests with Vitest
+- `npm run test:watch` - Run tests in watch mode
 
 ## Project Architecture
 
@@ -88,7 +105,8 @@ This is a full-stack bookmark manager application using a modern React + Express
 **Testing & Quality:**
 
 - TypeScript type checking via `npm run check`
-- No test framework configured (consider adding Vitest or Jest)
+- Vitest for unit testing
+- ESLint and Prettier for code quality
 
 ### Important Configuration Files
 
@@ -105,3 +123,26 @@ The application uses a user-isolated architecture where all data (bookmarks, cat
 - Bookmark sharing with passcodes
 - Screenshot capture and link status checking
 - Tag-based organization
+- Full-text search capabilities
+- AI-powered auto-tagging and description generation
+- Domain-based tag suggestions
+
+### Environment Variables
+
+Required:
+
+- `DATABASE_URL` - PostgreSQL connection string
+- `SESSION_SECRET` - Secret for session encryption
+
+Optional:
+
+- `THUMIO_TOKEN` - Thum.io auth token for screenshots
+- `OPENROUTER_API_KEY` - For AI-powered features
+- `VITE_PUBLIC_BASE_URL` - Public base URL for the site
+- Various AI model and timeout configurations
+
+### Path Aliases
+
+- `@/` → `client/src/`
+- `@shared/` → `shared/`
+- `@assets/` → `attached_assets/`

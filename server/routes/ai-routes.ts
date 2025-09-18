@@ -23,7 +23,7 @@ export function registerAiRoutes(app: Express) {
       const { url, name, description, language } = previewSchema.parse(req.body);
       const userId = getUserId(req);
       const userPreferences = userId ? await storage.getUserPreferences(userId) : undefined;
-      const preferredLanguage = language === 'auto' ? undefined : language ?? undefined;
+      const preferredLanguage = language === 'auto' ? undefined : (language ?? undefined);
       const preferenceLanguage = userPreferences?.defaultAiLanguage;
       const preferenceFallback = preferenceLanguage === 'auto' ? undefined : preferenceLanguage;
       const languageForGeneration = preferredLanguage ?? preferenceFallback;
@@ -106,7 +106,7 @@ export function registerAiRoutes(app: Express) {
         {
           userId,
           language:
-            (bookmark.language === 'auto' ? undefined : bookmark.language ?? undefined) ??
+            (bookmark.language === 'auto' ? undefined : (bookmark.language ?? undefined)) ??
             preferenceFallback,
         },
       );
