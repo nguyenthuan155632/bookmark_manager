@@ -23,14 +23,10 @@ export function registerAiRoutes(app: Express) {
       const { url, name, description, language } = previewSchema.parse(req.body);
       const userId = getUserId(req);
       const userPreferences = userId ? await storage.getUserPreferences(userId) : undefined;
-      const preferredLanguage = language ?? undefined;
+      const preferredLanguage = language === 'auto' ? undefined : language ?? undefined;
       const preferenceLanguage = userPreferences?.defaultAiLanguage;
-      const effectivePreference =
-        preferenceLanguage && preferenceLanguage !== 'auto' ? preferenceLanguage : undefined;
-      const languageForGeneration =
-        preferredLanguage ??
-        effectivePreference ??
-        (preferenceLanguage === 'auto' ? undefined : 'en');
+      const preferenceFallback = preferenceLanguage === 'auto' ? undefined : preferenceLanguage;
+      const languageForGeneration = preferredLanguage ?? preferenceFallback;
       const decision = await getAiChargeDecision(userId, 'desc');
       let usageRemaining: number | null = decision.remaining;
       if (decision.shouldCharge) {
@@ -102,8 +98,7 @@ export function registerAiRoutes(app: Express) {
 
       const userPreferences = await storage.getUserPreferences(userId);
       const preferenceLanguage = userPreferences?.defaultAiLanguage;
-      const effectivePreference =
-        preferenceLanguage && preferenceLanguage !== 'auto' ? preferenceLanguage : undefined;
+      const preferenceFallback = preferenceLanguage === 'auto' ? undefined : preferenceLanguage;
       const suggestedDescription = await storage.generateAutoDescription(
         bookmark.url,
         bookmark.name,
@@ -111,9 +106,8 @@ export function registerAiRoutes(app: Express) {
         {
           userId,
           language:
-            bookmark.language ||
-            effectivePreference ||
-            (preferenceLanguage === 'auto' ? undefined : 'en'),
+            (bookmark.language === 'auto' ? undefined : bookmark.language ?? undefined) ??
+            preferenceFallback,
         },
       );
 

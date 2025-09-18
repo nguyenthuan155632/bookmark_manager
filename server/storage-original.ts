@@ -13,9 +13,10 @@ import {
   type UserPreferences,
   type InsertUserPreferences,
   apiTokens,
-  BOOKMARK_LANGUAGES,
+  BASE_BOOKMARK_LANGUAGES,
   BOOKMARK_LANGUAGE_LABELS,
   type BookmarkLanguage,
+  bookmarkLanguageEnum,
 } from '@shared/schema';
 import { db, pool } from './db';
 import { eq, ilike, or, desc, asc, and, isNull, sql, inArray } from 'drizzle-orm';
@@ -34,6 +35,16 @@ const logAI = (...args: any[]) => {
     // ignore logging errors
   }
 };
+
+function normalizeBookmarkLanguage(input: unknown): BookmarkLanguage {
+  if (typeof input !== 'string') return 'auto';
+  const normalized = input.trim().toLowerCase();
+  const parsed = bookmarkLanguageEnum.safeParse(normalized);
+  if (parsed.success) {
+    return parsed.data as BookmarkLanguage;
+  }
+  return 'auto';
+}
 
 const PgSession = ConnectPgSimple(session);
 
@@ -475,10 +486,7 @@ export class DatabaseStorage implements IStorage {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     const { language: incomingLanguage, ...restWithoutLanguage } = bookmarkWithoutPasscode as any;
-    const normalizedLanguage =
-      typeof incomingLanguage === 'string' && incomingLanguage && incomingLanguage !== 'auto'
-        ? incomingLanguage
-        : 'en';
+    const normalizedLanguage = normalizeBookmarkLanguage(incomingLanguage);
 
     let bookmarkData: InsertBookmarkInternal = {
       ...restWithoutLanguage,
@@ -517,7 +525,7 @@ export class DatabaseStorage implements IStorage {
     };
 
     if (updateLanguage !== null && updateLanguage !== undefined) {
-      updateData.language = updateLanguage === 'auto' ? 'en' : updateLanguage;
+      updateData.language = normalizeBookmarkLanguage(updateLanguage);
     }
 
     // Hash passcode if provided and not null/undefined
@@ -1562,15 +1570,15 @@ export class DatabaseStorage implements IStorage {
       const requestedLanguage = opts?.language?.trim().toLowerCase() || '';
       const normalizedLanguage = requestedLanguage.split('-')[0];
       let targetLanguage: BookmarkLanguage | undefined;
-      if (normalizedLanguage) {
-        if ((BOOKMARK_LANGUAGES as readonly string[]).includes(normalizedLanguage)) {
+      if (normalizedLanguage && normalizedLanguage !== 'auto') {
+        if ((BASE_BOOKMARK_LANGUAGES as readonly string[]).includes(normalizedLanguage)) {
           targetLanguage = normalizedLanguage as BookmarkLanguage;
         }
       }
       if (!targetLanguage && prefs?.defaultAiLanguage && prefs.defaultAiLanguage !== 'auto') {
         const prefLanguage = String(prefs.defaultAiLanguage).trim().toLowerCase();
         const prefNormalized = prefLanguage.split('-')[0];
-        if ((BOOKMARK_LANGUAGES as readonly string[]).includes(prefNormalized)) {
+        if ((BASE_BOOKMARK_LANGUAGES as readonly string[]).includes(prefNormalized)) {
           targetLanguage = prefNormalized as BookmarkLanguage;
         }
       }

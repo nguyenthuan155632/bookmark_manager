@@ -18,7 +18,7 @@ export function registerPreferencesRoutes(app: Express) {
           theme: 'light',
           viewMode: 'grid',
           aiUsageLimit: 50,
-          defaultAiLanguage: 'en',
+          defaultAiLanguage: 'auto',
         });
       }
       res.json(preferences);

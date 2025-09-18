@@ -5,6 +5,8 @@ import {
   type InsertBookmark,
   type InsertBookmarkInternal,
   type Category,
+  bookmarkLanguageEnum,
+  type BookmarkLanguage,
 } from '@shared/schema';
 import {
   db,
@@ -20,6 +22,16 @@ import {
   bcrypt,
   crypto,
 } from './storage-base';
+
+function normalizeBookmarkLanguage(input: unknown): BookmarkLanguage {
+  if (typeof input !== 'string') return 'auto';
+  const normalized = input.trim().toLowerCase();
+  const parsed = bookmarkLanguageEnum.safeParse(normalized);
+  if (parsed.success) {
+    return parsed.data as BookmarkLanguage;
+  }
+  return 'auto';
+}
 
 export class BookmarkStorage {
   // Bookmark methods
@@ -289,10 +301,7 @@ export class BookmarkStorage {
     // Map client-facing 'passcode' to internal 'passcodeHash'
     const { passcode, ...bookmarkWithoutPasscode } = bookmark;
     const { language: incomingLanguage, ...restWithoutLanguage } = bookmarkWithoutPasscode as any;
-    const normalizedLanguage =
-      typeof incomingLanguage === 'string' && incomingLanguage && incomingLanguage !== 'auto'
-        ? incomingLanguage
-        : 'en';
+    const normalizedLanguage = normalizeBookmarkLanguage(incomingLanguage);
 
     let bookmarkData: InsertBookmarkInternal = {
       ...restWithoutLanguage,
@@ -334,7 +343,7 @@ export class BookmarkStorage {
     };
 
     if (updateLanguage !== null && updateLanguage !== undefined) {
-      updateData.language = updateLanguage === 'auto' ? 'en' : updateLanguage;
+      updateData.language = normalizeBookmarkLanguage(updateLanguage);
     }
 
     // Hash passcode if provided and not null/undefined

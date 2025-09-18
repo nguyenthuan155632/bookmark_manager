@@ -131,7 +131,7 @@ export default function SettingsPage() {
   const aiTaggingEnabled = preferences?.aiTaggingEnabled ?? false;
   const autoDescEnabled = preferences?.autoDescriptionEnabled ?? true;
   const aiDescEnabled = preferences?.aiDescriptionEnabled ?? false;
-  const defaultAiLanguage = (preferences?.defaultAiLanguage || 'en') as PreferenceAiLanguage;
+  const defaultAiLanguage = (preferences?.defaultAiLanguage || 'auto') as PreferenceAiLanguage;
   const LANGUAGE_OPTIONS = PREFERENCE_AI_LANGUAGES.map((code) => ({
     value: code,
     label: PREFERENCE_AI_LANGUAGE_LABELS[code],

@@ -101,7 +101,7 @@ export function AddBookmarkModal({ isOpen, onClose, editingBookmark }: AddBookma
     queryKey: ['/api/preferences'],
   });
 
-  const accountDefaultLanguage = (preferences?.defaultAiLanguage || 'en') as PreferenceAiLanguage;
+  const accountDefaultLanguage = (preferences?.defaultAiLanguage || 'auto') as PreferenceAiLanguage;
   const accountDefaultLabel = PREFERENCE_AI_LANGUAGE_LABELS[accountDefaultLanguage];
 
   const form = useForm<FormData & { removeVerify?: string }>({

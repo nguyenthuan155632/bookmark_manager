@@ -110,7 +110,7 @@ export class UserStorage {
           theme: preferences.theme || 'light',
           viewMode: preferences.viewMode || 'grid',
           aiUsageLimit: preferences.aiUsageLimit ?? 50,
-          defaultAiLanguage: preferences.defaultAiLanguage || 'en',
+          defaultAiLanguage: preferences.defaultAiLanguage || 'auto',
         })
         .returning();
       return newPreferences;

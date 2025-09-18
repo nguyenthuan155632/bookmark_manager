@@ -14,7 +14,7 @@ import { relations } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
-export const BOOKMARK_LANGUAGES = [
+export const BASE_BOOKMARK_LANGUAGES = [
   'en',
   'vi',
   'es',
@@ -37,9 +37,11 @@ export const BOOKMARK_LANGUAGES = [
   'uk',
   'he',
 ] as const;
+export const BOOKMARK_LANGUAGES = ['auto', ...BASE_BOOKMARK_LANGUAGES] as const;
 export const bookmarkLanguageEnum = z.enum(BOOKMARK_LANGUAGES);
 export type BookmarkLanguage = (typeof BOOKMARK_LANGUAGES)[number];
 export const BOOKMARK_LANGUAGE_LABELS: Record<BookmarkLanguage, string> = {
+  auto: 'Auto Detect',
   en: 'English',
   vi: 'Vietnamese',
   es: 'Spanish',
@@ -63,11 +65,10 @@ export const BOOKMARK_LANGUAGE_LABELS: Record<BookmarkLanguage, string> = {
   he: 'Hebrew',
 };
 
-export const PREFERENCE_AI_LANGUAGES = ['auto', ...BOOKMARK_LANGUAGES] as const;
+export const PREFERENCE_AI_LANGUAGES = BOOKMARK_LANGUAGES;
 export const preferenceAiLanguageEnum = z.enum(PREFERENCE_AI_LANGUAGES);
 export type PreferenceAiLanguage = (typeof PREFERENCE_AI_LANGUAGES)[number];
 export const PREFERENCE_AI_LANGUAGE_LABELS: Record<PreferenceAiLanguage, string> = {
-  auto: 'Auto Detect',
   ...BOOKMARK_LANGUAGE_LABELS,
 };
 
@@ -96,7 +97,7 @@ export const userPreferences = pgTable('user_preferences', {
   autoDescriptionEnabled: boolean('auto_description_enabled').default(true),
   aiDescriptionEnabled: boolean('ai_description_enabled').default(false),
   aiUsageLimit: integer('ai_usage_limit').default(50),
-  defaultAiLanguage: varchar('default_ai_language', { length: 16 }).notNull().default('en'),
+  defaultAiLanguage: varchar('default_ai_language', { length: 16 }).notNull().default('auto'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -158,7 +159,7 @@ export const bookmarks = pgTable(
     id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
-    language: varchar('language', { length: 16 }).notNull().default('en'),
+    language: varchar('language', { length: 16 }).notNull().default('auto'),
     url: text('url').notNull(),
     tags: text('tags').array().default([]),
     suggestedTags: text('suggested_tags').array().default([]),

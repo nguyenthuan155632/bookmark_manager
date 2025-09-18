@@ -2,7 +2,7 @@ import {
   bookmarks,
   domainTags,
   type Bookmark,
-  BOOKMARK_LANGUAGES,
+  BASE_BOOKMARK_LANGUAGES,
   BOOKMARK_LANGUAGE_LABELS,
   type BookmarkLanguage,
 } from '@shared/schema';
@@ -454,15 +454,15 @@ export class AIStorage {
       const requestedLanguage = opts?.language?.trim().toLowerCase() || '';
       const normalizedLanguage = requestedLanguage.split('-')[0];
       let targetLanguage: BookmarkLanguage | undefined;
-      if (normalizedLanguage) {
-        if ((BOOKMARK_LANGUAGES as readonly string[]).includes(normalizedLanguage)) {
+      if (normalizedLanguage && normalizedLanguage !== 'auto') {
+        if ((BASE_BOOKMARK_LANGUAGES as readonly string[]).includes(normalizedLanguage)) {
           targetLanguage = normalizedLanguage as BookmarkLanguage;
         }
       }
       if (!targetLanguage && prefs?.defaultAiLanguage && prefs.defaultAiLanguage !== 'auto') {
         const prefLanguage = String(prefs.defaultAiLanguage).trim().toLowerCase();
         const prefNormalized = prefLanguage.split('-')[0];
-        if ((BOOKMARK_LANGUAGES as readonly string[]).includes(prefNormalized)) {
+        if ((BASE_BOOKMARK_LANGUAGES as readonly string[]).includes(prefNormalized)) {
           targetLanguage = prefNormalized as BookmarkLanguage;
         }
       }
