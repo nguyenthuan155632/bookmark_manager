@@ -41,6 +41,11 @@ function normalizeHostForProtocol(host: string, protocol: string): string {
   return `${hostname}:${port}`;
 }
 
+function isLoopbackHost(host: string): boolean {
+  const hostname = host.split(':')[0]?.toLowerCase();
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   if (isProduction && canonicalUrl) {
     const canonicalProtocol = canonicalUrl.protocol.replace(':', '');
@@ -48,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     app.use((req, res, next) => {
       const hostHeader = req.headers.host;
-      if (!hostHeader) {
+      if (!hostHeader || isLoopbackHost(hostHeader)) {
         return next();
       }
 

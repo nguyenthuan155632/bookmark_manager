@@ -1,12 +1,150 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from 'express';
+import { gzipSync } from 'node:zlib';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic, log } from './vite';
+
+const MIN_HTML_COMPRESSION_SIZE = 1024; // avoid compressing tiny payloads
 
 const app = express();
 app.set('trust proxy', true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+app.use((req, res, next) => {
+  if (req.method === 'HEAD') {
+    return next();
+  }
+
+  const acceptEncoding = req.headers['accept-encoding'];
+  const acceptsGzip = Array.isArray(acceptEncoding)
+    ? acceptEncoding.some((value) => value.toLowerCase().includes('gzip'))
+    : typeof acceptEncoding === 'string'
+      ? acceptEncoding.toLowerCase().includes('gzip')
+      : false;
+
+  if (!acceptsGzip) {
+    return next();
+  }
+
+  const originalWrite = res.write.bind(res);
+  const originalEnd = res.end.bind(res);
+
+  let buffering = true;
+  const chunks: Buffer[] = [];
+
+  function appendVaryHeader() {
+    const varyHeader = res.getHeader('Vary');
+    if (!varyHeader) {
+      res.setHeader('Vary', 'Accept-Encoding');
+    } else if (typeof varyHeader === 'string' && !varyHeader.includes('Accept-Encoding')) {
+      res.setHeader('Vary', `${varyHeader}, Accept-Encoding`);
+    } else if (Array.isArray(varyHeader) && !varyHeader.includes('Accept-Encoding')) {
+      res.setHeader('Vary', [...varyHeader, 'Accept-Encoding']);
+    }
+  }
+
+  function restoreAndFlush(bufferToWrite?: Buffer) {
+    buffering = false;
+    res.write = originalWrite as typeof res.write;
+    res.end = originalEnd as typeof res.end;
+
+    if (bufferToWrite && bufferToWrite.length > 0) {
+      originalWrite(bufferToWrite);
+    } else if (chunks.length > 0) {
+      for (const chunk of chunks) {
+        originalWrite(chunk);
+      }
+    }
+    chunks.length = 0;
+  }
+
+  res.write = function overrideWrite(chunk: any, encoding?: any, callback?: any) {
+    if (!buffering) {
+      return originalWrite(chunk, encoding, callback);
+    }
+
+    const contentType = res.getHeader('Content-Type');
+    if (contentType && !String(contentType).toLowerCase().startsWith('text/html')) {
+      restoreAndFlush();
+      return originalWrite(chunk, encoding, callback);
+    }
+
+    const bufferChunk = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding);
+    chunks.push(bufferChunk);
+    if (typeof callback === 'function') {
+      callback();
+    }
+    return true;
+  } as typeof res.write;
+
+  res.end = function overrideEnd(chunk?: any, encoding?: any, callback?: any) {
+    if (chunk) {
+      res.write(chunk, encoding);
+    }
+
+    const contentType = res.getHeader('Content-Type');
+    const isHtml = contentType ? String(contentType).toLowerCase().startsWith('text/html') : false;
+
+    if (!buffering || !isHtml) {
+      restoreAndFlush();
+      const endArgs: any[] = [];
+      if (typeof callback === 'function') {
+        endArgs.push(callback);
+      } else if (typeof encoding === 'function') {
+        endArgs.push(encoding);
+      }
+      return originalEnd(...endArgs);
+    }
+
+    const buffer = Buffer.concat(chunks);
+    if (buffer.length < MIN_HTML_COMPRESSION_SIZE) {
+      restoreAndFlush(buffer);
+      const endArgs: any[] = [];
+      if (typeof callback === 'function') {
+        endArgs.push(callback);
+      } else if (typeof encoding === 'function') {
+        endArgs.push(encoding);
+      }
+      return originalEnd(...endArgs);
+    }
+
+    try {
+      const compressed = gzipSync(buffer);
+      appendVaryHeader();
+
+      res.setHeader('Content-Encoding', 'gzip');
+      res.setHeader('Content-Length', compressed.length.toString());
+
+      restoreAndFlush(compressed);
+      const endArgs: any[] = [];
+      if (typeof callback === 'function') {
+        endArgs.push(callback);
+      } else if (typeof encoding === 'function') {
+        endArgs.push(encoding);
+      }
+      return originalEnd(...endArgs);
+    } catch (error) {
+      restoreAndFlush(buffer);
+      const endArgs: any[] = [];
+      if (typeof callback === 'function') {
+        endArgs.push(callback);
+      } else if (typeof encoding === 'function') {
+        endArgs.push(encoding);
+      }
+      return originalEnd(...endArgs);
+    }
+  } as typeof res.end;
+
+  res.on('finish', () => {
+    buffering = false;
+    res.write = originalWrite as typeof res.write;
+    res.end = originalEnd as typeof res.end;
+    chunks.length = 0;
+  });
+
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
