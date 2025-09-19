@@ -17,7 +17,61 @@ import { registerDomainTagsRoutes } from './routes/domain-tags-routes';
 import { registerDocumentationRoutes } from './routes/documentation-routes';
 import { registerBookmarkDiscoveryRoutes } from './routes/bookmark-discovery-routes';
 
+const CANONICAL_BASE_URL =
+  process.env.CANONICAL_BASE_URL?.trim() || process.env.VITE_PUBLIC_BASE_URL?.trim();
+
+const canonicalUrl = (() => {
+  if (!CANONICAL_BASE_URL) return undefined;
+  try {
+    return new URL(CANONICAL_BASE_URL);
+  } catch (error) {
+    console.warn('Invalid canonical base URL:', CANONICAL_BASE_URL, error);
+    return undefined;
+  }
+})();
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+function normalizeHostForProtocol(host: string, protocol: string): string {
+  const [hostname, port] = host.toLowerCase().split(':');
+  const defaultPort = protocol === 'https' ? '443' : protocol === 'http' ? '80' : '';
+  if (!port || port === defaultPort) {
+    return hostname;
+  }
+  return `${hostname}:${port}`;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  if (isProduction && canonicalUrl) {
+    const canonicalProtocol = canonicalUrl.protocol.replace(':', '');
+    const normalizedCanonicalHost = normalizeHostForProtocol(canonicalUrl.host, canonicalProtocol);
+
+    app.use((req, res, next) => {
+      const hostHeader = req.headers.host;
+      if (!hostHeader) {
+        return next();
+      }
+
+      if (req.method !== 'GET' && req.method !== 'HEAD') {
+        return next();
+      }
+
+      const requestProtocol = req.protocol;
+      const normalizedRequestHost = normalizeHostForProtocol(hostHeader, requestProtocol);
+
+      const protocolMismatch = canonicalProtocol && requestProtocol !== canonicalProtocol;
+      const hostMismatch = normalizedRequestHost !== normalizedCanonicalHost;
+
+      if (protocolMismatch || hostMismatch) {
+        const redirectUrl = `${canonicalUrl.protocol}//${canonicalUrl.host}${req.originalUrl || req.url}`;
+        res.redirect(301, redirectUrl);
+        return;
+      }
+
+      next();
+    });
+  }
+
   // Setup authentication first - this adds passport middleware and session support
   setupAuth(app);
 
@@ -59,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerLinkCheckerRoutes(app);
   registerDomainTagsRoutes(app);
   registerDocumentationRoutes(app);
-  
+
   const httpServer = createServer(app);
   return httpServer;
 }
