@@ -25,7 +25,23 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1000, // Increase chunk size warning limit to 1000kb
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@tanstack')) {
+              return 'vendor-tanstack';
+            }
+            if (id.includes('lucide-react') || id.includes('framer-motion')) {
+              return 'vendor-ui';
+            }
+            return 'vendor';
+          }
+        },
+      },
+    },
+    sourcemap: true,
   },
   server: {
     fs: {
