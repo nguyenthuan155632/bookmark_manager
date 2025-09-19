@@ -21,7 +21,7 @@ Disallow: /category/
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: /sitemap.xml
+Sitemap: https://memorize.click/sitemap.xml
 
 # Additional directives
 User-agent: GPTBot
@@ -35,4 +35,3 @@ Disallow: /
 
 User-agent: anthropic-ai
 Disallow: /
-

@@ -61,11 +61,15 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted flex flex-col lg:flex-row">
       <SEO
-        title={isRegisterMode ? 'Create Account' : 'Sign In'}
+        title={
+          isRegisterMode
+            ? 'Create Account | Memorize Vault – AI Bookmark Manager'
+            : 'Sign In | Memorize Vault – AI Bookmark Manager'
+        }
         description={
           isRegisterMode
-            ? 'Create your Memorize account to save and organize bookmarks across devices.'
-            : 'Sign in to access your Memorize bookmark collection.'
+            ? 'Create your Memorize Vault account to build an AI-assisted bookmark manager and shared knowledge base for your team.'
+            : 'Sign in to Memorize Vault to manage your AI-powered bookmark manager, shared knowledge base, and organized research library.'
         }
         noindex
       />
@@ -74,7 +78,9 @@ export default function AuthPage() {
         <Card className="relative w-full max-w-md overflow-hidden border border-emerald-200/70 bg-white/90 text-slate-900 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-colors duration-300 before:absolute before:inset-0 before:bg-gradient-to-br before:from-white/90 before:via-slate-100/70 before:to-emerald-100/40 before:opacity-95 before:content-[''] after:pointer-events-none after:absolute after:-top-32 after:right-0 after:h-56 after:w-56 after:rounded-full after:bg-emerald-200/50 after:blur-3xl after:opacity-40 dark:border-emerald-500/25 dark:bg-slate-900/55 dark:text-slate-100 dark:before:from-white/12 dark:before:via-white/5 dark:before:to-emerald-400/12 dark:after:bg-emerald-500/25">
           <CardHeader className="relative z-10 space-y-1 pb-3 text-center">
             <CardTitle className="text-2xl font-semibold">
-              {isRegisterMode ? 'Create Account' : 'Sign In'}
+              {isRegisterMode
+                ? 'Create Your Memorize Vault Account'
+                : 'Sign In to Memorize Vault'}
             </CardTitle>
             {isRegisterMode ? (
               <CardDescription>Start organizing your bookmarks in moments.</CardDescription>
@@ -169,16 +175,18 @@ export default function AuthPage() {
             <div className="p-3 rounded-xl bg-white/15 backdrop-blur dark:bg-white/10">
               <Bookmark className="h-8 w-8" />
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Memorize</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Memorize Vault – AI Bookmark Manager
+            </h1>
           </div>
 
           <h2 className="text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-            Organize Your Digital Life
+            Build a Collaborative Knowledge Base in Minutes
           </h2>
 
           <p className="mt-6 text-base text-white/80 sm:text-lg dark:text-slate-200">
-            Keep all your important bookmarks organized, searchable, and secure in one place. Let AI
-            help you categorize and describe your content automatically.
+            Keep critical bookmarks organized, searchable, and secure. Let AI categorize links,
+            generate summaries, and keep your team’s research library always up to date.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
