@@ -70,13 +70,38 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  app.use(
+    express.static(distPath, {
+      etag: true,
+      lastModified: true,
+      setHeaders(res, servedPath) {
+        const ext = path.extname(servedPath).toLowerCase();
+        if (ext === '.html') {
+          res.setHeader('Cache-Control', 'no-cache');
+          return;
+        }
+
+        if (servedPath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          return;
+        }
+
+        if (ext === '.js' || ext === '.css' || ext === '.json' || ext === '.svg') {
+          res.setHeader('Cache-Control', 'public, max-age=604800');
+          return;
+        }
+
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+      },
+    }),
+  );
 
   // fall through to index.html if the file doesn't exist
   app.use('*', (req, res) => {
     if (req.originalUrl.startsWith('/api/')) {
       return res.status(404).json({ message: 'Not found' });
     }
+    res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.resolve(distPath, 'index.html'));
   });
 }
