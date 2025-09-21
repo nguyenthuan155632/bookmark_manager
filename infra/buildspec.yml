@@ -10,23 +10,23 @@ phases:
     commands:
       - echo Logging into Amazon ECR...
       - aws --version
-      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
-      - if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=$(date +%Y%m%d%H%M%S); fi
-      - echo "Using image tag: $IMAGE_TAG"
-      - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REPOSITORY_URL"
-      - export IMAGE_TAG
+      - 'IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}'
+      - 'if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=$(date +%Y%m%d%H%M%S); fi'
+      - 'echo "Using image tag: $IMAGE_TAG"'
+      - 'aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REPOSITORY_URL"'
+      - 'export IMAGE_TAG'
   build:
     commands:
       - echo Building Docker image...
-      - docker build -t "$ECR_REPOSITORY_URL:$IMAGE_TAG" -t "$ECR_REPOSITORY_URL:latest" .
+      - 'docker build -t "$ECR_REPOSITORY_URL:$IMAGE_TAG" -t "$ECR_REPOSITORY_URL:latest" .'
   post_build:
     commands:
       - echo Pushing Docker images...
-      - docker push "$ECR_REPOSITORY_URL:$IMAGE_TAG"
-      - docker push "$ECR_REPOSITORY_URL:latest"
-      - printf '{"imageUri":"%s:%s"}' "$ECR_REPOSITORY_URL" "$IMAGE_TAG" > imageDetail.json
-      - echo Triggering ECS deployment...
-      - aws ecs update-service --cluster "$ECS_CLUSTER_NAME" --service "$ECS_SERVICE_NAME" --force-new-deployment
+      - 'docker push "$ECR_REPOSITORY_URL:$IMAGE_TAG"'
+      - 'docker push "$ECR_REPOSITORY_URL:latest"'
+      - 'printf ''{"imageUri":"%s:%s"}'' "$ECR_REPOSITORY_URL" "$IMAGE_TAG" > imageDetail.json'
+      - 'echo Triggering ECS deployment...'
+      - 'aws ecs update-service --cluster "$ECS_CLUSTER_NAME" --service "$ECS_SERVICE_NAME" --force-new-deployment'
 artifacts:
   files:
     - imageDetail.json
