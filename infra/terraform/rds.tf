@@ -3,7 +3,7 @@ resource "random_id" "db_snapshot" {
 }
 
 resource "aws_db_subnet_group" "postgres" {
-  name       = "${local.name_prefix}-db-subnets"
+  name       = "${local.name_prefix}-db-subnets?sslmode=require"
   subnet_ids = values(aws_subnet.private)[*].id
 
   tags = merge(local.common_tags, {
