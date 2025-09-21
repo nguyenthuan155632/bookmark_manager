@@ -204,7 +204,7 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
           "ssm:GetParameter",
           "ssm:GetParameters"
         ]
-        Resource = local.secret_parameter_arns
+        Resource = concat([aws_ssm_parameter.database_url.arn], [for p in values(aws_ssm_parameter.app_secret_env) : p.arn])
       },
       {
         Effect = "Allow"
@@ -218,6 +218,12 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
     ]
   })
 }
+
+resource "aws_iam_role_policy_attachment" "ecs_task_ssm" {
+  role       = aws_iam_role.ecs_task.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 
 
 resource "aws_iam_role" "ecs_task" {
@@ -287,11 +293,11 @@ resource "aws_ecs_task_definition" "app" {
 
 resource "aws_ecs_service" "app" {
   enable_execute_command = true
-  name            = "${local.name_prefix}-service"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = var.desired_count
-  launch_type     = "FARGATE"
+  name                   = "${local.name_prefix}-service"
+  cluster                = aws_ecs_cluster.this.id
+  task_definition        = aws_ecs_task_definition.app.arn
+  desired_count          = var.desired_count
+  launch_type            = "FARGATE"
 
   network_configuration {
     subnets          = values(aws_subnet.private)[*].id
