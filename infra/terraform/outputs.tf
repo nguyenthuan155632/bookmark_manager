@@ -57,3 +57,8 @@ output "database_url_parameter_name" {
   description = "SSM parameter storing the DATABASE_URL connection string"
 }
 
+output "app_secret_parameter_names" {
+  value       = { for name, param in aws_ssm_parameter.app_secret_env : name => param.name }
+  description = "SSM parameter names for additional application secrets"
+}
+

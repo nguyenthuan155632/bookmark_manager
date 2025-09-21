@@ -14,3 +14,14 @@ allowed_http_cidr_blocks = ["0.0.0.0/0"]
 # acm_certificate_arn    = "arn:aws:acm:ap-northeast-1:123456789012:certificate/abcd-efgh"
 # enable_https           = true
 # existing_ecr_repository = "memorize-vault"
+app_secret_environment = {
+  VITE_PUBLIC_BASE_URL = "https://memorize.click"
+  OPENROUTER_API_KEY   = "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"
+  OPENROUTER_TAG_MODEL = "deepseek/deepseek-chat-v3.1:free"
+  OPENROUTER_DESC_MODEL = "deepseek/deepseek-chat-v3.1:free"
+  AI_DESC_MIN_CHARS    = "500"
+  AI_DESC_MAX_CHARS    = "1000"
+  AI_DESC_FORMAT       = "markdown"
+  THUMIO_TOKEN         = "75165-bookmark"
+}
+

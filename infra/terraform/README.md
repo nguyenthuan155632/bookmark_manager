@@ -75,6 +75,7 @@ Key inputs are defined in `variables.tf`. Notable settings:
 - `project_name`, `environment`: influence resource names and tagging
 - `container_port`, `container_cpu`, `container_memory`, `desired_count`: ECS service sizing
 - `db_engine_version`, `db_username`, `db_password`: database configuration (Terraform also writes a SecureString `DATABASE_URL` parameter)
+- `app_secret_environment`: map of additional secrets to inject into the ECS task via SSM Parameters
 - `codebuild_source_location`, `codebuild_source_type`, `codebuild_buildspec`: configure CodeBuild source and script
 - `enable_https`, `acm_certificate_arn`: enable TLS for the load balancer
 - `enable_create_ecr` / `existing_ecr_repository`: reuse an existing ECR repo if desired
@@ -90,6 +91,7 @@ Running `terraform apply` emits outputs with useful connection values:
 - `ecs_cluster_name`, `ecs_service_name`: ECS identifiers used by CI/CD
 - `codebuild_project_name`: link to your build project
 - `database_url_parameter_name`: location of the DATABASE_URL SecureString
+- `app_secret_parameter_names`: map of other application secrets stored in SSM
 
 ## Post-Deployment Notes
 

@@ -107,6 +107,13 @@ variable "db_username" {
   type        = string
 }
 
+
+variable "app_secret_environment" {
+  description = "Map of additional application secrets to store in SSM Parameter Store"
+  type        = map(string)
+  default     = {}
+}
+
 variable "db_password" {
   description = "Password for the Postgres database"
   type        = string

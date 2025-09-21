@@ -42,6 +42,29 @@ locals {
   ecr_repository_url = var.enable_create_ecr ? aws_ecr_repository.app[0].repository_url : data.aws_ecr_repository.existing[0].repository_url
 }
 
+
+locals {
+  secret_parameter_arns = concat(
+    [aws_ssm_parameter.database_url.arn],
+    [for param in values(aws_ssm_parameter.app_secret_env) : param.arn]
+  )
+
+  ecs_container_secrets = concat(
+    [
+      {
+        name      = "DATABASE_URL"
+        valueFrom = aws_ssm_parameter.database_url.arn
+      }
+    ],
+    [
+      for name, param in aws_ssm_parameter.app_secret_env : {
+        name      = name
+        valueFrom = param.arn
+      }
+    ]
+  )
+}
+
 resource "aws_cloudwatch_log_group" "ecs" {
   name              = "/aws/ecs/${local.name_prefix}"
   retention_in_days = var.logs_retention_days
@@ -181,7 +204,7 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
           "ssm:GetParameter",
           "ssm:GetParameters"
         ]
-        Resource = [aws_ssm_parameter.database_url.arn]
+        Resource = local.secret_parameter_arns
       },
       {
         Effect   = "Allow"
@@ -255,12 +278,7 @@ resource "aws_ecs_task_definition" "app" {
           value = tostring(var.container_port)
         }
       ]
-      secrets = [
-        {
-          name      = "DATABASE_URL"
-          valueFrom = aws_ssm_parameter.database_url.arn
-        }
-      ]
+      secrets = local.ecs_container_secrets
     }
   ])
 
