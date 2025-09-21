@@ -60,6 +60,15 @@ resource "aws_iam_role_policy" "codebuild" {
       {
         Effect = "Allow"
         Action = [
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
@@ -129,6 +138,12 @@ resource "aws_codebuild_project" "this" {
 
   artifacts {
     type = "NO_ARTIFACTS"
+  }
+
+  vpc_config {
+    vpc_id             = aws_vpc.main.id
+    security_group_ids = [aws_security_group.codebuild.id]
+    subnets            = values(aws_subnet.private)[*].id
   }
 
   environment {
