@@ -1,3 +1,19 @@
+
+resource "aws_security_group" "codebuild" {
+  name        = "${local.name_prefix}-codebuild"
+  description = "CodeBuild access to VPC resources"
+  vpc_id      = aws_vpc.main.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = local.common_tags
+}
+
 resource "aws_cloudwatch_log_group" "codebuild" {
   name              = "/aws/codebuild/${local.name_prefix}"
   retention_in_days = var.logs_retention_days
