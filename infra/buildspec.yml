@@ -6,13 +6,15 @@ env:
 phases:
   pre_build:
     commands:
-      - echo Logging into Amazon ECR...
-      - aws --version
-      - IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
-      - if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=$(date +%Y%m%d%H%M%S); fi
-      - echo "Using image tag: $IMAGE_TAG"
-      - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REPOSITORY_URL"
-      - export IMAGE_TAG
+      - |
+        echo Logging into Amazon ECR...
+        aws --version
+        IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
+        if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=$(date +%Y%m%d%H%M%S); fi
+        echo "Using image tag: $IMAGE_TAG"
+        aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REPOSITORY_URL"
+        export IMAGE_TAG
+        echo "IMAGE_TAG=$IMAGE_TAG" >> "$CODEBUILD_ENV_VAR_FILE"
   build:
     commands:
       - echo Building Docker image...
