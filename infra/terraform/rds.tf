@@ -66,7 +66,7 @@ resource "aws_ssm_parameter" "database_url" {
   name        = "/${local.name_prefix}/database_url"
   description = "Connection string for Memorize Vault application"
   type        = "SecureString"
-  value       = "postgresql://${var.db_username}:${urlencode(var.db_password)}@${aws_db_instance.postgres.address}:${aws_db_instance.postgres.port}/${aws_db_instance.postgres.db_name}"
+  value       = "postgresql://${var.db_username}:${urlencode(var.db_password)}@${aws_db_instance.postgres.address}:${aws_db_instance.postgres.port}/${aws_db_instance.postgres.db_name}?sslmode=require"
   overwrite   = true
 
   tags = local.common_tags

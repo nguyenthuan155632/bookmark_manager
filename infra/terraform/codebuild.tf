@@ -62,7 +62,13 @@ resource "aws_iam_role_policy" "codebuild" {
         Action = [
           "ec2:DescribeSecurityGroups",
           "ec2:DescribeSubnets",
-          "ec2:DescribeVpcs"
+          "ec2:DescribeVpcs",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:CreateNetworkInterface",
+          "ec2:DeleteNetworkInterface",
+          "ec2:CreateNetworkInterfacePermission",
+          "ec2:DescribeDhcpOptions",
+          "ec2:DescribeRouteTables"
         ]
         Resource = "*"
       },
@@ -96,7 +102,7 @@ resource "aws_iam_role_policy" "codebuild" {
           "ssm:GetParameter",
           "ssm:GetParameters"
         ]
-        Resource = [aws_ssm_parameter.database_url.arn]
+        Resource = concat([aws_ssm_parameter.database_url.arn], [for p in values(aws_ssm_parameter.app_secret_env) : p.arn])
       },
       {
         Effect = "Allow"
