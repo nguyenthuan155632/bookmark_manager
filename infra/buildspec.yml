@@ -24,6 +24,8 @@ phases:
       - echo Pushing Docker images...
       - 'docker push "$ECR_REPOSITORY_URL:$IMAGE_TAG"'
       - 'docker push "$ECR_REPOSITORY_URL:latest"'
+      - npm ci
+      - npm run db:push
       - 'printf ''{"imageUri":"%s:%s"}'' "$ECR_REPOSITORY_URL" "$IMAGE_TAG" > imageDetail.json'
       - 'echo Triggering ECS deployment...'
       - 'aws ecs update-service --cluster "$ECS_CLUSTER_NAME" --service "$ECS_SERVICE_NAME" --force-new-deployment'

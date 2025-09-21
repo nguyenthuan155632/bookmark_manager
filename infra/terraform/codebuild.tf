@@ -68,6 +68,23 @@ resource "aws_iam_role_policy" "codebuild" {
       {
         Effect = "Allow"
         Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = [aws_ssm_parameter.database_url.arn]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = [
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/aws/ssm"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
           "iam:PassRole"
         ]
         Resource = [
@@ -123,6 +140,12 @@ resource "aws_codebuild_project" "this" {
     environment_variable {
       name  = "ECS_SERVICE_NAME"
       value = aws_ecs_service.app.name
+    }
+
+    environment_variable {
+      name  = "DATABASE_URL"
+      value = aws_ssm_parameter.database_url.name
+      type  = "PARAMETER_STORE"
     }
   }
 
