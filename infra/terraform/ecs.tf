@@ -17,7 +17,7 @@ resource "aws_ecr_repository" "app" {
 resource "aws_ecr_lifecycle_policy" "app" {
   count      = var.enable_create_ecr ? 1 : 0
   repository = aws_ecr_repository.app[0].name
-  policy     = jsonencode({
+  policy = jsonencode({
     rules = [{
       rulePriority = 1
       description  = "Retain the last 10 images"
@@ -199,16 +199,16 @@ resource "aws_iam_role_policy" "ecs_task_execution_ssm" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ssm:GetParameter",
           "ssm:GetParameters"
         ]
         Resource = local.secret_parameter_arns
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "kms:Decrypt"
         ]
         Resource = [
@@ -293,8 +293,8 @@ resource "aws_ecs_service" "app" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = values(aws_subnet.private)[*].id
-    security_groups = [aws_security_group.ecs_service.id]
+    subnets          = values(aws_subnet.private)[*].id
+    security_groups  = [aws_security_group.ecs_service.id]
     assign_public_ip = false
   }
 
@@ -369,7 +369,7 @@ resource "aws_appautoscaling_policy" "cpu" {
   service_namespace  = aws_appautoscaling_target.ecs[0].service_namespace
 
   target_tracking_scaling_policy_configuration {
-    target_value       = var.ecs_cpu_target
+    target_value = var.ecs_cpu_target
     predefined_metric_specification {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }

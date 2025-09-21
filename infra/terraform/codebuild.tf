@@ -33,8 +33,8 @@ resource "aws_iam_role_policy" "codebuild" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
@@ -42,8 +42,8 @@ resource "aws_iam_role_policy" "codebuild" {
         Resource = "*"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
@@ -56,8 +56,8 @@ resource "aws_iam_role_policy" "codebuild" {
         Resource = "*"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ecs:DescribeServices",
           "ecs:RegisterTaskDefinition",
           "ecs:DeregisterTaskDefinition",
@@ -66,8 +66,8 @@ resource "aws_iam_role_policy" "codebuild" {
         Resource = "*"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "iam:PassRole"
         ]
         Resource = [
@@ -129,7 +129,7 @@ resource "aws_codebuild_project" "this" {
   logs_config {
     cloudwatch_logs {
       group_name  = aws_cloudwatch_log_group.codebuild.name
-      stream_name = "${local.name_prefix}"
+      stream_name = local.name_prefix
       status      = "ENABLED"
     }
   }
