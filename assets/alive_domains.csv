@@ -1,0 +1,1023 @@
+domain,tags,category,description,is_active
+github.com,"[""development"",""code"",""git"",""repository""]",development,GitHub - Code repository hosting,True
+gitlab.com,"[""development"",""code"",""git"",""repository""]",development,GitLab - DevOps platform,True
+bitbucket.org,"[""development"",""code"",""git"",""repository""]",development,Bitbucket - Git repository hosting,True
+stackoverflow.com,"[""programming"",""help"",""q&a"",""development""]",development,Stack Overflow - Programming Q&A,True
+stackexchange.com,"[""programming"",""help"",""q&a"",""development""]",development,Stack Exchange - Q&A network,True
+dev.to,"[""development"",""blog"",""programming""]",development,DEV Community - Developer blog platform,True
+hashnode.com,"[""development"",""blog"",""programming""]",development,Hashnode - Developer blogging platform,True
+codepen.io,"[""development"",""demo"",""frontend""]",development,CodePen - Frontend development playground,True
+jsfiddle.net,"[""development"",""demo"",""javascript""]",development,JSFiddle - JavaScript playground,True
+codesandbox.io,"[""development"",""demo"",""react"",""vue""]",development,CodeSandbox - Online IDE,True
+replit.com,"[""development"",""ide"",""programming""]",development,Replit - Online coding environment,True
+glitch.com,"[""development"",""demo"",""web""]",development,Glitch - Web app development platform,True
+npmjs.com,"[""javascript"",""package"",""development""]",development,npm - JavaScript package registry,True
+yarnpkg.com,"[""javascript"",""package"",""development""]",development,Yarn - JavaScript package manager,True
+pypi.org,"[""python"",""package"",""development""]",development,PyPI - Python package index,True
+crates.io,"[""rust"",""package"",""development""]",development,Crates.io - Rust package registry,True
+packagist.org,"[""php"",""package"",""development""]",development,Packagist - PHP package repository,True
+rubygems.org,"[""ruby"",""package"",""development""]",development,RubyGems - Ruby package manager,True
+mvnrepository.com,"[""java"",""package"",""development""]",development,Maven Repository - Java packages,True
+developer.mozilla.org,"[""documentation"",""web"",""development""]",documentation,MDN Developer Network,True
+docs.microsoft.com,"[""documentation"",""microsoft"",""development""]",documentation,Microsoft Developer Documentation,True
+docs.aws.amazon.com,"[""documentation"",""aws"",""cloud""]",documentation,AWS Documentation,True
+docs.azure.com,"[""documentation"",""azure"",""cloud""]",documentation,Azure Documentation,True
+w3schools.com,"[""tutorial"",""web"",""development""]",education,W3Schools - Web development tutorials,True
+coursera.org,"[""education"",""course"",""learning""]",education,Coursera - Online courses,True
+udemy.com,"[""education"",""course"",""learning""]",education,Udemy - Online learning platform,True
+edx.org,"[""education"",""course"",""learning""]",education,edX - Online courses,True
+khanacademy.org,"[""education"",""learning"",""free""]",education,Khan Academy - Free online learning,True
+freecodecamp.org,"[""education"",""programming"",""free""]",education,freeCodeCamp - Free programming education,True
+codecademy.com,"[""education"",""programming"",""interactive""]",education,Codecademy - Interactive programming courses,True
+pluralsight.com,"[""education"",""technology"",""learning""]",education,Pluralsight - Technology learning platform,True
+udacity.com,"[""education"",""programming"",""nanodegree""]",education,Udacity - Technology education,True
+news.ycombinator.com,"[""tech"",""news"",""startup""]",news,Hacker News - Tech news and discussion,True
+techcrunch.com,"[""tech"",""news"",""startup""]",news,TechCrunch - Technology news,True
+arstechnica.com,"[""tech"",""news""]",news,Ars Technica - Technology news,True
+theverge.com,"[""tech"",""news"",""culture""]",news,The Verge - Technology and culture,True
+wired.com,"[""tech"",""news"",""culture""]",news,Wired - Technology and culture magazine,True
+substack.com,"[""newsletter"",""writing"",""subscription""]",media,Substack - Newsletter platform,True
+wikipedia.org,"[""reference"",""encyclopedia"",""knowledge""]",reference,Wikipedia - Free encyclopedia,True
+wikimedia.org,"[""reference"",""encyclopedia"",""knowledge""]",reference,Wikimedia Foundation,True
+britannica.com,"[""reference"",""encyclopedia"",""knowledge""]",reference,Encyclopedia Britannica,True
+dictionary.com,"[""reference"",""dictionary"",""language""]",reference,Dictionary.com - Online dictionary,True
+merriam-webster.com,"[""reference"",""dictionary"",""language""]",reference,Merriam-Webster - Dictionary,True
+youtube.com,"[""video"",""entertainment"",""media""]",media,YouTube - Video sharing platform,True
+vimeo.com,"[""video"",""creative"",""media""]",media,Vimeo - Video hosting platform,True
+twitch.tv,"[""video"",""gaming"",""streaming""]",media,Twitch - Live streaming platform,True
+netflix.com,"[""video"",""entertainment"",""streaming""]",media,Netflix - Streaming service,True
+reddit.com,"[""social"",""community"",""discussion""]",social,Reddit - Social news aggregation,True
+x.com,"[""social"",""microblog""]",social,X (formerly Twitter),True
+twitter.com,"[""social"",""microblog""]",social,Twitter - Microblogging platform,True
+linkedin.com,"[""professional"",""networking"",""career""]",social,LinkedIn - Professional networking,True
+facebook.com,"[""social"",""networking""]",social,Facebook - Social networking,True
+instagram.com,"[""social"",""photo"",""visual""]",social,Instagram - Photo sharing,True
+tiktok.com,"[""social"",""video"",""short-form""]",social,TikTok - Short-form video,True
+dribbble.com,"[""design"",""ui"",""portfolio""]",design,Dribbble - Design portfolio platform,True
+behance.net,"[""design"",""portfolio"",""creative""]",design,Behance - Creative portfolio platform,True
+figma.com,"[""design"",""ui"",""tool"",""collaboration""]",design,Figma - Collaborative design tool,True
+sketch.com,"[""design"",""ui"",""tool""]",design,Sketch - Digital design tool,True
+adobe.com,"[""design"",""creative"",""software""]",design,Adobe - Creative software suite,True
+canva.com,"[""design"",""graphics"",""tool""]",design,Canva - Graphic design platform,True
+unsplash.com,"[""photos"",""stock"",""images""]",design,Unsplash - Free stock photos,True
+pexels.com,"[""photos"",""stock"",""images""]",design,Pexels - Free stock photos,True
+fonts.google.com,"[""fonts"",""typography"",""design""]",design,Google Fonts - Web fonts,True
+notion.so,"[""productivity"",""notes"",""tool""]",productivity,Notion - All-in-one workspace,True
+trello.com,"[""productivity"",""project-management"",""tool""]",productivity,Trello - Project management,True
+asana.com,"[""productivity"",""project-management"",""tool""]",productivity,Asana - Work management,True
+slack.com,"[""productivity"",""communication"",""tool""]",productivity,Slack - Team communication,True
+discord.com,"[""communication"",""gaming"",""community""]",productivity,Discord - Voice and text chat,True
+zoom.us,"[""communication"",""video"",""meeting""]",productivity,Zoom - Video conferencing,True
+meet.google.com,"[""communication"",""video"",""meeting""]",productivity,Google Meet - Video conferencing,True
+google.com,"[""search"",""tool""]",search,Google - Search engine,True
+docs.google.com,"[""document"",""collaboration"",""productivity""]",productivity,Google Docs - Online document editor,True
+sheets.google.com,"[""spreadsheet"",""data"",""productivity""]",productivity,Google Sheets - Online spreadsheet,True
+slides.google.com,"[""presentation"",""slides"",""productivity""]",productivity,Google Slides - Online presentation,True
+drive.google.com,"[""storage"",""file-sharing"",""productivity""]",productivity,Google Drive - Cloud storage,True
+gmail.com,"[""email"",""communication""]",productivity,Gmail - Email service,True
+calendar.google.com,"[""calendar"",""scheduling"",""productivity""]",productivity,Google Calendar - Online calendar,True
+aws.amazon.com,"[""cloud"",""infrastructure"",""aws""]",cloud,Amazon Web Services - Cloud platform,True
+azure.microsoft.com,"[""cloud"",""infrastructure"",""azure""]",cloud,Microsoft Azure - Cloud platform,True
+cloud.google.com,"[""cloud"",""infrastructure"",""gcp""]",cloud,Google Cloud Platform - Cloud services,True
+digitalocean.com,"[""cloud"",""hosting"",""infrastructure""]",cloud,DigitalOcean - Cloud infrastructure,True
+heroku.com,"[""cloud"",""hosting"",""paas""]",cloud,Heroku - Platform as a Service,True
+vercel.com,"[""cloud"",""hosting"",""frontend""]",cloud,Vercel - Frontend cloud platform,True
+netlify.com,"[""cloud"",""hosting"",""frontend""]",cloud,Netlify - Web development platform,True
+shopify.com,"[""ecommerce"",""store"",""business""]",business,Shopify - E-commerce platform,True
+woocommerce.com,"[""ecommerce"",""wordpress"",""business""]",business,WooCommerce - WordPress e-commerce,True
+stripe.com,"[""payment"",""api"",""fintech""]",business,Stripe - Payment processing,True
+paypal.com,"[""payment"",""fintech""]",business,PayPal - Online payment system,True
+squareup.com,"[""payment"",""pos"",""business""]",business,Square - Payment and POS system,True
+wordpress.com,"[""blog"",""cms"",""website""]",cms,WordPress.com - Blog and website platform,True
+wordpress.org,"[""cms"",""open-source"",""website""]",cms,WordPress.org - Open source CMS,True
+wix.com,"[""website"",""builder"",""tool""]",cms,Wix - Website builder,True
+squarespace.com,"[""website"",""builder"",""design""]",cms,Squarespace - Website builder,True
+webflow.com,"[""website"",""design"",""cms""]",cms,Webflow - Visual web design platform,True
+twilio.com,"[""communication"",""api"",""sms""]",api,Twilio - Communication platform API,True
+sendgrid.com,"[""email"",""api"",""communication""]",api,SendGrid - Email API,True
+mailchimp.com,"[""email"",""marketing"",""communication""]",api,Mailchimp - Email marketing platform,True
+hubspot.com,"[""marketing"",""crm"",""business""]",business,HubSpot - Marketing and sales platform,True
+salesforce.com,"[""crm"",""business"",""sales""]",business,Salesforce - Customer relationship management,True
+travis-ci.com,"[""ci"",""testing"",""development""]",development,Travis CI - Continuous integration,True
+circleci.com,"[""ci"",""testing"",""development""]",development,CircleCI - Continuous integration,True
+vnexpress.net,"[""news"",""vietnam"",""media""]",news,VnExpress - Vietnamese news,True
+tuoitre.vn,"[""news"",""vietnam"",""media""]",news,Tuổi Trẻ - Vietnamese news,True
+thanhnien.vn,"[""news"",""vietnam"",""media""]",news,Thanh Niên - Vietnamese news,True
+zingnews.vn,"[""news"",""vietnam"",""media""]",news,Zing News - Vietnamese news,True
+dantri.com.vn,"[""news"",""vietnam"",""media""]",news,Dân Trí - Vietnamese news,True
+kenh14.vn,"[""news"",""entertainment"",""vietnam""]",news,Kenh14 - Entertainment news,True
+vtv.vn,"[""media"",""tv"",""vietnam""]",media,VTV - Vietnam Television,True
+momo.vn,"[""payment"",""fintech"",""vietnam""]",business,MoMo - E-wallet Vietnam,True
+zalo.me,"[""social"",""messaging"",""vietnam""]",social,Zalo - Messaging app,True
+tiki.vn,"[""ecommerce"",""shopping"",""vietnam""]",business,Tiki - E-commerce Vietnam,True
+shopee.vn,"[""ecommerce"",""shopping"",""vietnam""]",business,Shopee Vietnam,True
+lazada.vn,"[""ecommerce"",""shopping"",""vietnam""]",business,Lazada Vietnam,True
+sanook.com,"[""news"",""thailand"",""media""]",news,Sanook - Thai portal,True
+kapook.com,"[""news"",""thailand"",""media""]",news,Kapook - Thai portal,True
+pantip.com,"[""community"",""forum"",""thailand""]",social,Pantip - Thai forum,True
+thairath.co.th,"[""news"",""thailand"",""media""]",news,Thai Rath - News,True
+mthai.com,"[""news"",""entertainment"",""thailand""]",news,MThai - News & entertainment,True
+nytimes.com,"[""news"",""us"",""media""]",news,The New York Times,True
+cnn.com,"[""news"",""us"",""media""]",news,CNN - News,True
+theguardian.com,"[""news"",""uk"",""media""]",news,The Guardian,True
+dailymail.co.uk,"[""news"",""uk"",""media""]",news,Daily Mail,True
+lemonde.fr,"[""news"",""france"",""media""]",news,Le Monde,True
+lefigaro.fr,"[""news"",""france"",""media""]",news,Le Figaro,True
+spiegel.de,"[""news"",""germany"",""media""]",news,Der Spiegel,True
+bild.de,"[""news"",""germany"",""media""]",news,BILD,True
+elpais.com,"[""news"",""spain"",""media""]",news,El País,True
+repubblica.it,"[""news"",""italy"",""media""]",news,La Repubblica,True
+corriere.it,"[""news"",""italy"",""media""]",news,Corriere della Sera,True
+baidu.com,"[""search"",""china"",""engine""]",search,Baidu - Search engine,True
+qq.com,"[""portal"",""china"",""media""]",media,QQ - Portal,True
+taobao.com,"[""shopping"",""china"",""ecommerce""]",business,Taobao - E-commerce,True
+tmall.com,"[""shopping"",""china"",""ecommerce""]",business,Tmall - E-commerce,True
+jd.com,"[""shopping"",""china"",""ecommerce""]",business,JD.com - E-commerce,True
+weibo.com,"[""social"",""microblog"",""china""]",social,Weibo - Microblogging,True
+bilibili.com,"[""video"",""entertainment"",""china""]",media,Bilibili - Video platform,True
+zhihu.com,"[""q&a"",""china"",""knowledge""]",social,Zhihu - Q&A,True
+yahoo.co.jp,"[""portal"",""japan"",""search""]",search,Yahoo! Japan,True
+rakuten.co.jp,"[""shopping"",""japan"",""ecommerce""]",business,Rakuten - E-commerce,True
+nikkei.com,"[""news"",""japan"",""business""]",news,Nikkei - Business news,True
+amazon.co.jp,"[""shopping"",""japan"",""ecommerce""]",business,Amazon Japan,True
+straitstimes.com,"[""news"",""singapore"",""media""]",news,The Straits Times,True
+channelnewsasia.com,"[""news"",""singapore"",""media""]",news,CNA - Channel NewsAsia,True
+gov.sg,"[""government"",""services"",""singapore""]",gov,Government of Singapore,True
+dbs.com.sg,"[""banking"",""finance"",""singapore""]",finance,DBS Bank,True
+uob.com.sg,"[""banking"",""finance"",""singapore""]",finance,UOB Bank,True
+ocbc.com,"[""banking"",""finance"",""singapore""]",finance,OCBC Bank,True
+grab.com,"[""superapp"",""ridehailing"",""singapore""]",business,Grab - Super app,True
+sport-wiki7429.com.ph,"[""knowledge"",""encyclopedia"",""reference""]",reference,Sport Wiki7429 - Reference,True
+zone-blog2622.com.ph,"[""video"",""streaming"",""entertainment"",""media"",""creative""]",media,Zone Blog2622 - Media,True
+news-deal1877.com.ph,"[""media"",""news"",""tech"",""startup"",""culture""]",news,News Deal1877 - News,True
+hub7957.com.ph,"[""api"",""documentation"",""reference""]",documentation,Hub7957 - Documentation,True
+wiki-bank7940.com.ph,"[""reference"",""knowledge"",""encyclopedia"",""dictionary""]",reference,Wiki Bank7940 - Reference,True
+trip-trade8948.ph,"[""booking"",""hotels"",""flights"",""travel""]",travel,Trip Trade8948 - Travel,False
+hotel1769.com.ph,"[""travel"",""booking"",""hotels""]",travel,Hotel1769 - Travel,True
+mart9395.com.ph,"[""shopping"",""marketplace"",""retail"",""deals""]",shopping,Mart9395 - Shopping,True
+deal-cook4682.ph,"[""marketplace"",""retail"",""deals"",""shopping""]",shopping,Deal Cook4682 - Shopping,True
+blog-shop9534.ph,"[""marketing"",""payment"",""crm""]",business,Blog Shop9534 - Business,True
+cook4225.ph,"[""entertainment"",""media"",""creative"",""streaming"",""video""]",media,Cook4225 - Media,True
+code-express3867.com.ph,"[""tech"",""media"",""culture""]",news,Code Express3867 - News,True
+portalradio8993.ph,"[""creative"",""media"",""video"",""entertainment"",""streaming""]",media,Portalradio8993 - Media,True
+tv-times7531.com.ph,"[""tech"",""startup"",""media"",""news"",""culture""]",news,Tv Times7531 - News,True
+radio6109.com.ph,"[""media"",""streaming"",""creative"",""video""]",media,Radio6109 - Media,True
+play2690.ph,"[""streaming"",""creative"",""video"",""entertainment""]",media,Play2690 - Media,True
+portal-travel7028.ph,"[""flights"",""travel"",""hotels""]",travel,Portal Travel7028 - Travel,False
+trade1411.com.ph,"[""discussion"",""social"",""microblog"",""networking""]",social,Trade1411 - Social,True
+sale2045.ph,"[""shopping"",""retail"",""deals"",""marketplace""]",shopping,Sale2045 - Shopping,True
+bank4495.ph,"[""trading"",""finance"",""banking"",""investment""]",finance,Bank4495 - Finance,True
+triptravel2573.ph,"[""hotels"",""flights"",""travel"",""booking""]",travel,Triptravel2573 - Travel,True
+plus5076.com.ph,"[""portfolio"",""ux"",""photos"",""ui"",""typography""]",design,Plus5076 - Design,True
+hub9945.com.ph,"[""streaming"",""entertainment"",""video"",""media"",""creative""]",media,Hub9945 - Media,True
+portal77.org,"[""tool"",""notes"",""email""]",productivity,Portal77 - Productivity,True
+plus7544.com.ph,"[""search"",""web"",""engine""]",search,Plus7544 - Search,True
+media-hub2483.ph,"[""course"",""interactive"",""free"",""learning"",""education""]",education,Media Hub2483 - Education,True
+talk7084.ph,"[""community"",""microblog"",""social""]",social,Talk7084 - Social,True
+forum-video688.ph,"[""media"",""creative"",""video""]",media,Forum Video688 - Media,True
+music-trade733.com.ph,"[""video"",""streaming"",""creative""]",media,Music Trade733 - Media,True
+health-code8721.com.ph,"[""git"",""development"",""repository"",""ide""]",development,Health Code8721 - Development,True
+sport2024.it,"[""video"",""media"",""creative""]",media,Sport2024 - Media,True
+data9.com.cn,"[""paas"",""infrastructure"",""cloud"",""hosting""]",cloud,Data9 - Cloud,True
+health7086.ph,"[""infrastructure"",""paas"",""hosting"",""cloud""]",cloud,Health7086 - Cloud,True
+travel7609.ph,"[""hotels"",""travel"",""flights"",""booking""]",travel,Travel7609 - Travel,True
+learn-dev7529.ph,"[""programming"",""development"",""ide""]",development,Learn Dev7529 - Development,True
+flight-plus5357.com.ph,"[""booking"",""travel"",""flights"",""hotels""]",travel,Flight Plus5357 - Travel,True
+times-plus1573.ph,"[""tech"",""culture"",""startup"",""media"",""news""]",news,Times Plus1573 - News,True
+review8027.com.ph,"[""video"",""media"",""creative"",""entertainment""]",media,Review8027 - Media,True
+code-plus3613.ph,"[""code"",""repository"",""git"",""development"",""ci""]",development,Code Plus3613 - Development,True
+media-plus8515.ph,"[""news"",""media"",""startup"",""tech"",""culture""]",news,Media Plus8515 - News,True
+hub1666.ph,"[""development"",""code"",""git"",""ide""]",development,Hub1666 - Development,True
+bank5707.ph,"[""trading"",""banking"",""finance"",""investment""]",finance,Bank5707 - Finance,True
+learnhotel7357.com.ph,"[""learning"",""tutorial"",""course"",""interactive"",""education""]",education,Learnhotel7357 - Education,True
+hoststore2748.com.ph,"[""shopping"",""deals"",""retail""]",shopping,Hoststore2748 - Shopping,True
+plus7566.ph,"[""documentation"",""web"",""api""]",documentation,Plus7566 - Documentation,False
+forum1601.ph,"[""social"",""discussion"",""community"",""microblog"",""networking""]",social,Forum1601 - Social,True
+world9638.com.ph,"[""web"",""documentation"",""reference"",""api""]",documentation,World9638 - Documentation,True
+times-hub9723.com.ph,"[""tech"",""culture"",""news"",""media""]",news,Times Hub9723 - News,True
+host4521.com.ph,"[""hosting"",""cloud"",""infrastructure"",""paas""]",cloud,Host4521 - Cloud,True
+guide8161.com.ph,"[""encyclopedia"",""knowledge"",""reference""]",reference,Guide8161 - Reference,True
+tech56.com,"[""news"",""media"",""startup"",""tech"",""culture""]",news,Tech56 - News,False
+dev-music2095.com.ph,"[""ide"",""code"",""ci"",""repository"",""development""]",development,Dev Music2095 - Development,True
+flight-zone6657.com.ph,"[""booking"",""flights"",""travel""]",travel,Flight Zone6657 - Travel,True
+cloudlearn5724.com.ph,"[""free"",""education"",""tutorial"",""course"",""interactive""]",education,Cloudlearn5724 - Education,True
+express130.ph,"[""media"",""culture"",""news"",""tech"",""startup""]",news,Express130 - News,True
+wiki9258.com.ph,"[""encyclopedia"",""knowledge"",""reference"",""dictionary""]",reference,Wiki9258 - Reference,True
+mart-plus4728.com.ph,"[""marketplace"",""shopping"",""deals""]",shopping,Mart Plus4728 - Shopping,True
+forumcloud2326.ph,"[""cloud"",""paas"",""hosting"",""infrastructure""]",cloud,Forumcloud2326 - Cloud,True
+flight3299.ph,"[""travel"",""flights"",""hotels""]",travel,Flight3299 - Travel,True
+tech-tv5806.ph,"[""culture"",""tech"",""media"",""news""]",news,Tech Tv5806 - News,True
+review1641.com.ph,"[""video"",""media"",""entertainment"",""creative"",""streaming""]",media,Review1641 - Media,True
+times1800.com.ph,"[""culture"",""media"",""startup"",""tech"",""news""]",news,Times1800 - News,True
+world1416.com.ph,"[""knowledge"",""encyclopedia"",""dictionary""]",reference,World1416 - Reference,False
+blog-food3667.ph,"[""streaming"",""creative"",""entertainment"",""video""]",media,Blog Food3667 - Media,True
+tvcommunity7467.ph,"[""media"",""creative"",""streaming""]",media,Tvcommunity7467 - Media,True
+times-market5716.ph,"[""tech"",""news"",""media"",""startup"",""culture""]",news,Times Market5716 - News,True
+trip3274.com.ph,"[""travel"",""hotels"",""flights"",""booking""]",travel,Trip3274 - Travel,True
+tech-docs2083.ph,"[""tech"",""news"",""media"",""startup""]",news,Tech Docs2083 - News,True
+guide-review3564.ph,"[""dictionary"",""encyclopedia"",""knowledge"",""reference""]",reference,Guide Review3564 - Reference,True
+trade6110.ph,"[""esports"",""community"",""gaming""]",gaming,Trade6110 - Gaming,True
+hotel-mall8685.com.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Hotel Mall8685 - Shopping,True
+radio6865.ph,"[""video"",""entertainment"",""creative""]",media,Radio6865 - Media,False
+tech9841.com.ph,"[""news"",""tech"",""media""]",news,Tech9841 - News,True
+tv6576.com.ph,"[""media"",""creative"",""video"",""streaming""]",media,Tv6576 - Media,True
+deal2884.ph,"[""retail"",""marketplace"",""shopping""]",shopping,Deal2884 - Shopping,True
+tv9974.com.ph,"[""media"",""streaming"",""entertainment"",""video"",""creative""]",media,Tv9974 - Media,True
+host-portal5169.com.ph,"[""hosting"",""infrastructure"",""paas""]",cloud,Host Portal5169 - Cloud,True
+cloud7512.com.ph,"[""hosting"",""paas"",""cloud""]",cloud,Cloud7512 - Cloud,True
+data-store576.ph,"[""deals"",""retail"",""shopping"",""marketplace""]",shopping,Data Store576 - Shopping,True
+zone5072.com.ph,"[""retail"",""deals"",""marketplace""]",shopping,Zone5072 - Shopping,True
+hotel8502.com.ph,"[""travel"",""booking"",""flights""]",travel,Hotel8502 - Travel,True
+deal8744.com.ph,"[""shopping"",""deals"",""marketplace"",""retail""]",shopping,Deal8744 - Shopping,False
+hostexpress433.ph,"[""news"",""startup"",""media"",""tech""]",news,Hostexpress433 - News,True
+play6053.ph,"[""media"",""entertainment"",""streaming"",""video""]",media,Play6053 - Media,True
+portalshop3951.ph,"[""business"",""fintech"",""crm"",""marketing""]",business,Portalshop3951 - Business,True
+video1967.ph,"[""media"",""streaming"",""video"",""entertainment""]",media,Video1967 - Media,True
+today1089.com,"[""tech"",""news"",""startup"",""culture"",""media""]",news,Today1089 - News,True
+guide-sport340.ph,"[""video"",""media"",""creative""]",media,Guide Sport340 - Media,True
+docs-music3246.ph,"[""api"",""documentation"",""web""]",documentation,Docs Music3246 - Documentation,True
+deal388.ph,"[""marketplace"",""retail"",""deals"",""shopping""]",shopping,Deal388 - Shopping,True
+hotel4358.ph,"[""booking"",""hotels"",""travel"",""flights""]",travel,Hotel4358 - Travel,True
+tradelearn3856.ph,"[""education"",""interactive"",""tutorial"",""learning"",""free""]",education,Tradelearn3856 - Education,True
+tradeshop1196.ph,"[""business"",""ecommerce"",""payment"",""fintech""]",business,Tradeshop1196 - Business,True
+portalfood5179.com.ph,"[""video"",""entertainment"",""streaming"",""media""]",media,Portalfood5179 - Media,True
+blog-trip3971.com.ph,"[""booking"",""travel"",""hotels""]",travel,Blog Trip3971 - Travel,True
+mall-host5778.ph,"[""shopping"",""retail"",""deals"",""marketplace""]",shopping,Mall Host5778 - Shopping,True
+docs-tech5870.ph,"[""news"",""tech"",""culture""]",news,Docs Tech5870 - News,True
+devfood279.com.ph,"[""programming"",""code"",""git"",""development"",""ide""]",development,Devfood279 - Development,True
+media687.ph,"[""reference"",""dictionary"",""knowledge""]",reference,Media687 - Reference,True
+forumexpress2724.com.ph,"[""tech"",""media"",""culture"",""news"",""startup""]",news,Forumexpress2724 - News,False
+tvmarket9059.ph,"[""video"",""media"",""entertainment"",""creative"",""streaming""]",media,Tvmarket9059 - Media,True
+docs3851.com.ph,"[""web"",""api"",""reference"",""documentation""]",documentation,Docs3851 - Documentation,True
+sale-hotel2790.ph,"[""shopping"",""retail"",""deals"",""marketplace""]",shopping,Sale Hotel2790 - Shopping,True
+talk5700.ph,"[""microblog"",""discussion"",""networking"",""social""]",social,Talk5700 - Social,True
+hostvideo4764.com.ph,"[""video"",""streaming"",""media"",""creative"",""entertainment""]",media,Hostvideo4764 - Media,True
+cook9430.ph,"[""streaming"",""video"",""media""]",media,Cook9430 - Media,True
+daily4207.com.ph,"[""media"",""culture"",""tech"",""startup"",""news""]",news,Daily4207 - News,True
+trade6639.ph,"[""fintech"",""marketing"",""crm"",""payment"",""business""]",business,Trade6639 - Business,True
+cook2122.com.ph,"[""media"",""streaming"",""video"",""creative"",""entertainment""]",media,Cook2122 - Media,True
+sport829.ph,"[""video"",""entertainment"",""streaming""]",media,Sport829 - Media,True
+hotel1995.ph,"[""hotels"",""booking"",""travel""]",travel,Hotel1995 - Travel,True
+portal489.com.ph,"[""deals"",""retail"",""shopping""]",shopping,Portal489 - Shopping,True
+guidemall1491.com.ph,"[""shopping"",""marketplace"",""deals""]",shopping,Guidemall1491 - Shopping,True
+tv6875.ph,"[""creative"",""video"",""streaming""]",media,Tv6875 - Media,True
+travelbank5425.ph,"[""booking"",""travel"",""hotels"",""flights""]",travel,Travelbank5425 - Travel,True
+healthreview3038.ph,"[""video"",""media"",""entertainment"",""creative"",""streaming""]",media,Healthreview3038 - Media,True
+sport4862.ph,"[""streaming"",""video"",""creative"",""entertainment""]",media,Sport4862 - Media,True
+review2830.ph,"[""media"",""creative"",""streaming"",""video"",""entertainment""]",media,Review2830 - Media,True
+cloudlearn2298.ph,"[""course"",""learning"",""education"",""free""]",education,Cloudlearn2298 - Education,True
+learntech1591.com.ph,"[""tech"",""news"",""media"",""culture"",""startup""]",news,Learntech1591 - News,True
+radio-dev3983.ph,"[""development"",""ci"",""ide"",""code"",""git""]",development,Radio Dev3983 - Development,True
+talk2939.ph,"[""networking"",""social"",""community"",""microblog""]",social,Talk2939 - Social,True
+wiki9087.ph,"[""reference"",""knowledge"",""encyclopedia""]",reference,Wiki9087 - Reference,True
+malltrade5039.com.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Malltrade5039 - Shopping,True
+tech40.com.ph,"[""tech"",""startup"",""news""]",news,Tech40 - News,True
+martmedia5884.ph,"[""marketplace"",""shopping"",""deals""]",shopping,Martmedia5884 - Shopping,True
+talktrade7830.ph,"[""discussion"",""networking"",""social""]",social,Talktrade7830 - Social,True
+plus-video7165.com.ph,"[""media"",""video"",""entertainment"",""streaming"",""creative""]",media,Plus Video7165 - Media,True
+health-code9138.ph,"[""programming"",""ci"",""repository""]",development,Health Code9138 - Development,True
+market9154.com.ph,"[""fintech"",""business"",""ecommerce""]",business,Market9154 - Business,True
+docsvideo5832.com.ph,"[""reference"",""documentation"",""web""]",documentation,Docsvideo5832 - Documentation,True
+plusdeal3624.ph,"[""retail"",""deals"",""marketplace"",""shopping""]",shopping,Plusdeal3624 - Shopping,True
+world-sport9763.ph,"[""video"",""entertainment"",""creative""]",media,World Sport9763 - Media,True
+hubflight1587.ph,"[""booking"",""flights"",""hotels""]",travel,Hubflight1587 - Travel,True
+play7557.ph,"[""streaming"",""entertainment"",""media"",""creative"",""video""]",media,Play7557 - Media,False
+flight7801.ph,"[""booking"",""travel"",""flights""]",travel,Flight7801 - Travel,True
+marthub7497.ph,"[""retail"",""marketplace"",""deals"",""shopping""]",shopping,Marthub7497 - Shopping,True
+newsblog8945.com.ph,"[""culture"",""startup"",""news"",""media"",""tech""]",news,Newsblog8945 - News,True
+blog7863.ph,"[""media"",""video"",""entertainment""]",media,Blog7863 - Media,True
+reviewblog7196.ph,"[""entertainment"",""creative"",""video"",""media"",""streaming""]",media,Reviewblog7196 - Media,True
+talkshop1094.com.ph,"[""fintech"",""marketing"",""business""]",business,Talkshop1094 - Business,True
+guide942.com.ph,"[""reference"",""encyclopedia"",""knowledge""]",reference,Guide942 - Reference,True
+talk9477.ph,"[""discussion"",""microblog"",""networking"",""community""]",social,Talk9477 - Social,True
+shop1415.com,"[""business"",""fintech"",""payment""]",business,Shop1415 - Business,True
+zone-cloud826.ph,"[""cloud"",""infrastructure"",""paas"",""hosting""]",cloud,Zone Cloud826 - Cloud,True
+trade6848.com.ph,"[""gaming"",""esports"",""community""]",gaming,Trade6848 - Gaming,True
+hotel-store6870.ph,"[""deals"",""shopping"",""retail"",""marketplace""]",shopping,Hotel Store6870 - Shopping,True
+times644.ph,"[""culture"",""startup"",""tech"",""news"",""media""]",news,Times644 - News,True
+flight8562.com.ph,"[""hotels"",""booking"",""flights"",""travel""]",travel,Flight8562 - Travel,True
+music5235.com.ph,"[""creative"",""entertainment"",""video"",""media""]",media,Music5235 - Media,True
+shop-tv4560.com.ph,"[""media"",""streaming"",""video"",""entertainment""]",media,Shop Tv4560 - Media,True
+blogreview2625.ph,"[""media"",""video"",""creative""]",media,Blogreview2625 - Media,True
+forum-cloud3354.ph,"[""hosting"",""infrastructure"",""cloud"",""paas""]",cloud,Forum Cloud3354 - Cloud,True
+care-mart3583.ph,"[""shopping"",""deals"",""retail""]",shopping,Care Mart3583 - Shopping,True
+play5705.com.ph,"[""video"",""creative"",""entertainment""]",media,Play5705 - Media,True
+forum9898.com.ph,"[""discussion"",""microblog"",""social""]",social,Forum9898 - Social,True
+martmall4291.com.ph,"[""deals"",""marketplace"",""retail""]",shopping,Martmall4291 - Shopping,True
+tripcommunity5712.ph,"[""travel"",""hotels"",""booking""]",travel,Tripcommunity5712 - Travel,True
+hub9824.com.ph,"[""sms"",""email"",""communication""]",api,Hub9824 - Api,True
+radio1112.ph,"[""media"",""streaming"",""video"",""entertainment""]",media,Radio1112 - Media,True
+sale-mall370.com.ph,"[""deals"",""marketplace"",""retail""]",shopping,Sale Mall370 - Shopping,True
+deal2284.ph,"[""shopping"",""deals"",""marketplace"",""retail""]",shopping,Deal2284 - Shopping,True
+radio5296.ph,"[""creative"",""video"",""entertainment"",""media"",""streaming""]",media,Radio5296 - Media,True
+marketcode2990.ph,"[""development"",""ci"",""repository""]",development,Marketcode2990 - Development,True
+review3320.ph,"[""video"",""streaming"",""media"",""entertainment""]",media,Review3320 - Media,True
+express994.com.ph,"[""news"",""culture"",""startup""]",news,Express994 - News,True
+video-media8225.com.ph,"[""creative"",""video"",""streaming""]",media,Video Media8225 - Media,True
+data527.com.ph,"[""paas"",""cloud"",""hosting"",""infrastructure""]",cloud,Data527 - Cloud,True
+world5935.com.ph,"[""crm"",""business"",""payment""]",business,World5935 - Business,True
+store-guide4992.ph,"[""shopping"",""marketplace"",""deals"",""retail""]",shopping,Store Guide4992 - Shopping,False
+sportlearn6980.ph,"[""interactive"",""learning"",""course""]",education,Sportlearn6980 - Education,True
+world1740.ph,"[""git"",""ide"",""development"",""programming""]",development,World1740 - Development,False
+cook-mall7523.com.ph,"[""deals"",""retail"",""shopping"",""marketplace""]",shopping,Cook Mall7523 - Shopping,True
+news31.cn,"[""media"",""startup"",""culture""]",news,News31 - News,True
+review-code1957.ph,"[""development"",""ide"",""repository""]",development,Review Code1957 - Development,True
+learn8870.ph,"[""course"",""education"",""free"",""interactive"",""learning""]",education,Learn8870 - Education,True
+clouddata215.com.ph,"[""hosting"",""cloud"",""infrastructure""]",cloud,Clouddata215 - Cloud,True
+review9365.com.ph,"[""entertainment"",""video"",""streaming"",""creative"",""media""]",media,Review9365 - Media,True
+guide278.com.ph,"[""knowledge"",""encyclopedia"",""dictionary"",""reference""]",reference,Guide278 - Reference,True
+shopstore4133.com.ph,"[""crm"",""business"",""payment""]",business,Shopstore4133 - Business,True
+codestore3727.ph,"[""programming"",""development"",""git"",""repository""]",development,Codestore3727 - Development,True
+cloud5730.ph,"[""infrastructure"",""cloud"",""paas""]",cloud,Cloud5730 - Cloud,True
+guide2987.com.ph,"[""encyclopedia"",""dictionary"",""reference""]",reference,Guide2987 - Reference,True
+hubcloud2284.ph,"[""cloud"",""hosting"",""paas"",""infrastructure""]",cloud,Hubcloud2284 - Cloud,True
+techtv2687.ph,"[""news"",""culture"",""tech""]",news,Techtv2687 - News,True
+cloudflight4003.ph,"[""paas"",""cloud"",""hosting"",""infrastructure""]",cloud,Cloudflight4003 - Cloud,False
+techsale2189.com.ph,"[""news"",""startup"",""culture"",""media""]",news,Techsale2189 - News,True
+portal938.ph,"[""collaboration"",""calendar"",""productivity"",""meeting""]",productivity,Portal938 - Productivity,True
+tech-cloud8166.com.ph,"[""media"",""tech"",""startup""]",news,Tech Cloud8166 - News,True
+deal3646.ph,"[""shopping"",""retail"",""marketplace"",""deals""]",shopping,Deal3646 - Shopping,True
+bank7861.ph,"[""banking"",""investment"",""finance""]",finance,Bank7861 - Finance,True
+today-code8250.ph,"[""news"",""startup"",""media""]",news,Today Code8250 - News,True
+hotel-plus2442.ph,"[""hotels"",""booking"",""travel"",""flights""]",travel,Hotel Plus2442 - Travel,True
+blog7476.com.ph,"[""media"",""entertainment"",""streaming"",""video"",""creative""]",media,Blog7476 - Media,True
+food855.ph,"[""streaming"",""creative"",""entertainment"",""media""]",media,Food855 - Media,True
+mall-mart5871.com.ph,"[""shopping"",""marketplace"",""retail"",""deals""]",shopping,Mall Mart5871 - Shopping,True
+cook7560.com.ph,"[""creative"",""entertainment"",""streaming"",""video""]",media,Cook7560 - Media,True
+health135.ph,"[""business"",""payment"",""ecommerce"",""marketing"",""fintech""]",business,Health135 - Business,True
+daily104.com.ph,"[""startup"",""tech"",""culture"",""news"",""media""]",news,Daily104 - News,True
+shop-learn7418.ph,"[""learning"",""interactive"",""education"",""course"",""tutorial""]",education,Shop Learn7418 - Education,True
+portal5279.com.ph,"[""booking"",""hotels"",""travel""]",travel,Portal5279 - Travel,True
+bank7987.ph,"[""investment"",""banking"",""trading"",""finance""]",finance,Bank7987 - Finance,True
+radio4686.com.ph,"[""creative"",""entertainment"",""streaming"",""video""]",media,Radio4686 - Media,True
+guide6208.com.ph,"[""knowledge"",""dictionary"",""encyclopedia""]",reference,Guide6208 - Reference,False
+store-daily7843.ph,"[""tech"",""media"",""culture""]",news,Store Daily7843 - News,True
+times-market6376.ph,"[""news"",""tech"",""media""]",news,Times Market6376 - News,True
+world-media143.com.ph,"[""git"",""programming"",""repository"",""code"",""ide""]",development,World Media143 - Development,True
+forum-world2018.com.ph,"[""microblog"",""social"",""community"",""networking""]",social,Forum World2018 - Social,True
+mart-docs7799.com.ph,"[""documentation"",""reference"",""web"",""api""]",documentation,Mart Docs7799 - Documentation,True
+community-market6938.com.ph,"[""crm"",""business"",""fintech"",""marketing"",""ecommerce""]",business,Community Market6938 - Business,False
+times371.ph,"[""news"",""tech"",""culture"",""startup""]",news,Times371 - News,True
+sale-docs356.com.ph,"[""documentation"",""api"",""reference"",""web""]",documentation,Sale Docs356 - Documentation,False
+times6075.ph,"[""startup"",""news"",""media"",""tech"",""culture""]",news,Times6075 - News,True
+hotel1441.ph,"[""booking"",""travel"",""hotels""]",travel,Hotel1441 - Travel,True
+hotel4735.ph,"[""booking"",""hotels"",""flights"",""travel""]",travel,Hotel4735 - Travel,True
+storehealth6533.com.ph,"[""marketplace"",""deals"",""shopping""]",shopping,Storehealth6533 - Shopping,True
+tradecloud780.ph,"[""cloud"",""hosting"",""infrastructure"",""paas""]",cloud,Tradecloud780 - Cloud,True
+times-food378.com.ph,"[""startup"",""media"",""tech"",""news""]",news,Times Food378 - News,True
+video-mart3475.ph,"[""streaming"",""media"",""creative""]",media,Video Mart3475 - Media,True
+newscare9423.com.ph,"[""tech"",""startup"",""culture"",""news"",""media""]",news,Newscare9423 - News,True
+portal5545.com.ph,"[""encyclopedia"",""knowledge"",""dictionary"",""reference""]",reference,Portal5545 - Reference,True
+newswiki1282.com.ph,"[""culture"",""startup"",""media""]",news,Newswiki1282 - News,True
+community3363.ph,"[""social"",""networking"",""community"",""microblog"",""discussion""]",social,Community3363 - Social,True
+code-cook398.ph,"[""programming"",""code"",""repository"",""ci""]",development,Code Cook398 - Development,True
+portalsale4474.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Portalsale4474 - Shopping,True
+data-zone9409.com.ph,"[""hosting"",""cloud"",""infrastructure"",""paas""]",cloud,Data Zone9409 - Cloud,True
+daily-sale7667.ph,"[""culture"",""news"",""startup"",""media""]",news,Daily Sale7667 - News,True
+store6163.com.ph,"[""deals"",""retail"",""marketplace""]",shopping,Store6163 - Shopping,True
+shop-wiki4037.ph,"[""encyclopedia"",""dictionary"",""reference""]",reference,Shop Wiki4037 - Reference,True
+newsdata2106.ph,"[""culture"",""media"",""tech"",""news""]",news,Newsdata2106 - News,True
+play3560.ph,"[""entertainment"",""media"",""streaming""]",media,Play3560 - Media,False
+music-health3698.com.ph,"[""entertainment"",""creative"",""video"",""media""]",media,Music Health3698 - Media,True
+shop2510.ph,"[""business"",""payment"",""fintech""]",business,Shop2510 - Business,True
+review1609.com.ph,"[""creative"",""streaming"",""media""]",media,Review1609 - Media,True
+host-health4288.com.ph,"[""hosting"",""cloud"",""paas"",""infrastructure""]",cloud,Host Health4288 - Cloud,True
+data-health5951.ph,"[""hosting"",""paas"",""infrastructure""]",cloud,Data Health5951 - Cloud,True
+daily4730.ph,"[""media"",""news"",""culture"",""tech""]",news,Daily4730 - News,True
+mall5067.com.ph,"[""shopping"",""retail"",""marketplace"",""deals""]",shopping,Mall5067 - Shopping,True
+radio-trip4864.com.ph,"[""video"",""media"",""entertainment"",""creative""]",media,Radio Trip4864 - Media,True
+times-store9108.ph,"[""media"",""news"",""culture"",""startup""]",news,Times Store9108 - News,True
+portalexpress8098.ph,"[""culture"",""startup"",""news""]",news,Portalexpress8098 - News,True
+forum6392.ph,"[""microblog"",""networking"",""community"",""social"",""discussion""]",social,Forum6392 - Social,True
+blog-learn3710.com.ph,"[""interactive"",""course"",""tutorial"",""learning""]",education,Blog Learn3710 - Education,True
+media-code9880.com.ph,"[""git"",""ide"",""repository"",""programming"",""code""]",development,Media Code9880 - Development,True
+store3119.ph,"[""retail"",""deals"",""marketplace""]",shopping,Store3119 - Shopping,False
+wiki1034.com.ph,"[""dictionary"",""encyclopedia"",""knowledge""]",reference,Wiki1034 - Reference,True
+docs-media9256.ph,"[""documentation"",""api"",""web"",""reference""]",documentation,Docs Media9256 - Documentation,True
+mediatrade9253.ph,"[""paas"",""infrastructure"",""hosting"",""cloud""]",cloud,Mediatrade9253 - Cloud,True
+portal6446.ph,"[""hosting"",""cloud"",""paas"",""infrastructure""]",cloud,Portal6446 - Cloud,True
+travel-times2324.com.ph,"[""media"",""tech"",""startup"",""news"",""culture""]",news,Travel Times2324 - News,True
+today-shop1297.com.ph,"[""news"",""tech"",""startup"",""culture""]",news,Today Shop1297 - News,True
+host5081.com.ph,"[""paas"",""cloud"",""infrastructure"",""hosting""]",cloud,Host5081 - Cloud,True
+video-news2386.com.ph,"[""news"",""media"",""tech""]",news,Video News2386 - News,True
+talk-deal4255.ph,"[""retail"",""shopping"",""deals"",""marketplace""]",shopping,Talk Deal4255 - Shopping,True
+marketstore6526.com.ph,"[""payment"",""crm"",""ecommerce"",""business"",""fintech""]",business,Marketstore6526 - Business,True
+blog8525.ph,"[""entertainment"",""media"",""streaming"",""creative""]",media,Blog8525 - Media,True
+cook-news5426.ph,"[""culture"",""startup"",""tech"",""media"",""news""]",news,Cook News5426 - News,True
+trip4864.com.ph,"[""travel"",""hotels"",""booking"",""flights""]",travel,Trip4864 - Travel,True
+daily-blog106.com.ph,"[""media"",""startup"",""culture""]",news,Daily Blog106 - News,True
+today4387.com.ph,"[""culture"",""news"",""startup""]",news,Today4387 - News,True
+bank-travel437.ph,"[""flights"",""travel"",""hotels""]",travel,Bank Travel437 - Travel,True
+fooddaily1543.com.ph,"[""startup"",""news"",""tech"",""media"",""culture""]",news,Fooddaily1543 - News,True
+bankdev7590.ph,"[""repository"",""code"",""ci""]",development,Bankdev7590 - Development,True
+health9648.com.ph,"[""community"",""gaming"",""esports""]",gaming,Health9648 - Gaming,True
+news-food5527.com.ph,"[""news"",""startup"",""media"",""tech"",""culture""]",news,News Food5527 - News,True
+shop8808.ph,"[""ecommerce"",""payment"",""marketing"",""business"",""crm""]",business,Shop8808 - Business,True
+music3206.com.ph,"[""entertainment"",""media"",""creative"",""streaming""]",media,Music3206 - Media,True
+hub3758.com.ph,"[""cloud"",""infrastructure"",""paas""]",cloud,Hub3758 - Cloud,True
+flighttech3192.com.ph,"[""culture"",""tech"",""media"",""startup""]",news,Flighttech3192 - News,False
+saletrip4859.com.ph,"[""shopping"",""retail"",""deals""]",shopping,Saletrip4859 - Shopping,True
+market2439.com.ph,"[""payment"",""ecommerce"",""crm"",""fintech""]",business,Market2439 - Business,True
+martcommunity1143.com.ph,"[""shopping"",""deals"",""marketplace"",""retail""]",shopping,Martcommunity1143 - Shopping,True
+daily2478.ph,"[""startup"",""tech"",""culture"",""media"",""news""]",news,Daily2478 - News,True
+travel7391.ph,"[""hotels"",""booking"",""travel"",""flights""]",travel,Travel7391 - Travel,True
+express2754.com.ph,"[""culture"",""startup"",""tech"",""news""]",news,Express2754 - News,True
+learn6746.com.ph,"[""free"",""learning"",""education""]",education,Learn6746 - Education,True
+care-plus7008.ph,"[""calendar"",""meeting"",""tool"",""productivity""]",productivity,Care Plus7008 - Productivity,True
+guide4398.com.ph,"[""reference"",""encyclopedia"",""knowledge""]",reference,Guide4398 - Reference,True
+codecook3031.com.ph,"[""ide"",""development"",""ci"",""programming""]",development,Codecook3031 - Development,True
+wiki-trade4314.ph,"[""dictionary"",""reference"",""knowledge""]",reference,Wiki Trade4314 - Reference,False
+tech1074.ph,"[""news"",""tech"",""media"",""culture"",""startup""]",news,Tech1074 - News,True
+hotel4241.com.ph,"[""travel"",""booking"",""hotels""]",travel,Hotel4241 - Travel,True
+wiki775.com.ph,"[""dictionary"",""reference"",""knowledge""]",reference,Wiki775 - Reference,True
+data95.cn,"[""hosting"",""paas"",""cloud"",""infrastructure""]",cloud,Data95 - Cloud,True
+mediacloud3929.ph,"[""infrastructure"",""cloud"",""paas"",""hosting""]",cloud,Mediacloud3929 - Cloud,True
+bank-health2178.ph,"[""banking"",""trading"",""investment""]",finance,Bank Health2178 - Finance,True
+music4.com,"[""streaming"",""media"",""entertainment"",""creative""]",media,Music4 - Media,True
+blog-cook1612.ph,"[""video"",""streaming"",""media"",""entertainment""]",media,Blog Cook1612 - Media,True
+music3341.ph,"[""video"",""creative"",""streaming""]",media,Music3341 - Media,False
+trade-music6084.ph,"[""creative"",""media"",""video""]",media,Trade Music6084 - Media,True
+care7954.com.ph,"[""builder"",""blog"",""website"",""cms""]",cms,Care7954 - Cms,True
+health1350.com.ph,"[""discussion"",""social"",""community"",""networking""]",social,Health1350 - Social,True
+talkdaily8341.com.ph,"[""startup"",""tech"",""culture"",""news"",""media""]",news,Talkdaily8341 - News,True
+portal7600.com.ph,"[""retail"",""deals"",""shopping"",""marketplace""]",shopping,Portal7600 - Shopping,True
+hotel5610.com.ph,"[""flights"",""travel"",""booking""]",travel,Hotel5610 - Travel,True
+play3501.com.ph,"[""media"",""creative"",""streaming""]",media,Play3501 - Media,True
+flight8496.ph,"[""hotels"",""flights"",""booking""]",travel,Flight8496 - Travel,True
+trip988.com,"[""flights"",""travel"",""hotels"",""booking""]",travel,Trip988 - Travel,True
+hubguide536.ph,"[""encyclopedia"",""dictionary"",""knowledge"",""reference""]",reference,Hubguide536 - Reference,True
+radio2090.com.ph,"[""creative"",""streaming"",""media"",""video""]",media,Radio2090 - Media,True
+portal2841.com.ph,"[""gaming"",""esports"",""community""]",gaming,Portal2841 - Gaming,True
+flighttoday4139.ph,"[""startup"",""tech"",""media"",""news"",""culture""]",news,Flighttoday4139 - News,True
+sale-data3642.com.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Sale Data3642 - Shopping,True
+dataradio3082.com.ph,"[""video"",""creative"",""entertainment"",""media"",""streaming""]",media,Dataradio3082 - Media,True
+cook2692.ph,"[""creative"",""video"",""streaming"",""media"",""entertainment""]",media,Cook2692 - Media,True
+plus-deal6307.com.ph,"[""shopping"",""retail"",""deals""]",shopping,Plus Deal6307 - Shopping,True
+times5053.ph,"[""culture"",""media"",""news"",""startup"",""tech""]",news,Times5053 - News,True
+timesdev2680.ph,"[""tech"",""culture"",""news""]",news,Timesdev2680 - News,True
+mall9363.ph,"[""shopping"",""deals"",""retail""]",shopping,Mall9363 - Shopping,True
+dev-sport1079.com.ph,"[""repository"",""ci"",""git"",""development"",""code""]",development,Dev Sport1079 - Development,True
+hotelsport4575.com.ph,"[""media"",""entertainment"",""video""]",media,Hotelsport4575 - Media,False
+trip7611.com.ph,"[""travel"",""flights"",""hotels"",""booking""]",travel,Trip7611 - Travel,True
+techlearn4884.com.ph,"[""news"",""tech"",""startup"",""culture""]",news,Techlearn4884 - News,True
+hub6155.com.ph,"[""communication"",""api"",""sms"",""email""]",api,Hub6155 - Api,True
+host-learn8553.com.ph,"[""tutorial"",""free"",""education"",""course"",""learning""]",education,Host Learn8553 - Education,True
+tvexpress4340.com.ph,"[""culture"",""news"",""startup""]",news,Tvexpress4340 - News,True
+trip1270.ph,"[""booking"",""flights"",""travel"",""hotels""]",travel,Trip1270 - Travel,True
+talktech4000.ph,"[""news"",""culture"",""media""]",news,Talktech4000 - News,True
+blog8598.com.ph,"[""video"",""creative"",""entertainment"",""streaming""]",media,Blog8598 - Media,True
+data1349.com.ph,"[""paas"",""hosting"",""cloud"",""infrastructure""]",cloud,Data1349 - Cloud,True
+cloud3041.ph,"[""paas"",""infrastructure"",""hosting"",""cloud""]",cloud,Cloud3041 - Cloud,True
+market3380.ph,"[""marketing"",""ecommerce"",""fintech"",""business"",""crm""]",business,Market3380 - Business,True
+blog-news4978.ph,"[""news"",""tech"",""media"",""startup""]",news,Blog News4978 - News,True
+times-health9089.ph,"[""startup"",""culture"",""news"",""media""]",news,Times Health9089 - News,True
+hotel2607.ph,"[""hotels"",""booking"",""travel""]",travel,Hotel2607 - Travel,True
+forumtalk8828.ph,"[""community"",""microblog"",""social"",""networking"",""discussion""]",social,Forumtalk8828 - Social,True
+host8678.ph,"[""cloud"",""hosting"",""infrastructure""]",cloud,Host8678 - Cloud,True
+learntech5865.com.ph,"[""news"",""startup"",""tech"",""media""]",news,Learntech5865 - News,True
+cloud-sport5700.ph,"[""entertainment"",""video"",""streaming"",""media""]",media,Cloud Sport5700 - Media,True
+trade8590.com.ph,"[""discussion"",""social"",""networking""]",social,Trade8590 - Social,True
+wiki2252.com.ph,"[""encyclopedia"",""knowledge"",""reference"",""dictionary""]",reference,Wiki2252 - Reference,True
+plus3175.ph,"[""medical"",""health"",""wellness""]",health,Plus3175 - Health,True
+blog5826.com.ph,"[""streaming"",""video"",""entertainment""]",media,Blog5826 - Media,True
+tv3597.com.ph,"[""creative"",""entertainment"",""media""]",media,Tv3597 - Media,True
+host8755.com.ph,"[""paas"",""cloud"",""infrastructure"",""hosting""]",cloud,Host8755 - Cloud,True
+portalworld1727.com.ph,"[""documentation"",""web"",""api"",""reference""]",documentation,Portalworld1727 - Documentation,True
+hotelwiki1499.com.ph,"[""knowledge"",""reference"",""dictionary"",""encyclopedia""]",reference,Hotelwiki1499 - Reference,True
+hotelplus5419.com.ph,"[""booking"",""hotels"",""travel""]",travel,Hotelplus5419 - Travel,True
+bankhotel5668.com.ph,"[""travel"",""booking"",""hotels""]",travel,Bankhotel5668 - Travel,True
+shop5503.com.ph,"[""payment"",""ecommerce"",""marketing"",""business"",""fintech""]",business,Shop5503 - Business,True
+blog-news3790.com.ph,"[""culture"",""news"",""startup""]",news,Blog News3790 - News,True
+news85.com,"[""media"",""startup"",""culture"",""tech""]",news,News85 - News,True
+cook-deal7522.ph,"[""deals"",""shopping"",""retail""]",shopping,Cook Deal7522 - Shopping,True
+plusfood1166.ph,"[""media"",""streaming"",""creative"",""entertainment""]",media,Plusfood1166 - Media,True
+todaytalk1495.ph,"[""startup"",""culture"",""tech""]",news,Todaytalk1495 - News,True
+docshost4450.com.ph,"[""web"",""documentation"",""reference"",""api""]",documentation,Docshost4450 - Documentation,False
+forum9283.com.ph,"[""community"",""networking"",""microblog"",""discussion""]",social,Forum9283 - Social,True
+news-review587.com.ph,"[""startup"",""culture"",""tech"",""news"",""media""]",news,News Review587 - News,True
+trade3696.com.ph,"[""ci"",""code"",""repository"",""git"",""ide""]",development,Trade3696 - Development,True
+plus5948.ph,"[""email"",""api"",""sms""]",api,Plus5948 - Api,True
+wiki-trade9738.com.ph,"[""encyclopedia"",""reference"",""knowledge""]",reference,Wiki Trade9738 - Reference,True
+newstravel4339.ph,"[""tech"",""culture"",""media"",""news"",""startup""]",news,Newstravel4339 - News,False
+shop-flight5139.ph,"[""crm"",""payment"",""business"",""marketing""]",business,Shop Flight5139 - Business,True
+flight1750.ph,"[""hotels"",""booking"",""flights"",""travel""]",travel,Flight1750 - Travel,True
+blog-play9778.com.ph,"[""entertainment"",""creative"",""media""]",media,Blog Play9778 - Media,True
+forum3119.ph,"[""microblog"",""community"",""networking"",""discussion""]",social,Forum3119 - Social,True
+radio314.com,"[""streaming"",""video"",""entertainment"",""media"",""creative""]",media,Radio314 - Media,True
+portal1607.ph,"[""media"",""startup"",""culture"",""news"",""tech""]",news,Portal1607 - News,True
+media-news2342.ph,"[""news"",""culture"",""media"",""tech"",""startup""]",news,Media News2342 - News,True
+talk8486.com.ph,"[""social"",""networking"",""community"",""microblog"",""discussion""]",social,Talk8486 - Social,True
+community5705.ph,"[""community"",""microblog"",""social"",""discussion""]",social,Community5705 - Social,True
+communitycode2476.ph,"[""git"",""ci"",""code"",""ide"",""development""]",development,Communitycode2476 - Development,True
+code711.com,"[""git"",""ci"",""ide""]",development,Code711 - Development,True
+learnhub3585.ph,"[""interactive"",""course"",""learning"",""free""]",education,Learnhub3585 - Education,True
+blog9642.ph,"[""creative"",""video"",""entertainment""]",media,Blog9642 - Media,True
+tv1861.net,"[""video"",""media"",""entertainment"",""streaming"",""creative""]",media,Tv1861 - Media,True
+world219.ph,"[""business"",""fintech"",""marketing""]",business,World219 - Business,True
+review-guide3471.ph,"[""dictionary"",""knowledge"",""encyclopedia""]",reference,Review Guide3471 - Reference,True
+portal8131.com.ph,"[""marketplace"",""retail"",""shopping""]",shopping,Portal8131 - Shopping,True
+cook5729.ph,"[""creative"",""video"",""streaming"",""media""]",media,Cook5729 - Media,True
+radio6942.ph,"[""creative"",""media"",""entertainment""]",media,Radio6942 - Media,True
+video2972.ph,"[""media"",""video"",""creative"",""entertainment""]",media,Video2972 - Media,True
+code-times7471.ph,"[""news"",""tech"",""media"",""culture"",""startup""]",news,Code Times7471 - News,True
+deal-hub313.ph,"[""retail"",""shopping"",""deals"",""marketplace""]",shopping,Deal Hub313 - Shopping,True
+data-daily9664.com.ph,"[""culture"",""tech"",""startup"",""news"",""media""]",news,Data Daily9664 - News,True
+wiki8896.ph,"[""encyclopedia"",""reference"",""knowledge"",""dictionary""]",reference,Wiki8896 - Reference,True
+expressreview1362.com.ph,"[""tech"",""media"",""culture"",""startup"",""news""]",news,Expressreview1362 - News,True
+learn2444.com.ph,"[""free"",""tutorial"",""course""]",education,Learn2444 - Education,True
+shop1868.ph,"[""business"",""fintech"",""payment"",""marketing"",""crm""]",business,Shop1868 - Business,True
+zoneforum9715.ph,"[""microblog"",""community"",""networking"",""discussion""]",social,Zoneforum9715 - Social,True
+blog-mall5572.com.ph,"[""marketplace"",""retail"",""shopping"",""deals""]",shopping,Blog Mall5572 - Shopping,True
+marketsale6998.com.ph,"[""business"",""payment"",""fintech"",""ecommerce""]",business,Marketsale6998 - Business,True
+blog7477.ph,"[""creative"",""streaming"",""entertainment"",""video"",""media""]",media,Blog7477 - Media,True
+talk-store3103.ph,"[""shopping"",""retail"",""marketplace""]",shopping,Talk Store3103 - Shopping,True
+store-docs4844.com.ph,"[""api"",""documentation"",""web""]",documentation,Store Docs4844 - Documentation,True
+code3984.com.ph,"[""programming"",""ide"",""code"",""repository""]",development,Code3984 - Development,True
+hub3021.com.ph,"[""public"",""government"",""services""]",gov,Hub3021 - Gov,True
+cook4271.com.ph,"[""entertainment"",""creative"",""media"",""streaming""]",media,Cook4271 - Media,True
+radio3172.ph,"[""creative"",""streaming"",""media"",""entertainment"",""video""]",media,Radio3172 - Media,True
+media8.com,"[""tool"",""calendar"",""collaboration"",""productivity"",""notes""]",productivity,Media8 - Productivity,True
+food2823.com.ph,"[""entertainment"",""media"",""streaming"",""creative""]",media,Food2823 - Media,True
+health4075.ph,"[""design"",""typography"",""ui"",""photos""]",design,Health4075 - Design,True
+zone-host5019.ph,"[""infrastructure"",""hosting"",""paas"",""cloud""]",cloud,Zone Host5019 - Cloud,True
+portalplus4574.com.ph,"[""encyclopedia"",""dictionary"",""knowledge""]",reference,Portalplus4574 - Reference,True
+radio-care3068.com.ph,"[""creative"",""streaming"",""entertainment""]",media,Radio Care3068 - Media,True
+radio8757.ph,"[""video"",""creative"",""media"",""entertainment""]",media,Radio8757 - Media,True
+health-trip6914.ph,"[""booking"",""flights"",""travel""]",travel,Health Trip6914 - Travel,True
+bankmusic7761.com.ph,"[""media"",""video"",""creative"",""entertainment""]",media,Bankmusic7761 - Media,True
+news5634.ph,"[""culture"",""news"",""startup""]",news,News5634 - News,True
+daily4186.ph,"[""startup"",""news"",""tech""]",news,Daily4186 - News,False
+news6907.com.ph,"[""startup"",""media"",""tech"",""culture"",""news""]",news,News6907 - News,True
+host6921.com.ph,"[""cloud"",""infrastructure"",""hosting"",""paas""]",cloud,Host6921 - Cloud,True
+wikiblog4295.ph,"[""reference"",""encyclopedia"",""knowledge""]",reference,Wikiblog4295 - Reference,True
+sale-health5809.com.ph,"[""retail"",""deals"",""marketplace"",""shopping""]",shopping,Sale Health5809 - Shopping,True
+zone-wiki4617.ph,"[""encyclopedia"",""reference"",""dictionary""]",reference,Zone Wiki4617 - Reference,True
+trade8608.ph,"[""learning"",""free"",""interactive"",""tutorial""]",education,Trade8608 - Education,True
+radiotv4976.ph,"[""video"",""media"",""entertainment"",""streaming""]",media,Radiotv4976 - Media,True
+media-radio3771.ph,"[""entertainment"",""creative"",""media"",""streaming""]",media,Media Radio3771 - Media,True
+mall-mart1841.com.ph,"[""retail"",""shopping"",""deals"",""marketplace""]",shopping,Mall Mart1841 - Shopping,True
+wikishop8676.com.ph,"[""encyclopedia"",""dictionary"",""knowledge""]",reference,Wikishop8676 - Reference,True
+forum998.ph,"[""networking"",""microblog"",""discussion"",""social""]",social,Forum998 - Social,False
+tvvideo6860.com.ph,"[""entertainment"",""creative"",""streaming"",""media""]",media,Tvvideo6860 - Media,True
+music2075.ph,"[""creative"",""video"",""streaming""]",media,Music2075 - Media,True
+host-tech5661.com.ph,"[""media"",""news"",""culture"",""startup"",""tech""]",news,Host Tech5661 - News,True
+flight9441.ph,"[""booking"",""hotels"",""flights"",""travel""]",travel,Flight9441 - Travel,True
+bank4561.com.ph,"[""investment"",""finance"",""trading""]",finance,Bank4561 - Finance,True
+play5595.com.ph,"[""media"",""creative"",""entertainment""]",media,Play5595 - Media,True
+times27.com.ph,"[""tech"",""startup"",""culture""]",news,Times27 - News,False
+wiki2811.ph,"[""dictionary"",""knowledge"",""encyclopedia""]",reference,Wiki2811 - Reference,True
+forumtoday247.com.ph,"[""startup"",""media"",""tech""]",news,Forumtoday247 - News,True
+tradesale6084.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Tradesale6084 - Shopping,True
+express-market7128.com.ph,"[""media"",""news"",""tech""]",news,Express Market7128 - News,True
+store2378.com.ph,"[""marketplace"",""deals"",""shopping"",""retail""]",shopping,Store2378 - Shopping,True
+tech3168.ph,"[""tech"",""startup"",""news""]",news,Tech3168 - News,True
+data1357.ph,"[""hosting"",""cloud"",""infrastructure""]",cloud,Data1357 - Cloud,True
+tech7642.com.ph,"[""culture"",""media"",""tech"",""news"",""startup""]",news,Tech7642 - News,True
+guide1503.ph,"[""encyclopedia"",""knowledge"",""dictionary""]",reference,Guide1503 - Reference,True
+data9524.com.ph,"[""cloud"",""hosting"",""infrastructure""]",cloud,Data9524 - Cloud,True
+food6132.com.ph,"[""media"",""entertainment"",""streaming"",""creative"",""video""]",media,Food6132 - Media,True
+review-community8091.ph,"[""community"",""microblog"",""social""]",social,Review Community8091 - Social,True
+radio4246.com.ph,"[""creative"",""entertainment"",""video"",""streaming""]",media,Radio4246 - Media,True
+talk-zone5925.ph,"[""discussion"",""networking"",""social"",""microblog"",""community""]",social,Talk Zone5925 - Social,True
+radio1804.com.ph,"[""media"",""streaming"",""video"",""creative"",""entertainment""]",media,Radio1804 - Media,True
+sport-dev9962.com.ph,"[""code"",""repository"",""git""]",development,Sport Dev9962 - Development,True
+tech4443.com.ph,"[""media"",""startup"",""news""]",news,Tech4443 - News,True
+today-plus9355.com.ph,"[""tech"",""news"",""media"",""culture""]",news,Today Plus9355 - News,True
+wiki-zone6802.com.ph,"[""dictionary"",""reference"",""knowledge""]",reference,Wiki Zone6802 - Reference,True
+hub3920.com.ph,"[""cloud"",""infrastructure"",""hosting"",""paas""]",cloud,Hub3920 - Cloud,True
+care3137.com.ph,"[""blog"",""website"",""builder"",""cms""]",cms,Care3137 - Cms,True
+world-hub6831.ph,"[""wellness"",""medical"",""health""]",health,World Hub6831 - Health,True
+tech-health7850.com.ph,"[""startup"",""tech"",""media""]",news,Tech Health7850 - News,True
+cloud-news9414.com.ph,"[""news"",""startup"",""media"",""culture""]",news,Cloud News9414 - News,False
+hubdeal1860.com.ph,"[""deals"",""shopping"",""retail""]",shopping,Hubdeal1860 - Shopping,False
+bankdocs800.ph,"[""documentation"",""api"",""web"",""reference""]",documentation,Bankdocs800 - Documentation,True
+saleplay1432.ph,"[""video"",""entertainment"",""streaming"",""creative""]",media,Saleplay1432 - Media,True
+media-today5459.ph,"[""culture"",""startup"",""tech"",""media""]",news,Media Today5459 - News,True
+cook-music4320.com.ph,"[""video"",""streaming"",""creative"",""entertainment""]",media,Cook Music4320 - Media,True
+store-bank615.com.ph,"[""marketplace"",""retail"",""deals"",""shopping""]",shopping,Store Bank615 - Shopping,True
+news4295.ph,"[""culture"",""tech"",""startup""]",news,News4295 - News,True
+guide1474.com.ph,"[""encyclopedia"",""knowledge"",""reference"",""dictionary""]",reference,Guide1474 - Reference,True
+blog1720.ph,"[""video"",""creative"",""streaming"",""media""]",media,Blog1720 - Media,True
+talk-express6187.ph,"[""media"",""culture"",""news"",""tech"",""startup""]",news,Talk Express6187 - News,True
+today3160.ph,"[""news"",""media"",""culture"",""tech""]",news,Today3160 - News,True
+hosttrip7273.com.ph,"[""hosting"",""cloud"",""paas"",""infrastructure""]",cloud,Hosttrip7273 - Cloud,True
+host-data8370.ph,"[""hosting"",""infrastructure"",""paas""]",cloud,Host Data8370 - Cloud,True
+plus4948.com.ph,"[""api"",""reference"",""documentation""]",documentation,Plus4948 - Documentation,True
+community6464.ph,"[""community"",""discussion"",""microblog""]",social,Community6464 - Social,True
+travelguide534.com.ph,"[""travel"",""booking"",""flights""]",travel,Travelguide534 - Travel,True
+talk-hub8005.ph,"[""social"",""community"",""microblog"",""networking"",""discussion""]",social,Talk Hub8005 - Social,True
+foodbank4768.ph,"[""video"",""media"",""creative"",""entertainment""]",media,Foodbank4768 - Media,True
+host-trade7645.ph,"[""hosting"",""paas"",""infrastructure""]",cloud,Host Trade7645 - Cloud,True
+wiki7854.ph,"[""knowledge"",""reference"",""encyclopedia""]",reference,Wiki7854 - Reference,True
+cook5642.ph,"[""video"",""creative"",""streaming""]",media,Cook5642 - Media,True
+markethub603.ph,"[""fintech"",""crm"",""business"",""ecommerce""]",business,Markethub603 - Business,True
+tech43.com,"[""culture"",""news"",""startup""]",news,Tech43 - News,True
+talkdata9179.com.ph,"[""hosting"",""infrastructure"",""cloud"",""paas""]",cloud,Talkdata9179 - Cloud,True
+forum5436.com.ph,"[""microblog"",""discussion"",""social"",""community"",""networking""]",social,Forum5436 - Social,True
+sport-community288.com.ph,"[""media"",""creative"",""video"",""entertainment"",""streaming""]",media,Sport Community288 - Media,True
+market-travel150.ph,"[""fintech"",""crm"",""business"",""marketing"",""ecommerce""]",business,Market Travel150 - Business,True
+tv-mall8278.ph,"[""creative"",""streaming"",""entertainment"",""media""]",media,Tv Mall8278 - Media,True
+reviewflight8457.ph,"[""hotels"",""flights"",""travel""]",travel,Reviewflight8457 - Travel,True
+video-dev6486.ph,"[""ide"",""development"",""code"",""ci"",""programming""]",development,Video Dev6486 - Development,True
+shop1957.ph,"[""payment"",""crm"",""ecommerce""]",business,Shop1957 - Business,True
+tech-community7684.com.ph,"[""culture"",""media"",""news"",""tech"",""startup""]",news,Tech Community7684 - News,True
+dev-deal7955.ph,"[""code"",""repository"",""ide"",""ci"",""git""]",development,Dev Deal7955 - Development,True
+forumtrade4448.ph,"[""microblog"",""discussion"",""social"",""community""]",social,Forumtrade4448 - Social,True
+trip7975.com.ph,"[""travel"",""hotels"",""flights""]",travel,Trip7975 - Travel,True
+bank4371.com.ph,"[""investment"",""trading"",""finance""]",finance,Bank4371 - Finance,True
+daily-code4310.ph,"[""news"",""culture"",""startup"",""media"",""tech""]",news,Daily Code4310 - News,True
+hub-forum9186.com.ph,"[""discussion"",""social"",""networking"",""community""]",social,Hub Forum9186 - Social,True
+community9583.ph,"[""networking"",""social"",""discussion""]",social,Community9583 - Social,True
+todayradio8332.com.ph,"[""news"",""tech"",""startup"",""culture""]",news,Todayradio8332 - News,True
+music4055.com.ph,"[""entertainment"",""video"",""streaming"",""media"",""creative""]",media,Music4055 - Media,True
+cloud-talk2836.com.ph,"[""hosting"",""paas"",""infrastructure""]",cloud,Cloud Talk2836 - Cloud,True
+musiccare1231.com.ph,"[""creative"",""entertainment"",""video""]",media,Musiccare1231 - Media,True
+hotel4007.ph,"[""hotels"",""travel"",""flights"",""booking""]",travel,Hotel4007 - Travel,True
+care4374.com.ph,"[""documentation"",""web"",""reference"",""api""]",documentation,Care4374 - Documentation,True
+food7057.com.ph,"[""entertainment"",""media"",""streaming"",""creative"",""video""]",media,Food7057 - Media,True
+tv1398.ph,"[""creative"",""entertainment"",""video"",""streaming""]",media,Tv1398 - Media,True
+trip7996.ph,"[""travel"",""hotels"",""booking"",""flights""]",travel,Trip7996 - Travel,True
+shoptv3546.ph,"[""entertainment"",""creative"",""video"",""streaming""]",media,Shoptv3546 - Media,True
+news1932.com.ph,"[""tech"",""media"",""news""]",news,News1932 - News,True
+todaybank9627.ph,"[""culture"",""media"",""tech"",""news"",""startup""]",news,Todaybank9627 - News,True
+food-world2574.ph,"[""creative"",""streaming"",""entertainment"",""media"",""video""]",media,Food World2574 - Media,True
+deal3601.ph,"[""deals"",""shopping"",""marketplace"",""retail""]",shopping,Deal3601 - Shopping,True
+times1671.ph,"[""media"",""startup"",""tech"",""news""]",news,Times1671 - News,True
+plus1504.ph,"[""community"",""esports"",""gaming""]",gaming,Plus1504 - Gaming,True
+mall9443.ph,"[""marketplace"",""deals"",""retail"",""shopping""]",shopping,Mall9443 - Shopping,True
+media-review222.ph,"[""creative"",""streaming"",""entertainment"",""media""]",media,Media Review222 - Media,True
+sporttrade6931.ph,"[""streaming"",""creative"",""entertainment"",""video""]",media,Sporttrade6931 - Media,True
+portal699.ph,"[""cloud"",""hosting"",""infrastructure"",""paas""]",cloud,Portal699 - Cloud,True
+data9145.com.ph,"[""cloud"",""infrastructure"",""hosting""]",cloud,Data9145 - Cloud,True
+worldnews7012.com.ph,"[""news"",""tech"",""culture"",""media""]",news,Worldnews7012 - News,True
+tradetravel2471.com.ph,"[""hotels"",""travel"",""flights"",""booking""]",travel,Tradetravel2471 - Travel,False
+wikistore7342.ph,"[""reference"",""knowledge"",""encyclopedia""]",reference,Wikistore7342 - Reference,True
+learn7538.ph,"[""free"",""course"",""tutorial""]",education,Learn7538 - Education,True
+portal-food4260.ph,"[""creative"",""video"",""media"",""streaming"",""entertainment""]",media,Portal Food4260 - Media,True
+times81.ph,"[""startup"",""tech"",""news"",""media"",""culture""]",news,Times81 - News,True
+wiki-bank4692.com.ph,"[""knowledge"",""reference"",""encyclopedia"",""dictionary""]",reference,Wiki Bank4692 - Reference,True
+trip899.com.ph,"[""flights"",""booking"",""hotels"",""travel""]",travel,Trip899 - Travel,True
+todaysale8350.com.ph,"[""news"",""tech"",""media"",""culture""]",news,Todaysale8350 - News,True
+media3810.ph,"[""website"",""builder"",""blog""]",cms,Media3810 - Cms,True
+zone9235.ph,"[""flights"",""booking"",""hotels""]",travel,Zone9235 - Travel,True
+bankradio5558.ph,"[""video"",""streaming"",""media"",""entertainment""]",media,Bankradio5558 - Media,True
+guideforum6958.ph,"[""community"",""networking"",""discussion""]",social,Guideforum6958 - Social,True
+health6042.ph,"[""meeting"",""notes"",""productivity""]",productivity,Health6042 - Productivity,True
+health4376.ph,"[""learning"",""interactive"",""tutorial"",""course""]",education,Health4376 - Education,True
+trade4823.com.ph,"[""media"",""video"",""creative"",""entertainment""]",media,Trade4823 - Media,True
+express2735.ph,"[""startup"",""media"",""culture"",""news""]",news,Express2735 - News,True
+cook-community2269.com.ph,"[""creative"",""entertainment"",""video"",""streaming""]",media,Cook Community2269 - Media,True
+travel-data9652.com.ph,"[""infrastructure"",""paas"",""hosting""]",cloud,Travel Data9652 - Cloud,True
+tv4619.com,"[""media"",""creative"",""video"",""entertainment""]",media,Tv4619 - Media,True
+forum5539.ph,"[""community"",""networking"",""microblog"",""discussion""]",social,Forum5539 - Social,True
+tech99.com.ph,"[""culture"",""news"",""tech""]",news,Tech99 - News,True
+play5503.com.ph,"[""video"",""creative"",""entertainment"",""streaming"",""media""]",media,Play5503 - Media,True
+review7893.com.ph,"[""media"",""streaming"",""video"",""entertainment"",""creative""]",media,Review7893 - Media,True
+express3225.com.ph,"[""culture"",""tech"",""startup"",""news""]",news,Express3225 - News,True
+music-news2268.com.ph,"[""tech"",""startup"",""media"",""culture""]",news,Music News2268 - News,True
+timesvideo1234.ph,"[""media"",""startup"",""news"",""culture""]",news,Timesvideo1234 - News,True
+blog2030.ph,"[""entertainment"",""media"",""creative"",""video"",""streaming""]",media,Blog2030 - Media,True
+food-flight1215.ph,"[""booking"",""flights"",""hotels""]",travel,Food Flight1215 - Travel,True
+pluscommunity5690.ph,"[""networking"",""microblog"",""social"",""community""]",social,Pluscommunity5690 - Social,True
+data-learn9925.com.ph,"[""education"",""tutorial"",""course"",""interactive"",""learning""]",education,Data Learn9925 - Education,True
+docs812.ph,"[""documentation"",""api"",""web""]",documentation,Docs812 - Documentation,True
+hotel-sport5371.ph,"[""media"",""video"",""entertainment"",""creative"",""streaming""]",media,Hotel Sport5371 - Media,True
+docs9807.ph,"[""api"",""documentation"",""reference"",""web""]",documentation,Docs9807 - Documentation,True
+zone545.com.ph,"[""interactive"",""free"",""learning""]",education,Zone545 - Education,True
+store-world2383.ph,"[""deals"",""shopping"",""marketplace""]",shopping,Store World2383 - Shopping,False
+hotelmarket9744.com.ph,"[""ecommerce"",""fintech"",""marketing"",""business"",""crm""]",business,Hotelmarket9744 - Business,True
+sport-talk2810.com.ph,"[""streaming"",""creative"",""entertainment"",""media""]",media,Sport Talk2810 - Media,True
+store-news7455.ph,"[""culture"",""news"",""media"",""tech""]",news,Store News7455 - News,True
+zoneforum5080.ph,"[""microblog"",""discussion"",""social"",""community"",""networking""]",social,Zoneforum5080 - Social,True
+learn2194.com.ph,"[""course"",""interactive"",""tutorial"",""learning""]",education,Learn2194 - Education,True
+sport-tv9685.ph,"[""creative"",""streaming"",""video"",""media"",""entertainment""]",media,Sport Tv9685 - Media,True
+hostvideo6684.com.ph,"[""video"",""entertainment"",""creative"",""media""]",media,Hostvideo6684 - Media,False
+tradedeal8230.ph,"[""deals"",""marketplace"",""shopping""]",shopping,Tradedeal8230 - Shopping,True
+wiki-code7661.com.ph,"[""ci"",""ide"",""development"",""git"",""repository""]",development,Wiki Code7661 - Development,True
+forum1913.com.ph,"[""discussion"",""community"",""microblog""]",social,Forum1913 - Social,True
+deal8387.ph,"[""shopping"",""marketplace"",""retail"",""deals""]",shopping,Deal8387 - Shopping,True
+shopcare7405.ph,"[""payment"",""marketing"",""fintech"",""ecommerce""]",business,Shopcare7405 - Business,True
+tech-portal6911.ph,"[""startup"",""tech"",""news"",""culture"",""media""]",news,Tech Portal6911 - News,True
+market6637.ph,"[""ecommerce"",""fintech"",""marketing"",""payment"",""business""]",business,Market6637 - Business,False
+blog-today9919.com.ph,"[""startup"",""culture"",""news"",""media"",""tech""]",news,Blog Today9919 - News,True
+today-hub7255.ph,"[""media"",""news"",""culture"",""tech"",""startup""]",news,Today Hub7255 - News,True
+plus-learn1949.com.ph,"[""free"",""learning"",""interactive"",""education"",""tutorial""]",education,Plus Learn1949 - Education,True
+forum9864.ph,"[""networking"",""microblog"",""social"",""community""]",social,Forum9864 - Social,True
+news4135.com.ph,"[""startup"",""tech"",""news""]",news,News4135 - News,True
+learn-tech4254.com.ph,"[""media"",""culture"",""startup"",""news"",""tech""]",news,Learn Tech4254 - News,True
+forum3610.ph,"[""networking"",""microblog"",""discussion""]",social,Forum3610 - Social,True
+mediamall2028.ph,"[""marketplace"",""deals"",""retail""]",shopping,Mediamall2028 - Shopping,True
+health9923.com.ph,"[""paas"",""infrastructure"",""cloud""]",cloud,Health9923 - Cloud,True
+mall3927.ph,"[""deals"",""shopping"",""retail""]",shopping,Mall3927 - Shopping,True
+media-talk6601.ph,"[""discussion"",""networking"",""community"",""microblog""]",social,Media Talk6601 - Social,True
+zonebank1777.com.ph,"[""trading"",""banking"",""investment""]",finance,Zonebank1777 - Finance,True
+news-food8632.ph,"[""news"",""startup"",""culture""]",news,News Food8632 - News,True
+hubnews1411.com.ph,"[""media"",""culture"",""news"",""startup"",""tech""]",news,Hubnews1411 - News,True
+cook5951.ph,"[""streaming"",""video"",""creative""]",media,Cook5951 - Media,True
+trip-data559.ph,"[""cloud"",""infrastructure"",""paas""]",cloud,Trip Data559 - Cloud,True
+tvshop7232.ph,"[""video"",""streaming"",""entertainment"",""media""]",media,Tvshop7232 - Media,True
+care2974.ph,"[""wellness"",""medical"",""health""]",health,Care2974 - Health,True
+communityportal5471.ph,"[""networking"",""discussion"",""community"",""microblog""]",social,Communityportal5471 - Social,True
+daily-travel6664.com.ph,"[""media"",""culture"",""tech""]",news,Daily Travel6664 - News,True
+sale7057.com.ph,"[""deals"",""marketplace"",""retail"",""shopping""]",shopping,Sale7057 - Shopping,True
+docstravel6600.com.ph,"[""web"",""api"",""reference""]",documentation,Docstravel6600 - Documentation,True
+flight-store7106.ph,"[""retail"",""deals"",""shopping"",""marketplace""]",shopping,Flight Store7106 - Shopping,True
+trip2584.ph,"[""booking"",""hotels"",""travel""]",travel,Trip2584 - Travel,True
+care7596.ph,"[""culture"",""media"",""news""]",news,Care7596 - News,True
+health1189.ph,"[""tech"",""culture"",""startup"",""media"",""news""]",news,Health1189 - News,True
+video2957.com.ph,"[""creative"",""entertainment"",""media"",""video"",""streaming""]",media,Video2957 - Media,True
+tech8203.ph,"[""news"",""culture"",""tech"",""startup""]",news,Tech8203 - News,True
+store-hotel308.com.ph,"[""retail"",""shopping"",""deals"",""marketplace""]",shopping,Store Hotel308 - Shopping,True
+portal-code1087.com.ph,"[""repository"",""ci"",""git"",""programming"",""development""]",development,Portal Code1087 - Development,True
+store-blog823.com.ph,"[""marketplace"",""retail"",""shopping"",""deals""]",shopping,Store Blog823 - Shopping,True
+flight2212.com.ph,"[""booking"",""travel"",""flights""]",travel,Flight2212 - Travel,True
+malltoday7761.ph,"[""news"",""media"",""tech"",""startup"",""culture""]",news,Malltoday7761 - News,True
+market-trade5003.com.ph,"[""payment"",""marketing"",""fintech""]",business,Market Trade5003 - Business,True
+talk3.ph,"[""discussion"",""networking"",""microblog"",""community""]",social,Talk3 - Social,True
+trade2623.ph,"[""blog"",""cms"",""builder"",""website""]",cms,Trade2623 - Cms,True
+zone2585.com.ph,"[""reference"",""api"",""documentation"",""web""]",documentation,Zone2585 - Documentation,True
+zone-bank3857.com.ph,"[""investment"",""banking"",""trading""]",finance,Zone Bank3857 - Finance,True
+talk-food6063.com.ph,"[""entertainment"",""video"",""media""]",media,Talk Food6063 - Media,True
+news-review2344.com.ph,"[""news"",""media"",""culture"",""tech"",""startup""]",news,News Review2344 - News,True
+play970.com,"[""entertainment"",""media"",""streaming"",""video""]",media,Play970 - Media,True
+code666.net,"[""development"",""git"",""ci"",""repository"",""code""]",development,Code666 - Development,True
+world1.cn,"[""trading"",""finance"",""banking"",""investment""]",finance,World1 - Finance,True
+shop8387.ph,"[""fintech"",""payment"",""ecommerce"",""business""]",business,Shop8387 - Business,True
+news1580.ph,"[""news"",""culture"",""media""]",news,News1580 - News,True
+guide3565.ph,"[""knowledge"",""reference"",""encyclopedia"",""dictionary""]",reference,Guide3565 - Reference,True
+store-trip3293.com.ph,"[""retail"",""marketplace"",""deals""]",shopping,Store Trip3293 - Shopping,True
+tech-talk2640.ph,"[""media"",""culture"",""tech"",""news"",""startup""]",news,Tech Talk2640 - News,True
+portal-sale7223.ph,"[""deals"",""shopping"",""retail"",""marketplace""]",shopping,Portal Sale7223 - Shopping,True
+tripwiki4164.ph,"[""encyclopedia"",""knowledge"",""dictionary""]",reference,Tripwiki4164 - Reference,True
+news-community4208.com.ph,"[""startup"",""news"",""media"",""culture"",""tech""]",news,News Community4208 - News,True
+music-mart2282.ph,"[""video"",""streaming"",""creative"",""media""]",media,Music Mart2282 - Media,True
+mart4525.ph,"[""deals"",""marketplace"",""shopping"",""retail""]",shopping,Mart4525 - Shopping,False
+portal1384.ph,"[""ecommerce"",""business"",""marketing""]",business,Portal1384 - Business,True
+hoteltalk4227.ph,"[""booking"",""travel"",""hotels"",""flights""]",travel,Hoteltalk4227 - Travel,True
+bank7657.com.ph,"[""banking"",""finance"",""trading""]",finance,Bank7657 - Finance,True
+radio4303.ph,"[""creative"",""media"",""streaming"",""video"",""entertainment""]",media,Radio4303 - Media,True
+tv-flight6698.ph,"[""entertainment"",""streaming"",""video"",""creative""]",media,Tv Flight6698 - Media,True
+today-trip7785.com.ph,"[""startup"",""news"",""culture"",""tech""]",news,Today Trip7785 - News,True
+trip4553.ph,"[""travel"",""booking"",""hotels"",""flights""]",travel,Trip4553 - Travel,True
+mall2427.com.ph,"[""retail"",""shopping"",""marketplace"",""deals""]",shopping,Mall2427 - Shopping,True
+host-music7417.com.ph,"[""video"",""streaming"",""media"",""entertainment""]",media,Host Music7417 - Media,True
+store672.ph,"[""marketplace"",""shopping"",""retail""]",shopping,Store672 - Shopping,True
+docscook2871.com.ph,"[""api"",""web"",""reference""]",documentation,Docscook2871 - Documentation,False
+docs-daily5127.com.ph,"[""culture"",""tech"",""media"",""startup""]",news,Docs Daily5127 - News,True
+play3928.ph,"[""creative"",""streaming"",""media""]",media,Play3928 - Media,True
+shop7704.ph,"[""marketing"",""crm"",""payment""]",business,Shop7704 - Business,True
+cloud-media9931.com.ph,"[""infrastructure"",""hosting"",""cloud"",""paas""]",cloud,Cloud Media9931 - Cloud,True
+flight1653.com.ph,"[""flights"",""hotels"",""booking"",""travel""]",travel,Flight1653 - Travel,True
+review4969.com.ph,"[""media"",""creative"",""streaming"",""video"",""entertainment""]",media,Review4969 - Media,True
+host5651.ph,"[""cloud"",""paas"",""infrastructure"",""hosting""]",cloud,Host5651 - Cloud,True
+video5543.ph,"[""creative"",""streaming"",""video""]",media,Video5543 - Media,True
+cook6488.ph,"[""media"",""creative"",""streaming"",""entertainment"",""video""]",media,Cook6488 - Media,True
+foodexpress7882.com.ph,"[""tech"",""media"",""startup""]",news,Foodexpress7882 - News,True
+dealhost7167.ph,"[""retail"",""marketplace"",""deals""]",shopping,Dealhost7167 - Shopping,True
+market1466.ph,"[""payment"",""fintech"",""business"",""marketing""]",business,Market1466 - Business,True
+plus6413.ph,"[""shopping"",""retail"",""marketplace"",""deals""]",shopping,Plus6413 - Shopping,True
+store641.ph,"[""retail"",""deals"",""marketplace"",""shopping""]",shopping,Store641 - Shopping,True
+cloudmedia3627.ph,"[""infrastructure"",""paas"",""hosting"",""cloud""]",cloud,Cloudmedia3627 - Cloud,True
+sportlearn7728.ph,"[""free"",""tutorial"",""interactive""]",education,Sportlearn7728 - Education,True
+times-learn9711.com.ph,"[""startup"",""news"",""media""]",news,Times Learn9711 - News,True
+times4071.ph,"[""startup"",""news"",""tech""]",news,Times4071 - News,True
+care-zone1133.com.ph,"[""sms"",""api"",""communication"",""email""]",api,Care Zone1133 - Api,True
+banktech3996.ph,"[""media"",""startup"",""tech"",""culture"",""news""]",news,Banktech3996 - News,True
+shop26.cn,"[""payment"",""ecommerce"",""fintech"",""marketing""]",business,Shop26 - Business,True
+learn2750.ph,"[""learning"",""education"",""interactive"",""course""]",education,Learn2750 - Education,True
+today-zone9051.ph,"[""startup"",""media"",""tech""]",news,Today Zone9051 - News,True
+tech51.net,"[""news"",""culture"",""tech""]",news,Tech51 - News,True
+communitydaily1823.com.ph,"[""startup"",""news"",""tech"",""media""]",news,Communitydaily1823 - News,True
+guideblog8139.com.ph,"[""streaming"",""creative"",""video"",""media""]",media,Guideblog8139 - Media,True
+tv-guide8735.ph,"[""video"",""creative"",""media"",""entertainment"",""streaming""]",media,Tv Guide8735 - Media,True
+talk9307.ph,"[""social"",""networking"",""discussion""]",social,Talk9307 - Social,True
+community-food2249.ph,"[""media"",""creative"",""entertainment""]",media,Community Food2249 - Media,True
+videoexpress5125.ph,"[""media"",""culture"",""startup"",""tech"",""news""]",news,Videoexpress5125 - News,True
+host3044.com.ph,"[""hosting"",""cloud"",""paas"",""infrastructure""]",cloud,Host3044 - Cloud,False
+community-mall9148.ph,"[""deals"",""shopping"",""marketplace"",""retail""]",shopping,Community Mall9148 - Shopping,True
+cloud-times1922.com.ph,"[""news"",""startup"",""media"",""culture"",""tech""]",news,Cloud Times1922 - News,True
+bankhotel7225.ph,"[""booking"",""travel"",""flights"",""hotels""]",travel,Bankhotel7225 - Travel,True
+play-today2259.com.ph,"[""startup"",""media"",""culture""]",news,Play Today2259 - News,True
+plus8510.ph,"[""builder"",""cms"",""blog""]",cms,Plus8510 - Cms,True
+mall6061.com.ph,"[""retail"",""marketplace"",""shopping"",""deals""]",shopping,Mall6061 - Shopping,True
+shop-sport1311.ph,"[""streaming"",""video"",""entertainment"",""creative""]",media,Shop Sport1311 - Media,True
+store2360.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Store2360 - Shopping,True
+review4239.ph,"[""media"",""video"",""creative"",""entertainment""]",media,Review4239 - Media,True
+blog3943.ph,"[""streaming"",""creative"",""media""]",media,Blog3943 - Media,True
+forum-dev9096.ph,"[""ci"",""ide"",""git"",""repository""]",development,Forum Dev9096 - Development,True
+plus-media4729.ph,"[""retail"",""marketplace"",""deals"",""shopping""]",shopping,Plus Media4729 - Shopping,True
+news7594.com.ph,"[""culture"",""startup"",""media"",""news""]",news,News7594 - News,True
+video8825.ph,"[""entertainment"",""streaming"",""media""]",media,Video8825 - Media,False
+media1941.ph,"[""sms"",""email"",""communication""]",api,Media1941 - Api,True
+plusplay9216.ph,"[""video"",""media"",""entertainment"",""creative"",""streaming""]",media,Plusplay9216 - Media,False
+mart6278.com.ph,"[""marketplace"",""shopping"",""retail"",""deals""]",shopping,Mart6278 - Shopping,True
+music-guide8180.ph,"[""creative"",""video"",""streaming"",""entertainment""]",media,Music Guide8180 - Media,True
+travelhost8349.com.ph,"[""cloud"",""paas"",""infrastructure"",""hosting""]",cloud,Travelhost8349 - Cloud,True
+express-flight1893.com.ph,"[""tech"",""media"",""culture"",""startup"",""news""]",news,Express Flight1893 - News,True
+cook-media4950.ph,"[""entertainment"",""media"",""streaming"",""video""]",media,Cook Media4950 - Media,True
+market-review5752.com.ph,"[""marketing"",""crm"",""fintech"",""ecommerce""]",business,Market Review5752 - Business,True
+community6677.com.ph,"[""community"",""discussion"",""microblog"",""networking"",""social""]",social,Community6677 - Social,True
+guide7504.com.ph,"[""knowledge"",""reference"",""dictionary""]",reference,Guide7504 - Reference,True
+times-news6490.ph,"[""news"",""tech"",""startup"",""media""]",news,Times News6490 - News,True
+trip159.com.ph,"[""travel"",""flights"",""hotels""]",travel,Trip159 - Travel,True
+talk-host1977.com.ph,"[""paas"",""cloud"",""hosting""]",cloud,Talk Host1977 - Cloud,False
+care-times3419.com.ph,"[""tech"",""media"",""culture""]",news,Care Times3419 - News,True
+food1359.ph,"[""entertainment"",""streaming"",""video"",""media"",""creative""]",media,Food1359 - Media,True
+plus9574.com.ph,"[""booking"",""hotels"",""travel""]",travel,Plus9574 - Travel,True
+music-blog6425.ph,"[""streaming"",""media"",""video""]",media,Music Blog6425 - Media,True
+mallradio355.ph,"[""streaming"",""entertainment"",""video""]",media,Mallradio355 - Media,True
+tech-portal6048.com.ph,"[""culture"",""startup"",""tech""]",news,Tech Portal6048 - News,True
+blog-market386.ph,"[""fintech"",""business"",""payment""]",business,Blog Market386 - Business,True
+databank3674.ph,"[""cloud"",""hosting"",""paas""]",cloud,Databank3674 - Cloud,True
+docs-express7621.com.ph,"[""culture"",""startup"",""tech""]",news,Docs Express7621 - News,True
+mall-community4898.com.ph,"[""shopping"",""retail"",""marketplace"",""deals""]",shopping,Mall Community4898 - Shopping,True
+hub8239.ph,"[""culture"",""tech"",""news"",""startup"",""media""]",news,Hub8239 - News,True
+sale8336.ph,"[""shopping"",""retail"",""marketplace"",""deals""]",shopping,Sale8336 - Shopping,True
+food5650.com.ph,"[""media"",""creative"",""entertainment""]",media,Food5650 - Media,True
+sport2621.com.ph,"[""streaming"",""creative"",""entertainment"",""media""]",media,Sport2621 - Media,True
+music-community9812.ph,"[""entertainment"",""video"",""streaming""]",media,Music Community9812 - Media,True
+sport65.com,"[""creative"",""streaming"",""video"",""media""]",media,Sport65 - Media,True
+sport-news4071.ph,"[""news"",""startup"",""tech"",""culture""]",news,Sport News4071 - News,True
+expresslearn7587.ph,"[""startup"",""culture"",""tech"",""media""]",news,Expresslearn7587 - News,True
+review5782.com.ph,"[""creative"",""streaming"",""entertainment""]",media,Review5782 - Media,True
+tech4990.ph,"[""news"",""startup"",""culture""]",news,Tech4990 - News,True
+world4185.com.ph,"[""ui"",""graphics"",""ux"",""typography""]",design,World4185 - Design,True
+video7782.ph,"[""video"",""media"",""streaming""]",media,Video7782 - Media,True
+trip3844.com.ph,"[""flights"",""travel"",""booking""]",travel,Trip3844 - Travel,True
+flightguide724.com.ph,"[""flights"",""travel"",""hotels""]",travel,Flightguide724 - Travel,True
+radio6282.ph,"[""media"",""creative"",""streaming""]",media,Radio6282 - Media,True
+trade3807.com.ph,"[""dictionary"",""reference"",""knowledge""]",reference,Trade3807 - Reference,True
+music-mart989.com.ph,"[""video"",""creative"",""entertainment"",""media""]",media,Music Mart989 - Media,True
+deal-host9443.com.ph,"[""shopping"",""deals"",""marketplace"",""retail""]",shopping,Deal Host9443 - Shopping,True
+hubblog6414.com.ph,"[""media"",""entertainment"",""creative"",""video""]",media,Hubblog6414 - Media,True
+community-store8489.ph,"[""marketplace"",""shopping"",""deals"",""retail""]",shopping,Community Store8489 - Shopping,False
+host8204.com.ph,"[""infrastructure"",""paas"",""hosting"",""cloud""]",cloud,Host8204 - Cloud,True
+mart9542.com.ph,"[""shopping"",""retail"",""marketplace"",""deals""]",shopping,Mart9542 - Shopping,True
+deal7760.com.ph,"[""shopping"",""retail"",""marketplace""]",shopping,Deal7760 - Shopping,True
+worldexpress7892.com.ph,"[""culture"",""news"",""tech"",""media""]",news,Worldexpress7892 - News,True
+media-tv8504.com.ph,"[""creative"",""entertainment"",""media"",""streaming""]",media,Media Tv8504 - Media,True
+learn-world8330.com.ph,"[""learning"",""course"",""education"",""interactive""]",education,Learn World8330 - Education,True
+world-tv2890.com.ph,"[""entertainment"",""media"",""video"",""creative""]",media,World Tv2890 - Media,True
+music2686.ph,"[""creative"",""media"",""entertainment"",""streaming""]",media,Music2686 - Media,True
+forum-dev9338.ph,"[""git"",""development"",""repository""]",development,Forum Dev9338 - Development,True
+talk-code1061.com.ph,"[""programming"",""repository"",""git""]",development,Talk Code1061 - Development,True
+code-bank5206.ph,"[""code"",""repository"",""git""]",development,Code Bank5206 - Development,True
+trade2025.com,"[""investment"",""trading"",""finance"",""banking""]",finance,Trade2025 - Finance,True
+play2371.com.ph,"[""entertainment"",""media"",""video"",""creative""]",media,Play2371 - Media,True
+cloud9713.ph,"[""infrastructure"",""hosting"",""cloud"",""paas""]",cloud,Cloud9713 - Cloud,True
+shop9736.com.ph,"[""business"",""ecommerce"",""marketing"",""fintech""]",business,Shop9736 - Business,True
+flight-play5811.com.ph,"[""entertainment"",""video"",""media"",""creative""]",media,Flight Play5811 - Media,True
+hub-travel5776.com.ph,"[""flights"",""travel"",""booking"",""hotels""]",travel,Hub Travel5776 - Travel,True
+learn4373.ph,"[""tutorial"",""education"",""interactive"",""course""]",education,Learn4373 - Education,True
+radio4209.com.ph,"[""entertainment"",""creative"",""streaming""]",media,Radio4209 - Media,True
+sport9742.ph,"[""streaming"",""entertainment"",""media""]",media,Sport9742 - Media,True
+sport9660.com.ph,"[""media"",""streaming"",""video""]",media,Sport9660 - Media,True
+dev8060.com.ph,"[""repository"",""development"",""ci""]",development,Dev8060 - Development,True
+trade6743.ph,"[""services"",""government"",""public""]",gov,Trade6743 - Gov,False
+wiki5738.com.ph,"[""encyclopedia"",""reference"",""knowledge"",""dictionary""]",reference,Wiki5738 - Reference,False
+shop-guide8867.com.ph,"[""marketing"",""ecommerce"",""crm"",""fintech"",""payment""]",business,Shop Guide8867 - Business,True
+flight-bank8812.ph,"[""booking"",""hotels"",""flights""]",travel,Flight Bank8812 - Travel,True
+news722.ph,"[""media"",""news"",""startup"",""culture"",""tech""]",news,News722 - News,True
+mall-world9894.com.ph,"[""deals"",""shopping"",""retail""]",shopping,Mall World9894 - Shopping,True
+news2260.ph,"[""news"",""tech"",""startup"",""media""]",news,News2260 - News,True
+community3800.com.ph,"[""discussion"",""microblog"",""community"",""social"",""networking""]",social,Community3800 - Social,True
+dealcloud5009.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Dealcloud5009 - Shopping,True
+clouddaily9398.ph,"[""startup"",""media"",""culture"",""news"",""tech""]",news,Clouddaily9398 - News,True
+hub4112.ph,"[""video"",""media"",""creative""]",media,Hub4112 - Media,True
+sale2844.com.ph,"[""marketplace"",""shopping"",""deals"",""retail""]",shopping,Sale2844 - Shopping,True
+blogmarket1886.com.ph,"[""marketing"",""payment"",""ecommerce"",""crm""]",business,Blogmarket1886 - Business,True
+flight-hub2931.com.ph,"[""hotels"",""travel"",""flights"",""booking""]",travel,Flight Hub2931 - Travel,True
+talk-express7401.ph,"[""culture"",""news"",""tech"",""startup""]",news,Talk Express7401 - News,True
+care5526.com.ph,"[""public"",""services"",""government""]",gov,Care5526 - Gov,True
+forum8245.com.ph,"[""microblog"",""community"",""social"",""networking"",""discussion""]",social,Forum8245 - Social,True
+deal-shop5331.com.ph,"[""ecommerce"",""marketing"",""fintech""]",business,Deal Shop5331 - Business,True
+portal-food6010.com.ph,"[""creative"",""entertainment"",""video"",""streaming""]",media,Portal Food6010 - Media,True
+tripmusic3673.ph,"[""video"",""media"",""streaming"",""creative""]",media,Tripmusic3673 - Media,True
+mall-talk8099.ph,"[""shopping"",""retail"",""deals""]",shopping,Mall Talk8099 - Shopping,True
+shop8816.ph,"[""payment"",""ecommerce"",""crm"",""business""]",business,Shop8816 - Business,False
+expressmart2974.ph,"[""culture"",""tech"",""media"",""news"",""startup""]",news,Expressmart2974 - News,True
+today-mall3952.com.ph,"[""culture"",""tech"",""startup"",""news""]",news,Today Mall3952 - News,True
+video331.ph,"[""entertainment"",""media"",""streaming""]",media,Video331 - Media,True
+hubdocs3296.ph,"[""documentation"",""api"",""web""]",documentation,Hubdocs3296 - Documentation,True
+play6112.ph,"[""entertainment"",""media"",""streaming""]",media,Play6112 - Media,True
+hotelhub7445.com.ph,"[""booking"",""travel"",""flights"",""hotels""]",travel,Hotelhub7445 - Travel,True
+forum-zone9411.com.ph,"[""discussion"",""microblog"",""community""]",social,Forum Zone9411 - Social,False
+daily6622.com.ph,"[""startup"",""media"",""news"",""tech""]",news,Daily6622 - News,True
+portal-news3969.ph,"[""startup"",""culture"",""news""]",news,Portal News3969 - News,True
+daily1678.com.ph,"[""tech"",""culture"",""media"",""startup"",""news""]",news,Daily1678 - News,True
+talkdeal5307.ph,"[""shopping"",""marketplace"",""retail"",""deals""]",shopping,Talkdeal5307 - Shopping,True
+plus2469.ph,"[""cms"",""builder"",""blog"",""website""]",cms,Plus2469 - Cms,True
+care-hotel1554.ph,"[""flights"",""booking"",""hotels"",""travel""]",travel,Care Hotel1554 - Travel,True
+health421.com.ph,"[""retail"",""shopping"",""deals""]",shopping,Health421 - Shopping,True
+express5405.ph,"[""media"",""startup"",""culture"",""tech""]",news,Express5405 - News,True
+guide-flight3049.ph,"[""booking"",""hotels"",""travel""]",travel,Guide Flight3049 - Travel,True
+docs1180.com.ph,"[""web"",""reference"",""api""]",documentation,Docs1180 - Documentation,True
+care292.com.ph,"[""health"",""medical"",""wellness""]",health,Care292 - Health,True
+trip734.ph,"[""booking"",""flights"",""hotels"",""travel""]",travel,Trip734 - Travel,True
+news4304.ph,"[""media"",""startup"",""culture"",""tech"",""news""]",news,News4304 - News,True
+travelwiki918.ph,"[""dictionary"",""knowledge"",""reference""]",reference,Travelwiki918 - Reference,True
+docs7535.com.ph,"[""api"",""web"",""reference""]",documentation,Docs7535 - Documentation,True
+hotel6510.com.ph,"[""hotels"",""booking"",""travel"",""flights""]",travel,Hotel6510 - Travel,True
+food-express593.com.ph,"[""news"",""culture"",""tech""]",news,Food Express593 - News,False
+travel8113.com.ph,"[""travel"",""booking"",""hotels"",""flights""]",travel,Travel8113 - Travel,True
+code-care8808.com.ph,"[""repository"",""development"",""git"",""ci"",""code""]",development,Code Care8808 - Development,True
+mall759.com.ph,"[""shopping"",""deals"",""retail""]",shopping,Mall759 - Shopping,True
+cook-care8842.ph,"[""creative"",""media"",""entertainment"",""streaming"",""video""]",media,Cook Care8842 - Media,True
+newssport7191.ph,"[""tech"",""startup"",""culture"",""media"",""news""]",news,Newssport7191 - News,True
+sporthost6392.ph,"[""entertainment"",""video"",""creative"",""streaming"",""media""]",media,Sporthost6392 - Media,True
+trade2872.ph,"[""tutorial"",""learning"",""free""]",education,Trade2872 - Education,True
+health8399.ph,"[""public"",""government"",""services""]",gov,Health8399 - Gov,True
+times8164.com.ph,"[""news"",""media"",""culture"",""tech"",""startup""]",news,Times8164 - News,True
+times3002.ph,"[""tech"",""media"",""culture"",""startup""]",news,Times3002 - News,True
+marketplus6858.ph,"[""marketing"",""fintech"",""payment""]",business,Marketplus6858 - Business,True
+mart5893.ph,"[""deals"",""shopping"",""retail""]",shopping,Mart5893 - Shopping,True
+flightlearn6799.com.ph,"[""course"",""free"",""education""]",education,Flightlearn6799 - Education,True
+tech2187.com.ph,"[""media"",""news"",""tech"",""culture""]",news,Tech2187 - News,True
+markettalk911.ph,"[""payment"",""fintech"",""marketing"",""business""]",business,Markettalk911 - Business,True
+daily8638.com.ph,"[""news"",""tech"",""startup""]",news,Daily8638 - News,True
+plusbank3203.com.ph,"[""finance"",""trading"",""banking"",""investment""]",finance,Plusbank3203 - Finance,True
+market7103.com.ph,"[""marketing"",""fintech"",""ecommerce"",""business"",""payment""]",business,Market7103 - Business,True
+play235.ph,"[""video"",""entertainment"",""streaming"",""media"",""creative""]",media,Play235 - Media,True
+deal-radio7826.ph,"[""streaming"",""entertainment"",""creative"",""media""]",media,Deal Radio7826 - Media,True
+tech4644.com.ph,"[""news"",""media"",""tech""]",news,Tech4644 - News,True
+communityzone8926.com.ph,"[""microblog"",""social"",""community""]",social,Communityzone8926 - Social,True
+cloud5017.ph,"[""paas"",""cloud"",""infrastructure""]",cloud,Cloud5017 - Cloud,True
+flight2587.ph,"[""flights"",""hotels"",""booking"",""travel""]",travel,Flight2587 - Travel,True
+tech-blog6071.ph,"[""media"",""news"",""tech"",""startup""]",news,Tech Blog6071 - News,True
+trade-community316.ph,"[""networking"",""discussion"",""microblog""]",social,Trade Community316 - Social,True
+express5649.ph,"[""media"",""news"",""startup""]",news,Express5649 - News,True
+sportshop7001.ph,"[""creative"",""entertainment"",""media""]",media,Sportshop7001 - Media,False
+store-radio1358.ph,"[""creative"",""streaming"",""video"",""media"",""entertainment""]",media,Store Radio1358 - Media,True
+wikidev1715.com.ph,"[""ide"",""git"",""ci""]",development,Wikidev1715 - Development,True
+market-plus6721.com.ph,"[""marketing"",""ecommerce"",""payment"",""fintech"",""business""]",business,Market Plus6721 - Business,True
+host7519.com.ph,"[""hosting"",""cloud"",""paas""]",cloud,Host7519 - Cloud,True
+care-shop4296.ph,"[""fintech"",""payment"",""crm"",""ecommerce""]",business,Care Shop4296 - Business,True
+review5648.ph,"[""video"",""streaming"",""creative""]",media,Review5648 - Media,True
+market-travel2150.com.ph,"[""payment"",""ecommerce"",""fintech"",""crm""]",business,Market Travel2150 - Business,True
+data2190.ph,"[""paas"",""infrastructure"",""hosting""]",cloud,Data2190 - Cloud,True
+tripmart6157.ph,"[""retail"",""shopping"",""marketplace""]",shopping,Tripmart6157 - Shopping,True
+dealcloud1407.ph,"[""retail"",""deals"",""marketplace""]",shopping,Dealcloud1407 - Shopping,True
+host4722.com.ph,"[""paas"",""hosting"",""cloud"",""infrastructure""]",cloud,Host4722 - Cloud,True
+tv-today6634.com.ph,"[""media"",""culture"",""tech"",""startup""]",news,Tv Today6634 - News,True
+trip-care5028.ph,"[""travel"",""booking"",""hotels""]",travel,Trip Care5028 - Travel,True
+review5212.com.ph,"[""streaming"",""video"",""media"",""entertainment"",""creative""]",media,Review5212 - Media,True
+mall3949.ph,"[""retail"",""marketplace"",""deals""]",shopping,Mall3949 - Shopping,True
+sportcloud3077.ph,"[""creative"",""media"",""video"",""entertainment""]",media,Sportcloud3077 - Media,True
+databank9273.com.ph,"[""infrastructure"",""paas"",""cloud""]",cloud,Databank9273 - Cloud,True
+deal-media9337.com.ph,"[""marketplace"",""shopping"",""retail""]",shopping,Deal Media9337 - Shopping,True
+mall-cloud3716.ph,"[""shopping"",""deals"",""retail""]",shopping,Mall Cloud3716 - Shopping,True
+deal3784.com.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Deal3784 - Shopping,True
+plus-play7090.ph,"[""media"",""creative"",""video"",""entertainment""]",media,Plus Play7090 - Media,True
+shop3783.com.ph,"[""crm"",""fintech"",""payment"",""marketing"",""business""]",business,Shop3783 - Business,True
+docs-guide6833.ph,"[""reference"",""api"",""web"",""documentation""]",documentation,Docs Guide6833 - Documentation,True
+portal-care8933.com.ph,"[""media"",""streaming"",""entertainment"",""video""]",media,Portal Care8933 - Media,True
+shopcloud7679.ph,"[""marketing"",""payment"",""crm""]",business,Shopcloud7679 - Business,True
+storewiki7016.com.ph,"[""encyclopedia"",""dictionary"",""reference""]",reference,Storewiki7016 - Reference,True
+flight-health9293.com.ph,"[""hotels"",""travel"",""booking""]",travel,Flight Health9293 - Travel,True
+trip7043.ph,"[""booking"",""hotels"",""flights"",""travel""]",travel,Trip7043 - Travel,True
+food7102.com.ph,"[""creative"",""entertainment"",""media"",""video"",""streaming""]",media,Food7102 - Media,True
+techplus7040.ph,"[""culture"",""tech"",""media"",""news""]",news,Techplus7040 - News,True
+store364.com.ph,"[""shopping"",""retail"",""deals""]",shopping,Store364 - Shopping,True
+plus-cook2190.com.ph,"[""entertainment"",""media"",""video"",""creative""]",media,Plus Cook2190 - Media,True
+videohotel3781.com.ph,"[""media"",""creative"",""entertainment""]",media,Videohotel3781 - Media,True
+store-community7082.ph,"[""shopping"",""retail"",""marketplace"",""deals""]",shopping,Store Community7082 - Shopping,True
+code4344.ph,"[""git"",""programming"",""code"",""repository"",""ide""]",development,Code4344 - Development,False
+dailysport7544.ph,"[""news"",""tech"",""startup"",""media"",""culture""]",news,Dailysport7544 - News,True
+hostvideo5835.ph,"[""video"",""media"",""entertainment"",""streaming""]",media,Hostvideo5835 - Media,True
+cloudhealth9931.com.ph,"[""paas"",""hosting"",""cloud""]",cloud,Cloudhealth9931 - Cloud,True
+tech-music8407.ph,"[""media"",""news"",""startup"",""tech"",""culture""]",news,Tech Music8407 - News,True
+blog189.com,"[""media"",""entertainment"",""streaming""]",media,Blog189 - Media,True
+music7806.com.ph,"[""entertainment"",""media"",""streaming""]",media,Music7806 - Media,True
+cookforum345.com.ph,"[""entertainment"",""video"",""creative"",""streaming"",""media""]",media,Cookforum345 - Media,True
+guide6167.ph,"[""knowledge"",""dictionary"",""encyclopedia""]",reference,Guide6167 - Reference,True
+health2201.com.ph,"[""productivity"",""meeting"",""calendar""]",productivity,Health2201 - Productivity,True
+tech-music6557.com.ph,"[""tech"",""news"",""culture""]",news,Tech Music6557 - News,True
+data-play8590.ph,"[""creative"",""video"",""entertainment""]",media,Data Play8590 - Media,True
+plus150.com.ph,"[""banking"",""finance"",""trading""]",finance,Plus150 - Finance,True
+health3389.com.ph,"[""networking"",""community"",""social"",""microblog""]",social,Health3389 - Social,True
+mallportal7277.ph,"[""shopping"",""marketplace"",""deals""]",shopping,Mallportal7277 - Shopping,True
+video4389.com.ph,"[""streaming"",""media"",""entertainment""]",media,Video4389 - Media,True
+review6938.com.ph,"[""media"",""streaming"",""video""]",media,Review6938 - Media,True
+playportal2416.ph,"[""streaming"",""entertainment"",""creative"",""media"",""video""]",media,Playportal2416 - Media,True
+portaltrip3182.com.ph,"[""flights"",""booking"",""hotels""]",travel,Portaltrip3182 - Travel,True
+plus-dev942.com.ph,"[""development"",""git"",""repository"",""ide"",""ci""]",development,Plus Dev942 - Development,True
+trip20.com.ph,"[""booking"",""travel"",""flights"",""hotels""]",travel,Trip20 - Travel,True
+flightcook3486.com.ph,"[""hotels"",""booking"",""flights"",""travel""]",travel,Flightcook3486 - Travel,True
+cloud-news7324.ph,"[""startup"",""media"",""tech""]",news,Cloud News7324 - News,True
+cook8870.com.ph,"[""video"",""creative"",""streaming"",""media""]",media,Cook8870 - Media,True
+dev-forum1446.ph,"[""programming"",""development"",""code"",""repository"",""ci""]",development,Dev Forum1446 - Development,True
+mart4658.ph,"[""retail"",""deals"",""marketplace""]",shopping,Mart4658 - Shopping,True
+guidedocs817.ph,"[""documentation"",""api"",""reference""]",documentation,Guidedocs817 - Documentation,True
+saletv4118.ph,"[""media"",""streaming"",""entertainment"",""video""]",media,Saletv4118 - Media,False
+hub3023.ph,"[""marketplace"",""deals"",""shopping""]",shopping,Hub3023 - Shopping,True
+docsguide1067.com.ph,"[""documentation"",""reference"",""api""]",documentation,Docsguide1067 - Documentation,False
+sale472.com.ph,"[""shopping"",""deals"",""retail"",""marketplace""]",shopping,Sale472 - Shopping,True
+sale-code8838.com.ph,"[""development"",""code"",""ci"",""git"",""ide""]",development,Sale Code8838 - Development,False
+video9856.com.ph,"[""video"",""entertainment"",""media"",""creative""]",media,Video9856 - Media,True
+flightlearn292.ph,"[""learning"",""tutorial"",""education"",""course""]",education,Flightlearn292 - Education,True
+guide8225.ph,"[""encyclopedia"",""knowledge"",""dictionary""]",reference,Guide8225 - Reference,True
+talkhost5574.ph,"[""hosting"",""infrastructure"",""paas"",""cloud""]",cloud,Talkhost5574 - Cloud,True
+cooktrade9100.com.ph,"[""media"",""entertainment"",""video"",""creative""]",media,Cooktrade9100 - Media,True
+bank3688.ph,"[""trading"",""investment"",""banking""]",finance,Bank3688 - Finance,True
+codesport3845.com.ph,"[""programming"",""ide"",""repository""]",development,Codesport3845 - Development,True
+news7886.com.ph,"[""startup"",""tech"",""culture"",""news""]",news,News7886 - News,True

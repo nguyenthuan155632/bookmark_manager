@@ -1,0 +1,16 @@
+aws_region               = "ap-northeast-1"
+project_name             = "Memorize Vault"
+environment              = "production"
+availability_zones       = ["ap-northeast-1a", "ap-northeast-1c"]
+container_port           = 4001
+desired_count            = 2
+db_engine_version        = "17.6"
+db_username              = "memorize"
+db_password              = "EXrAqAHjosMJEuGbDfLFlcKQJGOJzaxV"
+codebuild_source_type    = "GITHUB"
+codebuild_source_location = "https://github.com/nguyenthuan155632/bookmark_manager.git"
+codebuild_buildspec      = "infra/buildspec.yml"
+allowed_http_cidr_blocks = ["0.0.0.0/0"]
+# acm_certificate_arn    = "arn:aws:acm:ap-northeast-1:123456789012:certificate/abcd-efgh"
+# enable_https           = true
+# existing_ecr_repository = "memorize-vault"

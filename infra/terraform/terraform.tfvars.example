@@ -1,0 +1,16 @@
+aws_region                = "us-east-1"
+project_name              = "Memorize Vault"
+environment               = "prod"
+availability_zones        = ["us-east-1a", "us-east-1b"]
+container_port            = 4001
+desired_count             = 2
+db_engine_version         = "17.6"
+db_username               = "memorize"
+db_password               = "change-me"
+codebuild_source_type     = "GITHUB"
+codebuild_source_location = "https://github.com/your-org/memorize-vault.git"
+codebuild_buildspec       = "infra/buildspec.yml"
+allowed_http_cidr_blocks  = ["0.0.0.0/0"]
+# acm_certificate_arn     = "arn:aws:acm:us-east-1:123456789012:certificate/abcd-efgh"
+# enable_https            = true
+# existing_ecr_repository = "memorize-vault"
