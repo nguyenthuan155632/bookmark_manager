@@ -10,11 +10,8 @@ phases:
     commands:
       - echo Logging into Amazon ECR...
       - aws --version
-      - IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-7)
-      - |
-        if [ -z "$IMAGE_TAG" ]; then
-          IMAGE_TAG=$(date +%Y%m%d%H%M%S)
-        fi
+      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+      - if [ -z "$IMAGE_TAG" ]; then IMAGE_TAG=$(date +%Y%m%d%H%M%S); fi
       - echo "Using image tag: $IMAGE_TAG"
       - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REPOSITORY_URL"
       - export IMAGE_TAG
