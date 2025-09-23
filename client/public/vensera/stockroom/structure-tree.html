@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,11 +13,13 @@
             padding: 0;
             background: #f5f5f5;
         }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
+
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -25,24 +28,28 @@
             border-radius: 10px;
             text-align: center;
         }
+
         .section {
             background: white;
             margin-bottom: 2rem;
             padding: 2rem;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .section h2 {
             color: #333;
             border-bottom: 3px solid #667eea;
             padding-bottom: 10px;
             margin-bottom: 1.5rem;
         }
+
         .section h3 {
             color: #495057;
             margin-top: 2rem;
             margin-bottom: 1rem;
         }
+
         .tree-structure {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -55,26 +62,31 @@
             line-height: 1.4;
             white-space: pre;
         }
+
         .metrics-table {
             width: 100%;
             border-collapse: collapse;
             margin: 2rem 0;
             background: white;
         }
+
         .metrics-table th,
         .metrics-table td {
             border: 1px solid #e9ecef;
             padding: 0.75rem;
             text-align: left;
         }
+
         .metrics-table th {
             background: #f8f9fa;
             font-weight: 600;
             color: #495057;
         }
+
         .metrics-table tr:hover {
             background: #f8f9fa;
         }
+
         .badge {
             padding: 0.25rem 0.5rem;
             border-radius: 15px;
@@ -82,16 +94,31 @@
             font-weight: bold;
             color: white;
         }
-        .badge-high { background: #dc3545; }
-        .badge-medium { background: #ffc107; color: #212529; }
-        .badge-low { background: #28a745; }
-        .badge-very-low { background: #17a2b8; }
+
+        .badge-high {
+            background: #dc3545;
+        }
+
+        .badge-medium {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .badge-low {
+            background: #28a745;
+        }
+
+        .badge-very-low {
+            background: #17a2b8;
+        }
+
         .complexity-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin: 2rem 0;
         }
+
         .complexity-card {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -99,10 +126,12 @@
             padding: 1.5rem;
             transition: transform 0.2s, box-shadow 0.2s;
         }
+
         .complexity-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
         .complexity-card h4 {
             color: #495057;
             margin-top: 0;
@@ -110,32 +139,38 @@
             align-items: center;
             justify-content: space-between;
         }
+
         .score-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 15px;
             font-size: 0.8rem;
             font-weight: bold;
         }
+
         .health-metrics {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
             margin: 2rem 0;
         }
+
         .health-card {
             background: #f8f9fa;
             border-left: 4px solid #667eea;
             padding: 1rem;
             border-radius: 0 5px 5px 0;
         }
+
         .health-card h4 {
             margin: 0 0 0.5rem 0;
             color: #667eea;
         }
+
         .recommendation-list {
             list-style: none;
             padding: 0;
         }
+
         .recommendation-list li {
             background: #f8f9fa;
             margin: 0.5rem 0;
@@ -143,16 +178,19 @@
             border-left: 4px solid #667eea;
             border-radius: 0 5px 5px 0;
         }
+
         .recommendation-list li strong {
             color: #667eea;
         }
+
         .navigation {
             background: white;
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .nav-link {
             display: inline-block;
             background: #667eea;
@@ -163,33 +201,39 @@
             margin: 0.25rem;
             transition: background 0.2s;
         }
+
         .nav-link:hover {
             background: #5a6fd8;
         }
+
         .stats-summary {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin: 2rem 0;
         }
+
         .stat-card {
             background: white;
             padding: 1.5rem;
             border-radius: 8px;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             border-top: 4px solid #667eea;
         }
+
         .stat-number {
             font-size: 2rem;
             font-weight: bold;
             color: #667eea;
         }
+
         .stat-label {
             color: #6c757d;
             font-size: 0.9rem;
             margin-top: 0.5rem;
         }
+
         .code-block {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -200,6 +244,7 @@
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
         }
+
         .chart-data {
             background: #e9ecef;
             padding: 1rem;
@@ -209,6 +254,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -218,13 +264,16 @@
 
         <div class="navigation">
             <a href="index.html" class="nav-link">🏠 Home</a>
-            <a href="../structure-tree.md" class="nav-link">📄 Markdown Version</a>
+            <a href="structure-tree.html" class="nav-link">📄 Markdown Version</a>
             <a href="architecture-health-methodology.html" class="nav-link">📊 Health Metrics</a>
         </div>
 
         <div class="section">
             <h2>📊 Executive Summary</h2>
-            <p><strong>Raksul Stockroom</strong> is a mature, large-scale Rails 6.1 application with <strong>1,907+ Ruby files</strong> and <strong>1,000+ tests</strong>, representing a comprehensive inventory and order management system. The project demonstrates enterprise-level architecture with clear separation of concerns across multiple layers.</p>
+            <p><strong>Raksul Stockroom</strong> is a mature, large-scale Rails 6.1 application with <strong>1,907+ Ruby
+                    files</strong> and <strong>1,000+ tests</strong>, representing a comprehensive inventory and order
+                management system. The project demonstrates enterprise-level architecture with clear separation of
+                concerns across multiple layers.</p>
 
             <div class="stats-summary">
                 <div class="stat-card">
@@ -255,75 +304,75 @@
 
             <h3>Layer-by-Layer Breakdown</h3>
             <div class="tree-structure">Raksul Stockroom (Rails 6.1 Application)
-├── 🧪 Testing Suite (1,000+ tests, 7 directories)
-│   ├── 📂 spec/controllers/ (140+ tests)
-│   ├── 📂 spec/models/ (194+ tests)
-│   ├── 📂 spec/services/ (206+ tests)
-│   ├── 📂 spec/workers/ (80+ tests)
-│   ├── 📂 spec/policies/ (119+ tests)
-│   ├── 📂 spec/features/ (100+ integration tests)
-│   └── 📂 spec/requests/ (50+ API tests)
-│
-├── ⚙️ Services Layer (206 files, 80 directories)
-│   ├── 📂 Core Business Services (85 files, 25 directories)
-│   │   ├── 📂 orders/ (12 files)
-│   │   ├── 📂 payment/ (8 files, 1 directory)
-│   │   ├── 📂 cart_items/ (6 files)
-│   │   ├── 📂 users/ (5 files)
-│   │   ├── 📂 categories/ (8 files, 2 directories)
-│   │   ├── 📂 products/ (35 files, 15 directories)
-│   │   └── 📂 skus/ (15 files, 5 directories)
-│   │
-│   ├── 📂 System Services (80 files, 35 directories)
-│   │   ├── 📂 system_mails/ (25 files, 8 directories)
-│   │   ├── 📂 elastic_search/ (12 files, 2 directories)
-│   │   ├── 📂 export_csv/ (15 files, 5 directories)
-│   │   ├── 📂 import_csv/ (8 files, 2 directories)
-│   │   └── 📂 inventory_managements/ (12 files)
-│   │
-│   └── 📂 Specialized Services (41 files, 20 directories)
-│       ├── 📂 gmc/ (15 files, 8 directories)
-│       ├── 📂 search/ (10 files, 5 directories)
-│       └── 📂 integration/ (8 files, 4 directories)
-│
-├── 🎮 Controllers Layer (260 files, 64 directories)
-│   ├── 📂 Web Interface (37 files, 3 directories)
-│   ├── 📂 Operations/Admin Interface (180 files, 45 directories)
-│   ├── 📂 API Interface (9 files, 2 directories)
-│   └── 📂 Shared Concerns (33 files, 15 directories)
-│
-├── 🗄️ Models Layer (194 files, 6 directories)
-│   ├── 📂 Core Business Models (154 files - flat structure)
-│   └── 📂 Supporting Infrastructure (40 files, 6 directories)
-│
-├── 🛡️ Authorization Policies (119 files, 26 directories)
-│   ├── 📂 Operations/Admin Policies (95 files, 20 directories)
-│   └── 📂 Partner Policies (24 files, 6 directories)
-│
-├── 🔄 Background Jobs (80 files, 28 directories)
-│   ├── 📂 Core Business Workers (45 files, 15 directories)
-│   ├── 📂 System Workers (25 files, 10 directories)
-│   └── 📂 Specialized Workers (10 files, 3 directories)
-│
-├── 🧮 Business Calculations (31 files, 1 directory)
-│   └── 📂 Calculations Root Directory (31 files - flat structure)
-│
-├── 🔍 Database Queries (14 files, 6 directories)
-│   ├── 📂 Order-related Queries (6 files, 2 directories)
-│   ├── 📂 Product-related Queries (5 files, 2 directories)
-│   └── 📂 Other Queries (3 files, 2 directories)
-│
-├── 📦 API Serializers (3 files, 9 directories)
-│   └── 📂 API Version Organization (3 files, 9 directories)
-│
-└── 📚 Supporting Infrastructure (200+ files, 50+ directories)
-    ├── 📂 GraphQL API (25 files, 5 directories)
-    ├── 📂 View Decorators (30 files, 8 directories)
-    ├── 📂 View Presenters (20 files, 6 directories)
-    ├── 📂 Form Objects (35 files, 10 directories)
-    ├── 📂 Libraries (50+ files, 15+ directories)
-    ├── 📂 Configuration (40+ files, 25+ directories)
-    └── 📂 Frontend (50+ files, Node.js + Webpack)</div>
+                ├── 🧪 Testing Suite (1,000+ tests, 7 directories)
+                │ ├── 📂 spec/controllers/ (140+ tests)
+                │ ├── 📂 spec/models/ (194+ tests)
+                │ ├── 📂 spec/services/ (206+ tests)
+                │ ├── 📂 spec/workers/ (80+ tests)
+                │ ├── 📂 spec/policies/ (119+ tests)
+                │ ├── 📂 spec/features/ (100+ integration tests)
+                │ └── 📂 spec/requests/ (50+ API tests)
+                │
+                ├── ⚙️ Services Layer (206 files, 80 directories)
+                │ ├── 📂 Core Business Services (85 files, 25 directories)
+                │ │ ├── 📂 orders/ (12 files)
+                │ │ ├── 📂 payment/ (8 files, 1 directory)
+                │ │ ├── 📂 cart_items/ (6 files)
+                │ │ ├── 📂 users/ (5 files)
+                │ │ ├── 📂 categories/ (8 files, 2 directories)
+                │ │ ├── 📂 products/ (35 files, 15 directories)
+                │ │ └── 📂 skus/ (15 files, 5 directories)
+                │ │
+                │ ├── 📂 System Services (80 files, 35 directories)
+                │ │ ├── 📂 system_mails/ (25 files, 8 directories)
+                │ │ ├── 📂 elastic_search/ (12 files, 2 directories)
+                │ │ ├── 📂 export_csv/ (15 files, 5 directories)
+                │ │ ├── 📂 import_csv/ (8 files, 2 directories)
+                │ │ └── 📂 inventory_managements/ (12 files)
+                │ │
+                │ └── 📂 Specialized Services (41 files, 20 directories)
+                │ ├── 📂 gmc/ (15 files, 8 directories)
+                │ ├── 📂 search/ (10 files, 5 directories)
+                │ └── 📂 integration/ (8 files, 4 directories)
+                │
+                ├── 🎮 Controllers Layer (260 files, 64 directories)
+                │ ├── 📂 Web Interface (37 files, 3 directories)
+                │ ├── 📂 Operations/Admin Interface (180 files, 45 directories)
+                │ ├── 📂 API Interface (9 files, 2 directories)
+                │ └── 📂 Shared Concerns (33 files, 15 directories)
+                │
+                ├── 🗄️ Models Layer (194 files, 6 directories)
+                │ ├── 📂 Core Business Models (154 files - flat structure)
+                │ └── 📂 Supporting Infrastructure (40 files, 6 directories)
+                │
+                ├── 🛡️ Authorization Policies (119 files, 26 directories)
+                │ ├── 📂 Operations/Admin Policies (95 files, 20 directories)
+                │ └── 📂 Partner Policies (24 files, 6 directories)
+                │
+                ├── 🔄 Background Jobs (80 files, 28 directories)
+                │ ├── 📂 Core Business Workers (45 files, 15 directories)
+                │ ├── 📂 System Workers (25 files, 10 directories)
+                │ └── 📂 Specialized Workers (10 files, 3 directories)
+                │
+                ├── 🧮 Business Calculations (31 files, 1 directory)
+                │ └── 📂 Calculations Root Directory (31 files - flat structure)
+                │
+                ├── 🔍 Database Queries (14 files, 6 directories)
+                │ ├── 📂 Order-related Queries (6 files, 2 directories)
+                │ ├── 📂 Product-related Queries (5 files, 2 directories)
+                │ └── 📂 Other Queries (3 files, 2 directories)
+                │
+                ├── 📦 API Serializers (3 files, 9 directories)
+                │ └── 📂 API Version Organization (3 files, 9 directories)
+                │
+                └── 📚 Supporting Infrastructure (200+ files, 50+ directories)
+                ├── 📂 GraphQL API (25 files, 5 directories)
+                ├── 📂 View Decorators (30 files, 8 directories)
+                ├── 📂 View Presenters (20 files, 6 directories)
+                ├── 📂 Form Objects (35 files, 10 directories)
+                ├── 📂 Libraries (50+ files, 15+ directories)
+                ├── 📂 Configuration (40+ files, 25+ directories)
+                └── 📂 Frontend (50+ files, Node.js + Webpack)</div>
         </div>
 
         <div class="section">
@@ -545,21 +594,21 @@
 
             <h3>Layer Distribution for Charts</h3>
             <div class="chart-data">
-Testing: 1,000 files (52%)
-Services: 206 files (11%)
-Controllers: 260 files (14%)
-Models: 194 files (10%)
-Policies: 119 files (6%)
-Workers: 80 files (4%)
-Calculations: 31 files (2%)
-Queries: 14 files (1%)
-Serializers: 3 files (0.2%)</div>
+                Testing: 1,000 files (52%)
+                Services: 206 files (11%)
+                Controllers: 260 files (14%)
+                Models: 194 files (10%)
+                Policies: 119 files (6%)
+                Workers: 80 files (4%)
+                Calculations: 31 files (2%)
+                Queries: 14 files (1%)
+                Serializers: 3 files (0.2%)</div>
 
             <h3>Complexity Distribution</h3>
             <div class="chart-data">
-High Complexity: 15% of components
-Medium Complexity: 45% of components
-Low Complexity: 40% of components</div>
+                High Complexity: 15% of components
+                Medium Complexity: 45% of components
+                Low Complexity: 40% of components</div>
         </div>
 
         <div class="section">
@@ -629,12 +678,16 @@ Low Complexity: 40% of components</div>
         <div class="section">
             <h2>📋 Architecture Health Metrics Methodology</h2>
 
-            <p>The Architecture Health Metrics are measured using a combination of automated analysis tools and manual assessment. This methodology provides a data-driven approach to architectural improvement and technical debt management.</p>
+            <p>The Architecture Health Metrics are measured using a combination of automated analysis tools and manual
+                assessment. This methodology provides a data-driven approach to architectural improvement and technical
+                debt management.</p>
 
             <p><strong>Key Measurement Methods:</strong></p>
             <ul>
-                <li><strong>Automated Analysis (70%)</strong>: Code analysis tools, pattern matching, complexity metrics</li>
-                <li><strong>Manual Assessment (30%)</strong>: Code review observations, architectural pattern compliance, team feedback</li>
+                <li><strong>Automated Analysis (70%)</strong>: Code analysis tools, pattern matching, complexity metrics
+                </li>
+                <li><strong>Manual Assessment (30%)</strong>: Code review observations, architectural pattern
+                    compliance, team feedback</li>
             </ul>
 
             <p><strong>Scoring Criteria:</strong></p>
@@ -645,8 +698,10 @@ Low Complexity: 40% of components</div>
                 <li><strong>Needs Improvement (&lt;70%)</strong>: Significant issues present</li>
             </ul>
 
-            <p>For detailed methodology, see the <a href="architecture-health-methodology.html">Architecture Health Metrics Methodology</a> page.</p>
+            <p>For detailed methodology, see the <a href="architecture-health-methodology.html">Architecture Health
+                    Metrics Methodology</a> page.</p>
         </div>
     </div>
 </body>
+
 </html>

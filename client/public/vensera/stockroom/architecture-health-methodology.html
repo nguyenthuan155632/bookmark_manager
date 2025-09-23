@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,11 +13,13 @@
             padding: 0;
             background: #f5f5f5;
         }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
+
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -25,30 +28,35 @@
             border-radius: 10px;
             text-align: center;
         }
+
         .section {
             background: white;
             margin-bottom: 2rem;
             padding: 2rem;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .section h2 {
             color: #333;
             border-bottom: 3px solid #667eea;
             padding-bottom: 10px;
             margin-bottom: 1.5rem;
         }
+
         .section h3 {
             color: #495057;
             margin-top: 2rem;
             margin-bottom: 1rem;
         }
+
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin: 2rem 0;
         }
+
         .metric-card {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -56,10 +64,12 @@
             padding: 1.5rem;
             transition: transform 0.2s, box-shadow 0.2s;
         }
+
         .metric-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
+
         .metric-card h4 {
             color: #495057;
             margin-top: 0;
@@ -67,16 +77,34 @@
             align-items: center;
             justify-content: space-between;
         }
+
         .score-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 15px;
             font-size: 0.8rem;
             font-weight: bold;
         }
-        .excellent { background: #d4edda; color: #155724; }
-        .good { background: #d1ecf1; color: #0c5460; }
-        .fair { background: #fff3cd; color: #856404; }
-        .needs-improvement { background: #f8d7da; color: #721c24; }
+
+        .excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .good {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .fair {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .needs-improvement {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .code-block {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -87,36 +115,43 @@
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
         }
+
         .command {
             background: #e9ecef;
             padding: 0.2rem 0.4rem;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
         }
+
         .methodology-table {
             width: 100%;
             border-collapse: collapse;
             margin: 2rem 0;
             background: white;
         }
+
         .methodology-table th,
         .methodology-table td {
             border: 1px solid #e9ecef;
             padding: 0.75rem;
             text-align: left;
         }
+
         .methodology-table th {
             background: #f8f9fa;
             font-weight: 600;
             color: #495057;
         }
+
         .methodology-table tr:hover {
             background: #f8f9fa;
         }
+
         .recommendation-list {
             list-style: none;
             padding: 0;
         }
+
         .recommendation-list li {
             background: #f8f9fa;
             margin: 0.5rem 0;
@@ -124,16 +159,19 @@
             border-left: 4px solid #667eea;
             border-radius: 0 5px 5px 0;
         }
+
         .recommendation-list li strong {
             color: #667eea;
         }
+
         .navigation {
             background: white;
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .nav-link {
             display: inline-block;
             background: #667eea;
@@ -144,11 +182,13 @@
             margin: 0.25rem;
             transition: background 0.2s;
         }
+
         .nav-link:hover {
             background: #5a6fd8;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -158,13 +198,15 @@
 
         <div class="navigation">
             <a href="index.html" class="nav-link">🏠 Home</a>
-            <a href="../structure-tree.md" class="nav-link">🌳 Project Tree</a>
+            <a href="structure-tree.html" class="nav-link">🌳 Project Tree</a>
             <a href="architecture-health-methodology.html" class="nav-link">📊 Health Metrics</a>
         </div>
 
         <div class="section">
             <h2>🎯 Overview</h2>
-            <p>Architecture Health Metrics provide a quantitative assessment of your application's structural quality, maintainability, and sustainability. These metrics help identify technical debt, architectural issues, and areas for improvement.</p>
+            <p>Architecture Health Metrics provide a quantitative assessment of your application's structural quality,
+                maintainability, and sustainability. These metrics help identify technical debt, architectural issues,
+                and areas for improvement.</p>
 
             <div class="metrics-grid">
                 <div class="metric-card">
@@ -251,7 +293,8 @@
                         <td>85%</td>
                         <td><span class="score-badge good">Good</span></td>
                         <td>Pattern analysis, anti-pattern detection</td>
-                        <td><code class="command">find</code>, <code class="command">grep</code> for architectural violations</td>
+                        <td><code class="command">find</code>, <code class="command">grep</code> for architectural
+                            violations</td>
                     </tr>
                     <tr>
                         <td><strong>Service Layer Usage</strong></td>
@@ -304,182 +347,179 @@
 
             <h3>Automated Analysis (70% of Score)</h3>
             <div class="code-block">
-# File structure analysis
-find app/ -name "*.rb" | wc -l                    # Total files
-find app/ -type d | wc -l                       # Total directories
-find app/ -name "*.rb" -exec wc -l {} \; | awk '{sum+=$1} END {print sum/NR}'
+                # File structure analysis
+                find app/ -name "*.rb" | wc -l # Total files
+                find app/ -type d | wc -l # Total directories
+                find app/ -name "*.rb" -exec wc -l {} \; | awk '{sum+=$1} END {print sum/NR}'
 
-# Architectural pattern violations
-grep -r "class.*Controller.*<" app/models/       # Controllers in models (anti-pattern)
-grep -r "def.*sql.*query" app/controllers/      # SQL in controllers (anti-pattern)
-grep -r "if.*@.*\|unless.*@" app/controllers/ | wc -l  # Business logic in controllers
+                # Architectural pattern violations
+                grep -r "class.*Controller.*<" app/models/ # Controllers in models (anti-pattern) grep
+                    -r "def.*sql.*query" app/controllers/ # SQL in controllers (anti-pattern) grep
+                    -r "if.*@.*\|unless.*@" app/controllers/ | wc -l # Business logic in controllers # Performance
+                    analysis bundle exec rails log:analysis --db # Database query analysis grep
+                    -r "each.*\.find\|each.*\.where" app/ # N+1 query detection grep -r ".includes\|\.joins\|\.preload"
+                    app/ # Optimized queries # Security analysis grep -r "where.*#\|exec.*#\|find_by_sql" app/ # SQL
+                    injection risks grep -r "raw\|html_safe" app/ # XSS vulnerabilities grep
+                    -r "params\.require\|params\.permit" app/ # Parameter validation </div>
 
-# Performance analysis
-bundle exec rails log:analysis --db            # Database query analysis
-grep -r "each.*\.find\|each.*\.where" app/     # N+1 query detection
-grep -r ".includes\|\.joins\|\.preload" app/    # Optimized queries
-
-# Security analysis
-grep -r "where.*#\|exec.*#\|find_by_sql" app/  # SQL injection risks
-grep -r "raw\|html_safe" app/                  # XSS vulnerabilities
-grep -r "params\.require\|params\.permit" app/ # Parameter validation
+                    <h3>Manual Assessment (30% of Score)</h3>
+                    <ul>
+                        <li>Code review observations</li>
+                        <li>Architectural pattern compliance</li>
+                        <li>Team feedback and experience</li>
+                        <li>Documentation quality assessment</li>
+                    </ul>
             </div>
 
-            <h3>Manual Assessment (30% of Score)</h3>
-            <ul>
-                <li>Code review observations</li>
-                <li>Architectural pattern compliance</li>
-                <li>Team feedback and experience</li>
-                <li>Documentation quality assessment</li>
-            </ul>
-        </div>
+            <div class="section">
+                <h2>📊 Scoring Criteria</h2>
 
-        <div class="section">
-            <h2>📊 Scoring Criteria</h2>
+                <h3>Excellent (90-100%)</h3>
+                <ul>
+                    <li>Industry best practices followed</li>
+                    <li>Minimal anti-patterns or violations</li>
+                    <li>Comprehensive coverage in target areas</li>
+                    <li>Excellent separation of concerns</li>
+                </ul>
 
-            <h3>Excellent (90-100%)</h3>
-            <ul>
-                <li>Industry best practices followed</li>
-                <li>Minimal anti-patterns or violations</li>
-                <li>Comprehensive coverage in target areas</li>
-                <li>Excellent separation of concerns</li>
-            </ul>
+                <h3>Good (80-89%)</h3>
+                <ul>
+                    <li>Generally solid practices</li>
+                    <li>Minor violations or gaps</li>
+                    <li>Good architectural patterns</li>
+                    <li>Manageable complexity</li>
+                </ul>
 
-            <h3>Good (80-89%)</h3>
-            <ul>
-                <li>Generally solid practices</li>
-                <li>Minor violations or gaps</li>
-                <li>Good architectural patterns</li>
-                <li>Manageable complexity</li>
-            </ul>
+                <h3>Fair (70-79%)</h3>
+                <ul>
+                    <li>Acceptable but needs improvement</li>
+                    <li>Some architectural drift</li>
+                    <li>Moderate complexity issues</li>
+                    <li>Documentation gaps</li>
+                </ul>
 
-            <h3>Fair (70-79%)</h3>
-            <ul>
-                <li>Acceptable but needs improvement</li>
-                <li>Some architectural drift</li>
-                <li>Moderate complexity issues</li>
-                <li>Documentation gaps</li>
-            </ul>
+                <h3>Needs Improvement (&lt;70%)</h3>
+                <ul>
+                    <li>Significant issues present</li>
+                    <li>Major architectural violations</li>
+                    <li>High technical debt</li>
+                    <li>Critical gaps in coverage</li>
+                </ul>
+            </div>
 
-            <h3>Needs Improvement (&lt;70%)</h3>
-            <ul>
-                <li>Significant issues present</li>
-                <li>Major architectural violations</li>
-                <li>High technical debt</li>
-                <li>Critical gaps in coverage</li>
-            </ul>
-        </div>
+            <div class="section">
+                <h2>🎯 Key Insights for Raksul Stockroom</h2>
 
-        <div class="section">
-            <h2>🎯 Key Insights for Raksul Stockroom</h2>
+                <h3>Strengths (90%+ scores)</h3>
+                <ul>
+                    <li><strong>Test Coverage (95%)</strong>: Excellent regression protection</li>
+                    <li><strong>Service Layer Usage (90%)</strong>: Well-encapsulated business logic</li>
+                    <li><strong>Code Organization (85%)</strong>: Clear architectural patterns</li>
+                </ul>
 
-            <h3>Strengths (90%+ scores)</h3>
-            <ul>
-                <li><strong>Test Coverage (95%)</strong>: Excellent regression protection</li>
-                <li><strong>Service Layer Usage (90%)</strong>: Well-encapsulated business logic</li>
-                <li><strong>Code Organization (85%)</strong>: Clear architectural patterns</li>
-            </ul>
+                <h3>Maintenance Areas (&lt;80% scores)</h3>
+                <ul>
+                    <li><strong>Documentation (60%)</strong>: Biggest opportunity for improvement</li>
+                    <li><strong>Performance (65%)</strong>: Query optimization needed</li>
+                    <li><strong>Maintainability (75%)</strong>: Complexity reduction opportunities</li>
+                </ul>
+            </div>
 
-            <h3>Maintenance Areas (&lt;80% scores)</h3>
-            <ul>
-                <li><strong>Documentation (60%)</strong>: Biggest opportunity for improvement</li>
-                <li><strong>Performance (65%)</strong>: Query optimization needed</li>
-                <li><strong>Maintainability (75%)</strong>: Complexity reduction opportunities</li>
-            </ul>
-        </div>
+            <div class="section">
+                <h2>🛠️ Recommendations Based on Metrics</h2>
 
-        <div class="section">
-            <h2>🛠️ Recommendations Based on Metrics</h2>
+                <h3>Immediate Priority (Next 3 Months)</h3>
+                <ol class="recommendation-list">
+                    <li>
+                        <strong>Documentation Enhancement</strong> - Target: 75%+
+                        <ul>
+                            <li>Add inline comments to complex methods</li>
+                            <li>Create README files for major modules</li>
+                            <li>Document business rules and calculations</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Performance Optimization</strong> - Target: 80%+
+                        <ul>
+                            <li>Address N+1 query issues</li>
+                            <li>Add database indexes for frequent queries</li>
+                            <li>Implement caching strategies</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Maintainability Improvement</strong> - Target: 85%+
+                        <ul>
+                            <li>Refactor high-complexity methods</li>
+                            <li>Reduce technical debt (TODO/FIXME items)</li>
+                            <li>Improve code consistency</li>
+                        </ul>
+                    </li>
+                </ol>
 
-            <h3>Immediate Priority (Next 3 Months)</h3>
-            <ol class="recommendation-list">
-                <li>
-                    <strong>Documentation Enhancement</strong> - Target: 75%+
-                    <ul>
-                        <li>Add inline comments to complex methods</li>
-                        <li>Create README files for major modules</li>
-                        <li>Document business rules and calculations</li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>Performance Optimization</strong> - Target: 80%+
-                    <ul>
-                        <li>Address N+1 query issues</li>
-                        <li>Add database indexes for frequent queries</li>
-                        <li>Implement caching strategies</li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>Maintainability Improvement</strong> - Target: 85%+
-                    <ul>
-                        <li>Refactor high-complexity methods</li>
-                        <li>Reduce technical debt (TODO/FIXME items)</li>
-                        <li>Improve code consistency</li>
-                    </ul>
-                </li>
-            </ol>
+                <h3>Ongoing Maintenance</h3>
+                <ul>
+                    <li><strong>Test Coverage</strong>: Maintain 95%+ coverage</li>
+                    <li><strong>Security</strong>: Continue strong security practices</li>
+                    <li><strong>Service Layer</strong>: Preserve good architectural patterns</li>
+                </ul>
+            </div>
 
-            <h3>Ongoing Maintenance</h3>
-            <ul>
-                <li><strong>Test Coverage</strong>: Maintain 95%+ coverage</li>
-                <li><strong>Security</strong>: Continue strong security practices</li>
-                <li><strong>Service Layer</strong>: Preserve good architectural patterns</li>
-            </ul>
-        </div>
+            <div class="section">
+                <h2>⚙️ Automated Measurement Script</h2>
+                <p>For continuous monitoring, implement a health check script:</p>
 
-        <div class="section">
-            <h2>⚙️ Automated Measurement Script</h2>
-            <p>For continuous monitoring, implement a health check script:</p>
+                <div class="code-block">
+                    # lib/architecture_health_analyzer.rb
+                    class ArchitectureHealthAnalyzer
+                    def initialize(app_path = Rails.root)
+                    @app_path = app_path
+                    end
 
-            <div class="code-block">
-# lib/architecture_health_analyzer.rb
-class ArchitectureHealthAnalyzer
-  def initialize(app_path = Rails.root)
-    @app_path = app_path
-  end
+                    def analyze
+                    {
+                    test_coverage: measure_test_coverage,
+                    code_organization: measure_code_organization,
+                    service_layer_usage: measure_service_layer_usage,
+                    authorization_coverage: measure_authorization_coverage,
+                    performance: measure_performance,
+                    maintainability: measure_maintainability,
+                    security: measure_security,
+                    documentation: measure_documentation
+                    }
+                    end
 
-  def analyze
-    {
-      test_coverage: measure_test_coverage,
-      code_organization: measure_code_organization,
-      service_layer_usage: measure_service_layer_usage,
-      authorization_coverage: measure_authorization_coverage,
-      performance: measure_performance,
-      maintainability: measure_maintainability,
-      security: measure_security,
-      documentation: measure_documentation
-    }
-  end
+                    private
 
-  private
+                    def measure_test_coverage
+                    # Parse SimpleCov results
+                    # Return percentage 0-100
+                    end
 
-  def measure_test_coverage
-    # Parse SimpleCov results
-    # Return percentage 0-100
-  end
+                    def measure_code_organization
+                    # Analyze file structure and patterns
+                    # Return score 0-100
+                    end
 
-  def measure_code_organization
-    # Analyze file structure and patterns
-    # Return score 0-100
-  end
+                    # ... other measurement methods
+                    end
+                </div>
+            </div>
 
-  # ... other measurement methods
-end
+            <div class="section">
+                <h2>📈 Usage Recommendations</h2>
+                <ol>
+                    <li><strong>Monthly Health Checks</strong>: Run full analysis to track progress</li>
+                    <li><strong>Sprint Retrospectives</strong>: Discuss metrics and plan improvements</li>
+                    <li><strong>Technical Debt Sprints</strong>: Focus on lowest-scoring areas</li>
+                    <li><strong>Architecture Reviews</strong>: Use metrics to guide architectural decisions</li>
+                    <li><strong>Team Onboarding</strong>: Use documentation metrics to improve knowledge transfer</li>
+                </ol>
+
+                <p><em>This methodology provides a data-driven approach to architectural improvement and technical debt
+                        management, enabling teams to make informed decisions about codebase quality and
+                        maintainability.</em></p>
             </div>
         </div>
-
-        <div class="section">
-            <h2>📈 Usage Recommendations</h2>
-            <ol>
-                <li><strong>Monthly Health Checks</strong>: Run full analysis to track progress</li>
-                <li><strong>Sprint Retrospectives</strong>: Discuss metrics and plan improvements</li>
-                <li><strong>Technical Debt Sprints</strong>: Focus on lowest-scoring areas</li>
-                <li><strong>Architecture Reviews</strong>: Use metrics to guide architectural decisions</li>
-                <li><strong>Team Onboarding</strong>: Use documentation metrics to improve knowledge transfer</li>
-            </ol>
-
-            <p><em>This methodology provides a data-driven approach to architectural improvement and technical debt management, enabling teams to make informed decisions about codebase quality and maintainability.</em></p>
-        </div>
-    </div>
 </body>
+
 </html>
