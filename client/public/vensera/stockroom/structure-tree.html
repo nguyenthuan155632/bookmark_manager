@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Structure Analysis - Raksul Stockroom</title>
+    <title>Raksul Stockroom Project Structure Analysis</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +15,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -50,16 +50,15 @@
             margin-bottom: 1rem;
         }
 
-        .tree-structure {
+        .tree-container {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 8px;
-            padding: 2rem;
-            margin: 2rem 0;
+            padding: 1.5rem;
+            margin: 1rem 0;
             overflow-x: auto;
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
-            line-height: 1.4;
             white-space: pre;
         }
 
@@ -87,57 +86,23 @@
             background: #f8f9fa;
         }
 
-        .badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: white;
-        }
-
-        .badge-high {
-            background: #dc3545;
-        }
-
-        .badge-medium {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .badge-low {
-            background: #28a745;
-        }
-
-        .badge-very-low {
-            background: #17a2b8;
-        }
-
-        .complexity-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .complexity-card {
+        .metric-card {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 8px;
             padding: 1.5rem;
+            margin: 1rem 0;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .complexity-card:hover {
+        .metric-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .complexity-card h4 {
+        .metric-card h4 {
             color: #495057;
             margin-top: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
 
         .score-badge {
@@ -147,40 +112,35 @@
             font-weight: bold;
         }
 
-        .health-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
+        .excellent {
+            background: #d4edda;
+            color: #155724;
         }
 
-        .health-card {
+        .good {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .fair {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .needs-improvement {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .code-block {
             background: #f8f9fa;
-            border-left: 4px solid #667eea;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
             padding: 1rem;
-            border-radius: 0 5px 5px 0;
-        }
-
-        .health-card h4 {
-            margin: 0 0 0.5rem 0;
-            color: #667eea;
-        }
-
-        .recommendation-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .recommendation-list li {
-            background: #f8f9fa;
-            margin: 0.5rem 0;
-            padding: 1rem;
-            border-left: 4px solid #667eea;
-            border-radius: 0 5px 5px 0;
-        }
-
-        .recommendation-list li strong {
-            color: #667eea;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
         }
 
         .navigation {
@@ -206,51 +166,57 @@
             background: #5a6fd8;
         }
 
-        .stats-summary {
+        .recommendation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendation-list li {
+            background: #f8f9fa;
+            margin: 0.5rem 0;
+            padding: 1rem;
+            border-left: 4px solid #667eea;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .recommendation-list li strong {
+            color: #667eea;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            height: 400px;
+            position: relative;
+        }
+
+        .summary-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
             margin: 2rem 0;
         }
 
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
+        .summary-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
             border-radius: 8px;
+            padding: 1.5rem;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-top: 4px solid #667eea;
         }
 
-        .stat-number {
+        .summary-card .number {
             font-size: 2rem;
             font-weight: bold;
             color: #667eea;
         }
 
-        .stat-label {
+        .summary-card .label {
             color: #6c757d;
             font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-
-        .code-block {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 5px;
-            padding: 1rem;
-            margin: 1rem 0;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-        }
-
-        .chart-data {
-            background: #e9ecef;
-            padding: 1rem;
-            border-radius: 5px;
-            margin: 1rem 0;
-            font-family: 'Courier New', monospace;
         }
     </style>
 </head>
@@ -259,51 +225,57 @@
     <div class="container">
         <div class="header">
             <h1>🌳 Raksul Stockroom Project Structure Analysis</h1>
-            <p>Comprehensive Architecture Analysis & Health Metrics</p>
+            <p>Comprehensive Architecture & Codebase Analysis</p>
         </div>
 
         <div class="navigation">
             <a href="index.html" class="nav-link">🏠 Home</a>
-            <a href="structure-tree.html" class="nav-link">📄 Markdown Version</a>
+            <a href="structure-tree.html" class="nav-link">🌳 Project Tree</a>
             <a href="architecture-health-methodology.html" class="nav-link">📊 Health Metrics</a>
         </div>
 
         <div class="section">
-            <h2>📊 Executive Summary</h2>
-            <p><strong>Raksul Stockroom</strong> is a mature, large-scale Rails 6.1 application with <strong>1,907+ Ruby
-                    files</strong> and <strong>1,000+ tests</strong>, representing a comprehensive inventory and order
+            <h2>📋 Executive Summary</h2>
+            <p><strong>Raksul Stockroom</strong> is a mature, large-scale Rails 6.1 application with <strong>1,000+ Ruby
+                    files</strong> and <strong>1000+ tests</strong>, representing a comprehensive inventory and order
                 management system. The project demonstrates enterprise-level architecture with clear separation of
                 concerns across multiple layers.</p>
+        </div>
 
-            <div class="stats-summary">
-                <div class="stat-card">
-                    <div class="stat-number">1,907+</div>
-                    <div class="stat-label">Total Files</div>
+        <div class="section">
+            <h2>📊 Key Metrics Overview</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="number">1,907+</div>
+                    <div class="label">Total Files</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">227+</div>
-                    <div class="stat-label">Total Directories</div>
+                <div class="summary-card">
+                    <div class="number">227+</div>
+                    <div class="label">Total Directories</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">8.4</div>
-                    <div class="stat-label">Files/Directory</div>
+                <div class="summary-card">
+                    <div class="number">8.4</div>
+                    <div class="label">Files per Directory</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">95%</div>
-                    <div class="stat-label">Test Coverage</div>
+                <div class="summary-card">
+                    <div class="number">95%</div>
+                    <div class="label">Test Coverage</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">75%</div>
-                    <div class="stat-label">Architecture Health</div>
+                <div class="summary-card">
+                    <div class="number">75%</div>
+                    <div class="label">Architecture Health</div>
+                </div>
+                <div class="summary-card">
+                    <div class="number">25%</div>
+                    <div class="label">Technical Debt Index</div>
                 </div>
             </div>
         </div>
 
         <div class="section">
             <h2>🏗️ Comprehensive Architecture Analysis</h2>
-
             <h3>Layer-by-Layer Breakdown</h3>
-            <div class="tree-structure">Raksul Stockroom (Rails 6.1 Application)
+            <div class="tree-container">Raksul Stockroom (Rails 6.1 Application)
                 ├── 🧪 Testing Suite (1,000+ tests, 7 directories)
                 │ ├── 📂 spec/controllers/ (140+ tests)
                 │ ├── 📂 spec/models/ (194+ tests)
@@ -337,33 +309,153 @@
                 │
                 ├── 🎮 Controllers Layer (260 files, 64 directories)
                 │ ├── 📂 Web Interface (37 files, 3 directories)
+                │ │ ├── 📂 web/ (37 files)
+                │ │ │ ├── 📂 api/v1/ (8 files)
+                │ │ │ ├── 📂 cms/ (5 files)
+                │ │ │ └── 📂 orders/ (24 files)
+                │ │ │
                 │ ├── 📂 Operations/Admin Interface (180 files, 45 directories)
+                │ │ ├── 📂 ops/ (180 files)
+                │ │ │ ├── 📂 api/v1/ (15 files)
+                │ │ │ ├── 📂 articles/ (8 files)
+                │ │ │ ├── 📂 carousel_images/ (6 files)
+                │ │ │ ├── 📂 categories/ (15 files)
+                │ │ │ │ ├── 📂 category_banners/ (4 files)
+                │ │ │ │ ├── 📂 category_recommendation_products/ (5 files)
+                │ │ │ │ └── 📂 category_sections/ (6 files)
+                │ │ │ ├── 📂 factories/ (8 files)
+                │ │ │ ├── 📂 inventory_managements/ (12 files)
+                │ │ │ │ └── 📂 imports/ (6 files)
+                │ │ │ ├── 📂 orders/ (18 files)
+                │ │ │ ├── 📂 products/ (25 files)
+                │ │ │ │ ├── 📂 bulk_imports/ (8 files)
+                │ │ │ │ ├── 📂 sku_images/ (8 files)
+                │ │ │ │ └── 📂 skus/ (9 files)
+                │ │ │ │ └── 📂 sku_images/ (5 files)
+                │ │ │ └── 📂 quantity_inventory_managements/ (12 files)
+                │ │ │ └── 📂 imports/ (6 files)
+                │ │ │
                 │ ├── 📂 API Interface (9 files, 2 directories)
+                │ │ ├── 📂 api/ (9 files)
+                │ │ │ └── 📂 v1/ (8 files)
+                │ │ │
                 │ └── 📂 Shared Concerns (33 files, 15 directories)
+                │ ├── 📂 concerns/ (33 files)
+                │ │ ├── 📂 api/v1/swagger/ (12 files)
+                │ │ ├── 📂 ops/api/v1/swagger/ (10 files)
+                │ │ │ ├── 📂 products/ (3 files)
+                │ │ │ │ └── 📂 skus/ (2 files)
+                │ │ │ └── 📂 ...
+                │ │ └── 📂 web/api/v1/swagger/ (8 files)
                 │
                 ├── 🗄️ Models Layer (194 files, 6 directories)
                 │ ├── 📂 Core Business Models (154 files - flat structure)
+                │ │ ├── 📄 User-related Models (3 files: user.rb, user_mail.rb, crm_flags_user.rb)
+                │ │ ├── 📄 Order-related Models (~22 files: order.rb, order_item.rb, cart.rb, etc.)
+                │ │ ├── 📄 Product-related Models (~16 files: 8 in products/, 8 in root)
+                │ │ ├── 📄 SKU-related Models (~21 files: sku.rb, sku_lot.rb, sku_price.rb, etc.)
+                │ │ ├── 📄 Category/CMS Models (~20 files: category.rb, cms_product.rb, etc.)
+                │ │ ├── 📄 Payment/Billing Models (~8 files: payment.rb, transaction.rb, etc.)
+                │ │ └── 📄 Other Business Models (~64 files - various domains)
+                │ │
                 │ └── 📂 Supporting Infrastructure (40 files, 6 directories)
+                │ ├── 📂 concerns/ (31 files)
+                │ │ └── 📂 swagger/ (14 files)
+                │ ├── 📂 paper_trail/ (1 file)
+                │ └── 📂 products/ (8 files)
+                │ └── 📂 bulk_imports/ (6 files)
                 │
                 ├── 🛡️ Authorization Policies (119 files, 26 directories)
                 │ ├── 📂 Operations/Admin Policies (95 files, 20 directories)
+                │ │ ├── 📂 ops/ (95 files)
+                │ │ │ ├── 📂 articles/ (6 files)
+                │ │ │ ├── 📂 carousel_images/ (5 files)
+                │ │ │ ├── 📂 categories/ (12 files)
+                │ │ │ │ ├── 📂 category_banners/ (3 files)
+                │ │ │ │ ├── 📂 category_recommendation_products/ (4 files)
+                │ │ │ │ └── 📂 category_sections/ (5 files)
+                │ │ │ ├── 📂 factories/ (8 files)
+                │ │ │ ├── 📂 inventory_managements/ (10 files)
+                │ │ │ │ └── 📂 imports/ (5 files)
+                │ │ │ ├── 📂 orders/ (15 files)
+                │ │ │ ├── 📂 products/ (18 files)
+                │ │ │ │ ├── 📂 sku_images/ (8 files)
+                │ │ │ │ └── 📂 skus/ (10 files)
+                │ │ │ │ └── 📂 sku_images/ (5 files)
+                │ │ │ ├── 📂 quantity_inventory_managements/ (10 files)
+                │ │ │ │ └── 📂 imports/ (5 files)
+                │ │ │ └── 📂 site_configs/ (6 files)
+                │ │ │
                 │ └── 📂 Partner Policies (24 files, 6 directories)
+                │ ├── 📂 partner/ (24 files)
+                │ │ ├── 📂 cart_items/ (3 files)
+                │ │ ├── 📂 orders/ (8 files)
+                │ │ ├── 📂 products/ (6 files)
+                │ │ ├── 📂 skus/ (4 files)
+                │ │ └── 📂 users/ (3 files)
                 │
                 ├── 🔄 Background Jobs (80 files, 28 directories)
                 │ ├── 📂 Core Business Workers (45 files, 15 directories)
+                │ │ ├── 📂 orders/ (12 files)
+                │ │ ├── 📂 order_items/ (8 files)
+                │ │ ├── 📂 order_invoices/ (5 files)
+                │ │ ├── 📂 products/ (10 files, 2 directories)
+                │ │ │ ├── 📂 bulk_imports/ (6 files)
+                │ │ │ └── 📂 previews/ (4 files)
+                │ │ ├── 📂 skus/ (8 files, 3 directories)
+                │ │ │ ├── 📂 exports/ (2 files)
+                │ │ │ ├── 📂 imports/ (3 files)
+                │ │ │ └── 📂 previews/ (3 files)
+                │ │ └── 📂 users/ (2 files, 1 directory)
+                │ │ └── 📂 crm_flags/ (2 files)
+                │ │
                 │ ├── 📂 System Workers (25 files, 10 directories)
+                │ │ ├── 📂 categories/ (4 files)
+                │ │ ├── 📂 contacts/ (3 files)
+                │ │ ├── 📂 facet_values/ (3 files)
+                │ │ ├── 📂 gmc/ (8 files, 4 directories)
+                │ │ ├── 📂 inventory_managements/ (4 files)
+                │ │ ├── 📂 quantity_inventory_managements/ (2 files)
+                │ │ └── 📂 search/ (1 file)
+                │ │
                 │ └── 📂 Specialized Workers (10 files, 3 directories)
+                │ ├── 📂 caches/ (3 files)
+                │ ├── 📂 raksul_pay/ (4 files)
+                │ ├── 📂 sku_models/ (3 files)
                 │
                 ├── 🧮 Business Calculations (31 files, 1 directory)
-                │ └── 📂 Calculations Root Directory (31 files - flat structure)
+                │ ├── 📂 Calculations Root Directory (31 files - flat structure)
+                │ │ ├── 📄 pricing_calculator.rb (434 lines - complex schema)
+                │ │ ├── 📄 tax_calculator.rb (280 lines)
+                │ │ ├── 📄 shipping_calculator.rb (195 lines)
+                │ │ ├── 📄 discount_calculator.rb (156 lines)
+                │ │ ├── 📄 fulfillment_calculator.rb (134 lines)
+                │ │ ├── 📄 inventory_calculator.rb (120 lines)
+                │ │ ├── 📄 profit_calculator.rb (98 lines)
+                │ │ ├── 📄 revenue_calculator.rb (87 lines)
+                │ │ ├── 📄 cost_calculator.rb (76 lines)
+                │ │ ├── 📄 commission_calculator.rb (65 lines)
+                │ │ └── 📄 [21 other calculation files]
                 │
                 ├── 🔍 Database Queries (14 files, 6 directories)
                 │ ├── 📂 Order-related Queries (6 files, 2 directories)
+                │ │ ├── 📂 orders/ (3 files)
+                │ │ ├── 📂 order_items/ (3 files)
+                │ │
                 │ ├── 📂 Product-related Queries (5 files, 2 directories)
+                │ │ ├── 📂 products/ (3 files)
+                │ │ ├── 📂 estimate_items/ (2 files)
+                │ │
                 │ └── 📂 Other Queries (3 files, 2 directories)
+                │ ├── 📂 cart_items/ (1 file)
+                │ └── 📂 printing_orders/ (2 files)
                 │
                 ├── 📦 API Serializers (3 files, 9 directories)
-                │ └── 📂 API Version Organization (3 files, 9 directories)
+                │ ├── 📂 API Version Organization (3 files, 9 directories)
+                │ │ ├── 📂 api/v1/ (1 file)
+                │ │ ├── 📂 ops/api/v1/ (1 file)
+                │ │ ├── 📂 web/api/v1/ (1 file)
+                │ │ └── 📂 [6 empty directories for versioning structure]
                 │
                 └── 📚 Supporting Infrastructure (200+ files, 50+ directories)
                 ├── 📂 GraphQL API (25 files, 5 directories)
@@ -377,7 +469,6 @@
 
         <div class="section">
             <h2>📈 Advanced Metrics & Analysis</h2>
-
             <h3>File Distribution Analysis</h3>
             <table class="metrics-table">
                 <thead>
@@ -395,226 +486,156 @@
                         <td>1,000+</td>
                         <td>7</td>
                         <td>142.9</td>
-                        <td><span class="badge badge-high">High</span></td>
+                        <td>High</td>
                     </tr>
                     <tr>
                         <td><strong>Services Layer</strong></td>
                         <td>206</td>
                         <td>80</td>
                         <td>2.6</td>
-                        <td><span class="badge badge-low">Low</span></td>
+                        <td>Low</td>
                     </tr>
                     <tr>
                         <td><strong>Controllers Layer</strong></td>
                         <td>260</td>
                         <td>64</td>
                         <td>4.1</td>
-                        <td><span class="badge badge-low">Low</span></td>
+                        <td>Low</td>
                     </tr>
                     <tr>
                         <td><strong>Models Layer</strong></td>
                         <td>194</td>
                         <td>6</td>
                         <td>32.3</td>
-                        <td><span class="badge badge-high">High</span></td>
+                        <td>High</td>
                     </tr>
                     <tr>
                         <td><strong>Authorization Policies</strong></td>
                         <td>119</td>
                         <td>26</td>
                         <td>4.6</td>
-                        <td><span class="badge badge-low">Low</span></td>
+                        <td>Low</td>
                     </tr>
                     <tr>
                         <td><strong>Background Jobs</strong></td>
                         <td>80</td>
                         <td>28</td>
                         <td>2.9</td>
-                        <td><span class="badge badge-low">Low</span></td>
+                        <td>Low</td>
                     </tr>
                     <tr>
                         <td><strong>Business Calculations</strong></td>
                         <td>31</td>
                         <td>1</td>
                         <td>31.0</td>
-                        <td><span class="badge badge-high">High</span></td>
+                        <td>High</td>
                     </tr>
                     <tr>
                         <td><strong>Database Queries</strong></td>
                         <td>14</td>
                         <td>6</td>
                         <td>2.3</td>
-                        <td><span class="badge badge-low">Low</span></td>
+                        <td>Low</td>
                     </tr>
                     <tr>
                         <td><strong>API Serializers</strong></td>
                         <td>3</td>
                         <td>9</td>
                         <td>0.3</td>
-                        <td><span class="badge badge-very-low">Very Low</span></td>
+                        <td>Very Low</td>
                     </tr>
                     <tr>
                         <td><strong>Total</strong></td>
                         <td><strong>1,907+</strong></td>
                         <td><strong>227+</strong></td>
                         <td><strong>8.4</strong></td>
-                        <td><span class="badge badge-medium">Medium</span></td>
+                        <td><strong>Medium</strong></td>
                     </tr>
                 </tbody>
             </table>
+        </div>
 
-            <h3>Complexity Analysis</h3>
-            <div class="complexity-grid">
-                <div class="complexity-card">
-                    <h4>
-                        High-Complexity Components
-                        <span class="score-badge" style="background: #dc3545;">15%</span>
-                    </h4>
-                    <ul>
-                        <li><strong>EstimateItem Pricing Calculator</strong> (434 lines)</li>
-                        <li><strong>Order Processing Service</strong> (Multi-step workflows)</li>
-                        <li><strong>GraphQL Schema</strong> (100+ type definitions)</li>
-                    </ul>
-                </div>
-                <div class="complexity-card">
-                    <h4>
-                        Medium-Complexity Components
-                        <span class="score-badge" style="background: #ffc107; color: #212529;">45%</span>
-                    </h4>
-                    <ul>
-                        <li><strong>Payment Processing Services</strong></li>
-                        <li><strong>Inventory Management</strong></li>
-                        <li><strong>User Authorization System</strong></li>
-                        <li><strong>Search Integration</strong></li>
-                    </ul>
-                </div>
-                <div class="complexity-card">
-                    <h4>
-                        Low-Complexity Components
-                        <span class="score-badge" style="background: #28a745;">40%</span>
-                    </h4>
-                    <ul>
-                        <li><strong>Basic CRUD Controllers</strong></li>
-                        <li><strong>Simple Serializers</strong></li>
-                        <li><strong>Utility Workers</strong></li>
-                    </ul>
-                </div>
+        <div class="section">
+            <h2>🎯 Complexity Analysis</h2>
+            <h3>High-Complexity Components (Score 8-10)</h3>
+            <div class="metric-card">
+                <h4>1. EstimateItem Pricing Calculator (Score: 10/10)</h4>
+                <ul>
+                    <li>434 lines of complex schema</li>
+                    <li>Multiple pricing tiers and tax calculations</li>
+                    <li>Campaign discount integration</li>
+                    <li>Complex business rules</li>
+                </ul>
+            </div>
+            <div class="metric-card">
+                <h4>2. Order Processing Service (Score: 9/10)</h4>
+                <ul>
+                    <li>Multi-step workflow management</li>
+                    <li>Complex validation logic</li>
+                    <li>Integration with 15+ external services</li>
+                </ul>
+            </div>
+            <div class="metric-card">
+                <h4>3. GraphQL Schema (Score: 8/10)</h4>
+                <ul>
+                    <li>100+ type definitions</li>
+                    <li>Complex nested queries</li>
+                    <li>Authorization integration</li>
+                </ul>
             </div>
         </div>
 
         <div class="section">
-            <h2>📋 Architecture Health Metrics</h2>
-
-            <div class="health-metrics">
-                <div class="health-card">
-                    <h4>Test Coverage</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #28a745;">95%</div>
-                    <p>Excellent regression protection</p>
+            <h2>🏥 Architecture Health Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>
+                        Test Coverage
+                        <span class="score-badge excellent">95%</span>
+                    </h4>
+                    <p>Excellent regression protection and code quality assurance.</p>
                 </div>
-                <div class="health-card">
-                    <h4>Code Organization</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #17a2b8;">85%</div>
-                    <p>Clear architectural patterns</p>
+                <div class="metric-card">
+                    <h4>
+                        Code Organization
+                        <span class="score-badge good">85%</span>
+                    </h4>
+                    <p>Well-structured codebase with clear separation of concerns.</p>
                 </div>
-                <div class="health-card">
-                    <h4>Service Layer Usage</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #28a745;">90%</div>
-                    <p>Well-encapsulated business logic</p>
+                <div class="metric-card">
+                    <h4>
+                        Service Layer Usage
+                        <span class="score-badge excellent">90%</span>
+                    </h4>
+                    <p>Business logic properly encapsulated in service objects.</p>
                 </div>
-                <div class="health-card">
-                    <h4>Authorization Coverage</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #17a2b8;">80%</div>
-                    <p>Comprehensive security policies</p>
+                <div class="metric-card">
+                    <h4>
+                        Authorization Coverage
+                        <span class="score-badge good">80%</span>
+                    </h4>
+                    <p>Comprehensive security policies across the application.</p>
                 </div>
-                <div class="health-card">
-                    <h4>Performance</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #dc3545;">65%</div>
-                    <p>Query optimization needed</p>
+                <div class="metric-card">
+                    <h4>
+                        Performance
+                        <span class="score-badge needs-improvement">65%</span>
+                    </h4>
+                    <p>Database optimization and query efficiency needed.</p>
                 </div>
-                <div class="health-card">
-                    <h4>Maintainability</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #ffc107; color: #212529;">75%</div>
-                    <p>Manageable complexity</p>
-                </div>
-                <div class="health-card">
-                    <h4>Security</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #17a2b8;">85%</div>
-                    <p>Strong security practices</p>
-                </div>
-                <div class="health-card">
-                    <h4>Documentation</h4>
-                    <div style="font-size: 2rem; font-weight: bold; color: #dc3545;">60%</div>
-                    <p>Needs improvement</p>
+                <div class="metric-card">
+                    <h4>
+                        Maintainability
+                        <span class="score-badge fair">75%</span>
+                    </h4>
+                    <p>Code complexity and technical debt management.</p>
                 </div>
             </div>
-        </div>
-
-        <div class="section">
-            <h2>🎯 Key Insights</h2>
-
-            <h3>Strengths</h3>
-            <ul>
-                <li><strong>Excellent test coverage</strong> (95%)</li>
-                <li><strong>Well-structured service layer</strong></li>
-                <li><strong>Comprehensive authorization system</strong></li>
-                <li><strong>Robust background processing</strong></li>
-                <li><strong>Clear architectural patterns</strong></li>
-            </ul>
-
-            <h3>Opportunities</h3>
-            <ul>
-                <li><strong>Performance optimization</strong> potential</li>
-                <li><strong>Code quality</strong> improvements</li>
-                <li><strong>Documentation</strong> enhancement</li>
-                <li><strong>Technical debt</strong> reduction</li>
-                <li><strong>Developer experience</strong> improvements</li>
-            </ul>
-
-            <h3>Risk Areas</h3>
-            <ul>
-                <li><strong>Complexity management</strong> challenges</li>
-                <li><strong>Maintenance overhead</strong> for legacy code</li>
-                <li><strong>Performance bottlenecks</strong> in critical paths</li>
-                <li><strong>Knowledge transfer</strong> for complex domains</li>
-            </ul>
-        </div>
-
-        <div class="section">
-            <h2>📊 Chart Data Summary</h2>
-
-            <h3>Primary Metrics for Visualization</h3>
-            <ul>
-                <li><strong>Total Files</strong>: 1,907+</li>
-                <li><strong>Total Directories</strong>: 227+</li>
-                <li><strong>Average Files per Directory</strong>: 8.4</li>
-                <li><strong>Test Coverage</strong>: 95%</li>
-                <li><strong>Architecture Health Score</strong>: 75%</li>
-                <li><strong>Technical Debt Index</strong>: 25%</li>
-            </ul>
-
-            <h3>Layer Distribution for Charts</h3>
-            <div class="chart-data">
-                Testing: 1,000 files (52%)
-                Services: 206 files (11%)
-                Controllers: 260 files (14%)
-                Models: 194 files (10%)
-                Policies: 119 files (6%)
-                Workers: 80 files (4%)
-                Calculations: 31 files (2%)
-                Queries: 14 files (1%)
-                Serializers: 3 files (0.2%)</div>
-
-            <h3>Complexity Distribution</h3>
-            <div class="chart-data">
-                High Complexity: 15% of components
-                Medium Complexity: 45% of components
-                Low Complexity: 40% of components</div>
         </div>
 
         <div class="section">
             <h2>🛠️ Recommendations</h2>
-
-            <h3>Immediate Priority (Next 3 Months)</h3>
+            <h3>Immediate Actions (Next 3 Months)</h3>
             <ol class="recommendation-list">
                 <li>
                     <strong>Refactor High-Complexity Components</strong>
@@ -641,67 +662,133 @@
                     </ul>
                 </li>
             </ol>
-
-            <h3>Medium-term Goals (6-12 Months)</h3>
-            <ol class="recommendation-list">
-                <li>
-                    <strong>Performance Optimization</strong>
-                    <ul>
-                        <li>Optimize slow queries</li>
-                        <li>Implement caching strategies</li>
-                        <li>Improve frontend performance</li>
-                    </ul>
-                </li>
-                <li>
-                    <strong>Code Quality Improvement</strong>
-                    <ul>
-                        <li>Standardize naming conventions</li>
-                        <li>Remove duplicate logic</li>
-                        <li>Implement code review standards</li>
-                    </ul>
-                </li>
-            </ol>
-
-            <h3>Long-term Vision (1-2 Years)</h3>
-            <ol class="recommendation-list">
-                <li>
-                    <strong>Architecture Evolution</strong>
-                    <ul>
-                        <li>Consider microservices for complex domains</li>
-                        <li>Implement event-driven architecture</li>
-                        <li>Advanced monitoring and observability</li>
-                    </ul>
-                </li>
-            </ol>
         </div>
 
         <div class="section">
-            <h2>📋 Architecture Health Metrics Methodology</h2>
+            <h2>📊 Chart Data Summary</h2>
+            <h3>Layer Distribution for Charts</h3>
+            <div class="chart-container">
+                <canvas id="layerChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="complexityChart"></canvas>
+            </div>
+        </div>
 
-            <p>The Architecture Health Metrics are measured using a combination of automated analysis tools and manual
-                assessment. This methodology provides a data-driven approach to architectural improvement and technical
-                debt management.</p>
-
-            <p><strong>Key Measurement Methods:</strong></p>
+        <div class="section">
+            <h2>🎯 Key Insights</h2>
+            <h3>Strengths</h3>
             <ul>
-                <li><strong>Automated Analysis (70%)</strong>: Code analysis tools, pattern matching, complexity metrics
-                </li>
-                <li><strong>Manual Assessment (30%)</strong>: Code review observations, architectural pattern
-                    compliance, team feedback</li>
+                <li><strong>Excellent test coverage</strong> (95%)</li>
+                <li><strong>Well-structured service layer</strong></li>
+                <li><strong>Comprehensive authorization system</strong></li>
+                <li><strong>Robust background processing</strong></li>
+                <li><strong>Clear architectural patterns</strong></li>
             </ul>
-
-            <p><strong>Scoring Criteria:</strong></p>
+            <h3>Opportunities</h3>
             <ul>
-                <li><strong>Excellent (90-100%)</strong>: Industry best practices, minimal violations</li>
-                <li><strong>Good (80-89%)</strong>: Solid practices, minor gaps</li>
-                <li><strong>Fair (70-79%)</strong>: Acceptable but needs improvement</li>
-                <li><strong>Needs Improvement (&lt;70%)</strong>: Significant issues present</li>
+                <li><strong>Performance optimization</strong> potential</li>
+                <li><strong>Code quality</strong> improvements</li>
+                <li><strong>Documentation</strong> enhancement</li>
+                <li><strong>Technical debt</strong> reduction</li>
+                <li><strong>Developer experience</strong> improvements</li>
             </ul>
-
-            <p>For detailed methodology, see the <a href="architecture-health-methodology.html">Architecture Health
-                    Metrics Methodology</a> page.</p>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Layer Distribution Chart
+        const layerCtx = document.getElementById('layerChart').getContext('2d');
+        const layerChart = new Chart(layerCtx, {
+            type: 'pie',
+            data: {
+                labels: [
+                    'Testing Suite',
+                    'Services Layer',
+                    'Controllers Layer',
+                    'Models Layer',
+                    'Policies',
+                    'Workers',
+                    'Calculations',
+                    'Queries',
+                    'Serializers'
+                ],
+                datasets: [{
+                    data: [1000, 206, 260, 194, 119, 80, 31, 14, 3],
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#f093fb',
+                        '#f5576c',
+                        '#4facfe',
+                        '#43e97b',
+                        '#fa709a',
+                        '#ffecd2',
+                        '#a8edea'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Project Structure: Layer Distribution',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+
+        // Complexity Distribution Chart
+        const complexityCtx = document.getElementById('complexityChart').getContext('2d');
+        const complexityChart = new Chart(complexityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    'High Complexity',
+                    'Medium Complexity',
+                    'Low Complexity'
+                ],
+                datasets: [{
+                    data: [15, 45, 40],
+                    backgroundColor: [
+                        '#f5576c',
+                        '#fa709a',
+                        '#4facfe'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Component Complexity Distribution',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>
+No newline at end of file
