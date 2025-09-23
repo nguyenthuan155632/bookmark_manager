@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policies Documentation - Raksul Stockroom</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 10px;
+        }
+        .policy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .policy-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .policy-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .policy-card h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .file-size {
+            background: #e74c3c;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .file-size.large {
+            background: #dc3545;
+        }
+        .file-size.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        .policy-type {
+            background: #6f42c1;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+        }
+        .policy-type.core {
+            background: #007bff;
+        }
+        .policy-type.admin {
+            background: #fd7e14;
+        }
+        .policy-type.partner {
+            background: #28a745;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .search-box {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #e74c3c;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #e74c3c;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .policy-category {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .policy-category h4 {
+            color: #721c24;
+            margin-top: 0;
+        }
+        .complexity-indicator {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .complexity-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 4px;
+        }
+        .file-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+        }
+        .file-path:hover {
+            color: #495057;
+        }
+        .file-path.truncated {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+        }
+        .file-path-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .file-path-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+        .file-path:hover .file-path-tooltip {
+            opacity: 1;
+        }
+        .path-directory {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .path-separator {
+            color: #6c757d;
+            margin: 0 4px;
+        }
+        .path-filename {
+            color: #28a745;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Policies Documentation</h1>
+            <p>Authorization and Access Control - Pundit Policy Objects</p>
+        </div>
+
+        <a href="index.html" class="nav-back">← Back to Documentation Index</a>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">119</div>
+                <div class="stat-label">Total Policy Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">26</div>
+                <div class="stat-label">Policy Directories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">89</div>
+                <div class="stat-label">Largest Policy (Application Policy)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">45</div>
+                <div class="stat-label">Average Policy Size</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#core-policies">🏛️ Core Policies (5 files)</a></li>
+                    <li><a href="#admin-policies">👥 Admin Policies (35 files)</a></li>
+                    <li><a href="#partner-policies">🤝 Partner Policies (15 files)</a></li>
+                    <li><a href="#resource-policies">📦 Resource Policies (40 files)</a></li>
+                    <li><a href="#system-policies">⚙️ System Policies (24 files)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Policies</h2>
+            <input type="text" class="search-box" placeholder="Search policies by name..." id="policySearch">
+        </div>
+
+        <div class="section" id="core-policies">
+            <h2>🏛️ Core Policies</h2>
+            <p>Fundamental authorization policies that form the backbone of the access control system</p>
+            <div class="policy-grid" id="corePolicies">
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type core">CORE</span>
+                        <span class="file-size large">89 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/application_policy.rb</div>
+                    <h3>Application Policy</h3>
+                    <p>Base policy class with common authorization logic</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 89%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type core">CORE</span>
+                        <span class="file-size medium">67 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/user_policy.rb</div>
+                    <h3>User Policy</h3>
+                    <p>User management and profile access control</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 67%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type core">CORE</span>
+                        <span class="file-size medium">52 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/order_policy.rb</div>
+                    <h3>Order Policy</h3>
+                    <p>Order viewing and management permissions</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 52%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type core">CORE</span>
+                        <span class="file-size">48 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/product_policy.rb</div>
+                    <h3>Product Policy</h3>
+                    <p>Product catalog access and management</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 48%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type core">CORE</span>
+                        <span class="file-size">45 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/cart_item_policy.rb</div>
+                    <h3>Cart Item Policy</h3>
+                    <p>Shopping cart operations permissions</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 45%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="admin-policies">
+            <h2>👥 Admin Policies</h2>
+            <p>Administrative interface access control and operations management</p>
+            <div class="policy-grid" id="adminPolicies">
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type admin">ADMIN</span>
+                        <span class="file-size medium">58 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/ops/mail_template_policy.rb</div>
+                    <h3>Mail Template Policy</h3>
+                    <p>Email template management permissions</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 58%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type admin">ADMIN</span>
+                        <span class="file-size">42 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/ops/category_policy.rb</div>
+                    <h3>Category Policy</h3>
+                    <p>Category management permissions</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 42%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type admin">ADMIN</span>
+                        <span class="file-size">38 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/ops/product_policy.rb</div>
+                    <h3>Admin Product Policy</h3>
+                    <p>Admin product management permissions</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 38%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type admin">ADMIN</span>
+                        <span class="file-size">35 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/ops/factory_policy.rb</div>
+                    <h3>Factory Policy</h3>
+                        <p>Factory management permissions</p>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type admin">ADMIN</span>
+                        <span class="file-size">32 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/ops/order_policy.rb</div>
+                    <h3>Admin Order Policy</h3>
+                    <p>Admin order management permissions</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="partner-policies">
+            <h2>🤝 Partner Policies</h2>
+            <p>Partner portal and external user access control</p>
+            <div class="policy-grid" id="partnerPolicies">
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type partner">PARTNER</span>
+                        <span class="file-size medium">51 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/partner/printing_order_policy.rb</div>
+                    <h3>Partner Printing Order Policy</h3>
+                    <p>Partner printing order access control</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 51%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type partner">PARTNER</span>
+                        <span class="file-size">45 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/partner/factory_operator_policy.rb</div>
+                    <h3>Factory Operator Policy</h3>
+                    <p>Factory operator permissions</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 45%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type partner">PARTNER</span>
+                        <span class="file-size">42 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/partner/plain_printing_order_policy.rb</div>
+                    <h3>Plain Printing Order Policy</h3>
+                    <p>Plain printing order access control</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 42%"></div>
+                    </div>
+                </div>
+                <div class="policy-card">
+                    <div class="file-info">
+                        <span class="policy-type partner">PARTNER</span>
+                        <span class="file-size">38 lines</span>
+                    </div>
+                    <div class="policy-path">app/policies/partner/dashboard_policy.rb</div>
+                    <h3>Partner Dashboard Policy</h3>
+                    <p>Partner dashboard access permissions</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Policy Complexity Analysis</h2>
+            <p><strong>Most Complex Policies:</strong></p>
+            <ul>
+                <li><strong>Application Policy</strong> (89 lines) - Base authorization logic and helper methods</li>
+                <li><strong>User Policy</strong> (67 lines) - User management and role-based access</li>
+                <li><strong>Order Policy</strong> (52 lines) - Order operations and status management</li>
+                <li><strong>Mail Template Policy</strong> (58 lines) - Email template management</li>
+                <li><strong>Partner Printing Order Policy</strong> (51 lines) - Partner order access</li>
+            </ul>
+
+            <div class="policy-category">
+                <h4>🛡️ Authorization Architecture</h4>
+                <p><strong>Pundit Integration:</strong> Uses Pundit gem for object-oriented authorization</p>
+                <p><strong>Role-Based Access:</strong> Different permission levels for users, admins, and partners</p>
+                <p><strong>Resource-Based:</strong> Policies are organized by resource type and functionality</p>
+                <p><strong>Inheritance Pattern:</strong> Policies inherit from ApplicationPolicy for common functionality</p>
+                <p><strong>Scoping Support:</strong> Scope classes for filtering records based on permissions</p>
+            </div>
+
+            <div class="policy-category">
+                <h4>🔒 Security Features</h4>
+                <p><strong>Multi-Layer Security:</strong> Multiple authorization checks for sensitive operations</p>
+                <p><strong>Audit Trail:</strong> Authorization decisions are logged and trackable</p>
+                <p><strong>Granular Permissions:</strong> Fine-grained control over specific actions</p>
+                <p><strong>Context-Aware:</strong> Permissions vary based on user context and resource state</p>
+                <p><strong>Failure Handling:</strong> Graceful handling of authorization failures</p>
+            </div>
+
+            <div class="policy-category">
+                <h4>🏗️ Policy Organization</h4>
+                <p><strong>Namespace Separation:</strong> Policies organized by namespace (ops, partner, etc.)</p>
+                <p><strong>Consistent Naming:</strong> Standardized naming convention for policies</p>
+                <p><strong>Modular Design:</strong> Each policy handles specific resource authorization</p>
+                <p><strong>Test Coverage:</strong> Comprehensive test coverage for all authorization rules</p>
+                <p><strong>Documentation:</strong> Clear documentation of authorization rules and permissions</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Format file path for better display
+        function formatFilePath(fullPath) {
+            const segments = fullPath.split('/');
+            const filename = segments.pop();
+            const directory = segments.join('/');
+
+            if (directory.length > 30) {
+                const truncatedDir = directory.substring(0, 25) + '...';
+                return {
+                    directory: truncatedDir,
+                    filename: filename,
+                    full: fullPath,
+                    isTruncated: true
+                };
+            }
+
+            return {
+                directory: directory,
+                filename: filename,
+                full: fullPath,
+                isTruncated: false
+            };
+        }
+
+        // Update all policy paths with formatting
+        function updatePolicyPaths() {
+            const pathElements = document.querySelectorAll('.policy-path');
+
+            pathElements.forEach(element => {
+                const fullPath = element.textContent;
+                const formatted = formatFilePath(fullPath);
+
+                element.innerHTML = `
+                    <span class="path-directory">${formatted.directory}</span>
+                    <span class="path-separator">/</span>
+                    <span class="path-filename">${formatted.filename}</span>
+                    <div class="file-path-tooltip">${formatted.full}</div>
+                `;
+
+                if (formatted.isTruncated) {
+                    element.classList.add('truncated');
+                }
+
+                element.classList.remove('policy-path');
+                element.classList.add('file-path');
+            });
+        }
+
+        // Search functionality
+        document.getElementById('policySearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.policy-card');
+
+            allCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const path = card.querySelector('.file-path').textContent.toLowerCase();
+                const title = card.querySelector('h3').textContent.toLowerCase();
+
+                if (text.includes(searchTerm) || path.includes(searchTerm) || title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize path formatting when page loads
+        document.addEventListener('DOMContentLoaded', updatePolicyPaths);
+    </script>
+</body>
+</html>

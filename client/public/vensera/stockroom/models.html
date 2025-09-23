@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Models Documentation - Raksul Stockroom</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #28a745;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 3px solid #28a745;
+            padding-bottom: 10px;
+        }
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .model-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .model-card h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .path-display {
+            margin-bottom: 0.5rem;
+        }
+        .file-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+            position: relative;
+        }
+        .file-path.full-path {
+            white-space: pre-wrap;
+            font-size: 0.8rem;
+        }
+        .file-path.truncated {
+            cursor: pointer;
+            position: relative;
+        }
+        .file-path.truncated::after {
+            content: '...';
+            color: #28a745;
+            font-weight: bold;
+        }
+        .file-path-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            top: 100%;
+            left: 0;
+            margin-top: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .file-path:hover .file-path-tooltip {
+            opacity: 1;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .file-size {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .file-size.large {
+            background: #dc3545;
+        }
+        .file-size.medium {
+            background: #fd7e14;
+        }
+        .model-type {
+            background: #17a2b8;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+        }
+        .model-type.core {
+            background: #007bff;
+        }
+        .model-type.concern {
+            background: #ffc107;
+            color: #212529;
+        }
+        .model-type.product {
+            background: #6610f2;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .search-box {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #28a745;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #28a745;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .relationship-diagram {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .relationship-diagram h4 {
+            color: #495057;
+            margin-top: 0;
+        }
+        .relationship-box {
+            display: inline-block;
+            background: white;
+            border: 2px solid #28a745;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .complexity-indicator {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .complexity-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗄️ Models Documentation</h1>
+            <p>ActiveRecord Models and Database Schema</p>
+        </div>
+
+        <a href="index.html" class="nav-back">← Back to Documentation Index</a>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">194</div>
+                <div class="stat-label">Total Models</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">499</div>
+                <div class="stat-label">Largest Model (OrderItem)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">434</div>
+                <div class="stat-label">Complex Schema (EstimateItem)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">366</div>
+                <div class="stat-label">Order Model</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#core-models">🏛️ Core Models (5 files)</a></li>
+                    <li><a href="#order-models">📦 Order Management (15 files)</a></li>
+                    <li><a href="#product-models">🛍️ Product Catalog (20 files)</a></li>
+                    <li><a href="#user-models">👥 User Management (8 files)</a></li>
+                    <li><a href="#cms-models">📝 CMS Management (12 files)</a></li>
+                    <li><a href="#inventory-models">📦 Inventory Management (12 files)</a></li>
+                    <li><a href="#concerns">🔧 Model Concerns (25 files)</a></li>
+                    <li><a href="#utility-models">⚙️ Utility Models (62 files)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Models</h2>
+            <input type="text" class="search-box" placeholder="Search models by name..." id="modelSearch">
+        </div>
+
+        <div class="section" id="core-models">
+            <h2>🏛️ Core Models</h2>
+            <p>Fundamental models that form the backbone of the application</p>
+            <div class="model-grid" id="coreModels">
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type core">CORE</span>
+                        <span class="file-size large">366 lines</span>
+                    </div>
+                    <div class="model-path">app/models/order.rb</div>
+                    <h3>Order</h3>
+                    <p>Central order management model with state transitions, payments, and fulfillment</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 73%"></div>
+                    </div>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type core">CORE</span>
+                        <span class="file-size large">499 lines</span>
+                    </div>
+                    <div class="model-path">app/models/order_item.rb</div>
+                    <h3>OrderItem</h3>
+                    <p>Individual order items with complex pricing, printing, and delivery logic</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type core">CORE</span>
+                        <span class="file-size large">214 lines</span>
+                    </div>
+                    <div class="model-path">app/models/product.rb</div>
+                    <h3>Product</h3>
+                    <p>Product catalog with pricing, variants, and search optimization</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 43%"></div>
+                    </div>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type core">CORE</span>
+                        <span class="file-size medium">206 lines</span>
+                    </div>
+                    <div class="model-path">app/models/sku.rb</div>
+                    <h3>SKU</h3>
+                    <p>Stock Keeping Units with inventory tracking and pricing</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 41%"></div>
+                    </div>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type core">CORE</span>
+                        <span class="file-size medium">161 lines</span>
+                    </div>
+                    <div class="model-path">app/models/user.rb</div>
+                    <h3>User</h3>
+                    <p>User accounts with authentication and profile management</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 32%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="order-models">
+            <h2>📦 Order Management Models</h2>
+            <p>Models related to order processing, payments, and fulfillment</p>
+            <div class="model-grid" id="orderModels">
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size">130 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cart_item.rb</div>
+                    <h3>CartItem</h3>
+                    <p>Shopping cart items before order creation</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size medium">123 lines</span>
+                    </div>
+                    <div class="model-path">app/models/payment.rb</div>
+                    <h3>Payment</h3>
+                    <p>Payment processing and state management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size">100 lines</span>
+                    </div>
+                    <div class="model-path">app/models/printing_order.rb</div>
+                    <h3>PrintingOrder</h3>
+                    <p>Printing-specific order processing</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size">85 lines</span>
+                    </div>
+                    <div class="model-path">app/models/refund.rb</div>
+                    <h3>Refund</h3>
+                    <p>Refund processing and tracking</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size">112 lines</span>
+                    </div>
+                    <div class="model-path">app/models/order_complaint.rb</div>
+                    <h3>OrderComplaint</h3>
+                    <p>Customer complaint management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size">79 lines</span>
+                    </div>
+                    <div class="model-path">app/models/recipient_address.rb</div>
+                    <h3>RecipientAddress</h3>
+                    <p>Shipping and delivery addresses</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size">64 lines</span>
+                    </div>
+                    <div class="model-path">app/models/estimate_item.rb</div>
+                    <h3>EstimateItem</h3>
+                    <p>Price estimation and quotes</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">ORDER</span>
+                        <span class="file-size">50 lines</span>
+                    </div>
+                    <div class="model-path">app/models/sender_address.rb</div>
+                    <h3>SenderAddress</h3>
+                    <p>Return and sender addresses</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="product-models">
+            <h2>🛍️ Product Catalog Models</h2>
+            <p>Models for product management, categories, and search</p>
+            <div class="model-grid" id="productModels">
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size medium">245 lines</span>
+                    </div>
+                    <div class="model-path">app/models/category.rb</div>
+                    <h3>Category</h3>
+                    <p>Product categorization and navigation</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size">129 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cms_category.rb</div>
+                    <h3>CMSCategory</h3>
+                    <p>CMS-managed categories</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size">123 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cms_magazine.rb</div>
+                    <h3>CMSMagazine</h3>
+                    <p>CMS magazine and content management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size">114 lines</span>
+                    </div>
+                    <div class="model-path">app/models/product.rb</div>
+                    <h3>Product</h3>
+                    <p>Core product information</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size">92 lines</span>
+                    </div>
+                    <div class="model-path">app/models/facet_key.rb</div>
+                    <h3>FacetKey</h3>
+                    <p>Search facets and filters</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size">89 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cms_product.rb</div>
+                    <h3>CMSProduct</h3>
+                    <p>CMS-managed products</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size">86 lines</span>
+                    </div>
+                    <div class="model-path">app/models/bulk_export_product.rb</div>
+                    <h3>BulkExportProduct</h3>
+                    <p>Product export functionality</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type product">PRODUCT</span>
+                        <span class="file-size">72 lines</span>
+                    </div>
+                    <div class="model-path">app/models/article.rb</div>
+                    <h3>Article</h3>
+                    <p>Content articles and blog posts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="user-models">
+            <h2>👥 User Management Models</h2>
+            <p>Models for user accounts, authentication, and permissions</p>
+            <div class="model-grid" id="userModels">
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">USER</span>
+                        <span class="file-size medium">161 lines</span>
+                    </div>
+                    <div class="model-path">app/models/user.rb</div>
+                    <h3>User</h3>
+                    <p>Core user model with authentication</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">USER</span>
+                        <span class="file-size">64 lines</span>
+                    </div>
+                    <div class="model-path">app/models/staff.rb</div>
+                    <h3>Staff</h3>
+                    <p>Administrative staff accounts</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">USER</span>
+                        <span class="file-size">27 lines</span>
+                    </div>
+                    <div class="model-path">app/models/role.rb</div>
+                    <h3>Role</h3>
+                    <p>User roles and permissions</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">USER</span>
+                        <span class="file-size">50 lines</span>
+                    </div>
+                    <div class="model-path">app/models/address.rb</div>
+                    <h3>Address</h3>
+                    <p>User address management</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="cms-models">
+            <h2>📝 CMS Management Models</h2>
+            <p>Content Management System models</p>
+            <div class="model-grid" id="cmsModels">
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">CMS</span>
+                        <span class="file-size medium">123 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cms_magazine.rb</div>
+                    <h3>CMSMagazine</h3>
+                    <p>Magazine content management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">CMS</span>
+                        <span class="file-size">129 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cms_category.rb</div>
+                    <h3>CMSCategory</h3>
+                    <p>CMS category management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">CMS</span>
+                        <span class="file-size">89 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cms_product.rb</div>
+                    <h3>CMSProduct</h3>
+                    <p>CMS product management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">CMS</span>
+                        <span class="file-size">35 lines</span>
+                    </div>
+                    <div class="model-path">app/models/cms_editor_template.rb</div>
+                    <h3>CMSEditorTemplate</h3>
+                    <p>CMS editor templates</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="inventory-models">
+            <h2>📦 Inventory Management Models</h2>
+            <p>Models for inventory tracking and factory management</p>
+            <div class="model-grid" id="inventoryModels">
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">INVENTORY</span>
+                        <span class="file-size medium">206 lines</span>
+                    </div>
+                    <div class="model-path">app/models/sku.rb</div>
+                    <h3>SKU</h3>
+                    <p>Stock Keeping Unit management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">INVENTORY</span>
+                        <span class="file-size">67 lines</span>
+                    </div>
+                    <div class="model-path">app/models/sku_lot.rb</div>
+                    <h3>SKULot</h3>
+                    <p>Inventory lot tracking</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">INVENTORY</span>
+                        <span class="file-size">58 lines</span>
+                    </div>
+                    <div class="model-path">app/models/factory.rb</div>
+                    <h3>Factory</h3>
+                    <p>Factory and production management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">INVENTORY</span>
+                        <span class="file-size">58 lines</span>
+                    </div>
+                    <div class="model-path">app/models/delivery.rb</div>
+                    <h3>Delivery</h3>
+                    <p>Delivery and shipping management</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type">INVENTORY</span>
+                        <span class="file-size">55 lines</span>
+                    </div>
+                    <div class="model-path">app/models/supplier.rb</div>
+                    <h3>Supplier</h3>
+                    <p>Supplier management</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="concerns">
+            <h2>🔧 Model Concerns</h2>
+            <p>Shared model functionality and behavior modules</p>
+            <div class="model-grid" id="concerns">
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type concern">CONCERN</span>
+                        <span class="file-size large">434 lines</span>
+                    </div>
+                    <div class="model-path">app/models/concerns/swagger/estimate_item_schema.rb</div>
+                    <h3>EstimateItem Schema</h3>
+                    <p>Swagger API documentation for estimate items</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type concern">CONCERN</span>
+                        <span class="file-size large">340 lines</span>
+                    </div>
+                    <div class="model-path">app/models/concerns/swagger/order_item_schema.rb</div>
+                    <h3>OrderItem Schema</h3>
+                    <p>Swagger API documentation for order items</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type concern">CONCERN</span>
+                        <span class="file-size large">278 lines</span>
+                    </div>
+                    <div class="model-path">app/models/concerns/swagger/cart_item_schema.rb</div>
+                    <h3>CartItem Schema</h3>
+                    <p>Swagger API documentation for cart items</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type concern">CONCERN</span>
+                        <span class="file-size medium">124 lines</span>
+                    </div>
+                    <div class="model-path">app/models/concerns/swagger/order_schema.rb</div>
+                    <h3>Order Schema</h3>
+                    <p>Swagger API documentation for orders</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type concern">CONCERN</span>
+                        <span class="file-size">48 lines</span>
+                    </div>
+                    <div class="model-path">app/models/concerns/taggable.rb</div>
+                    <h3>Taggable</h3>
+                    <p>Tagging functionality for models</p>
+                </div>
+                <div class="model-card">
+                    <div class="file-info">
+                        <span class="model-type concern">CONCERN</span>
+                        <span class="file-size">48 lines</span>
+                    </div>
+                    <div class="model-path">app/models/concerns/products_history.rb</div>
+                    <h3>Products History</h3>
+                    <p>Product browsing history tracking</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Model Complexity Analysis</h2>
+            <p><strong>Most Complex Models:</strong></p>
+            <ul>
+                <li><strong>OrderItem</strong> (499 lines) - Most complex model with extensive business logic</li>
+                <li><strong>Order</strong> (366 lines) - Central order management with state machines</li>
+                <li><strong>Product</strong> (214 lines) - Product catalog with search optimization</li>
+                <li><strong>SKU</strong> (206 lines) - Inventory tracking and pricing logic</li>
+                <li><strong>Category</strong> (245 lines) - Product categorization and navigation</li>
+            </ul>
+
+            <div class="relationship-diagram">
+                <h4>🔗 Key Model Relationships</h4>
+                <div>
+                    <div class="relationship-box">User</div>
+                    <span>→</span>
+                    <div class="relationship-box">Order</div>
+                    <span>→</span>
+                    <div class="relationship-box">OrderItem</div>
+                    <span>→</span>
+                    <div class="relationship-box">SKU</div>
+                    <span>→</span>
+                    <div class="relationship-box">Product</div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <div class="relationship-box">Product</div>
+                    <span>→</span>
+                    <div class="relationship-box">Category</div>
+                    <span>→</span>
+                    <div class="relationship-box">FacetKey</div>
+                </div>
+            </div>
+
+            <p><strong>Key Architectural Patterns:</strong></p>
+            <ul>
+                <li><strong>State Machines</strong>: Order and payment state transitions</li>
+                <li><strong>Soft Deletes</strong>: Paranoia gem for soft deletion</li>
+                <li><strong>Versioning</strong>: PaperTrail for audit trails</li>
+                <li><strong>Search Optimization</strong>: Elasticsearch integration</li>
+                <li><strong>API Documentation</strong>: Comprehensive Swagger schemas</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Path truncation and display functionality
+        function formatFilePath(fullPath) {
+            const segments = fullPath.split('/');
+            const filename = segments.pop();
+            const directory = segments.join('/');
+
+            if (directory.length > 30) {
+                const truncatedDir = directory.substring(0, 25) + '...';
+                return {
+                    directory: truncatedDir,
+                    filename: filename,
+                    full: fullPath
+                };
+            }
+
+            return {
+                directory: directory,
+                filename: filename,
+                full: fullPath
+            };
+        }
+
+        function createPathDisplay(path) {
+            const formatted = formatFilePath(path);
+            const pathDisplay = document.createElement('div');
+            pathDisplay.className = 'path-display';
+
+            if (formatted.directory.length > 25) {
+                const dirSpan = document.createElement('div');
+                dirSpan.className = 'file-path truncated';
+                dirSpan.textContent = formatted.directory;
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'file-path-tooltip';
+                tooltip.textContent = formatted.directory;
+                dirSpan.appendChild(tooltip);
+
+                const fileSpan = document.createElement('div');
+                fileSpan.className = 'file-path';
+                fileSpan.style.fontWeight = 'bold';
+                fileSpan.textContent = formatted.filename;
+
+                pathDisplay.appendChild(dirSpan);
+                pathDisplay.appendChild(fileSpan);
+            } else {
+                const fullPath = document.createElement('div');
+                fullPath.className = 'file-path';
+                fullPath.textContent = path;
+                pathDisplay.appendChild(fullPath);
+            }
+
+            return pathDisplay;
+        }
+
+        // Initialize path displays
+        document.addEventListener('DOMContentLoaded', function() {
+            const modelCards = document.querySelectorAll('.model-card');
+
+            modelCards.forEach(card => {
+                const pathElement = card.querySelector('.model-path');
+                if (pathElement) {
+                    const fullPath = pathElement.textContent;
+                    const pathDisplay = createPathDisplay(fullPath);
+                    pathElement.parentNode.replaceChild(pathDisplay, pathElement);
+                }
+            });
+        });
+
+        // Search functionality
+        document.getElementById('modelSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.model-card');
+
+            allCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const pathElement = card.querySelector('.file-path');
+                const path = pathElement ? pathElement.textContent.toLowerCase() : '';
+                const title = card.querySelector('h3').textContent.toLowerCase();
+
+                if (text.includes(searchTerm) || path.includes(searchTerm) || title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

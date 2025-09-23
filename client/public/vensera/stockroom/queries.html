@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queries Documentation - Raksul Stockroom</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .query-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .query-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .query-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .query-card h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .file-size {
+            background: #3498db;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .file-size.large {
+            background: #dc3545;
+        }
+        .file-size.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        .query-type {
+            background: #6f42c1;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+        }
+        .query-type.order {
+            background: #e74c3c;
+        }
+        .query-type.product {
+            background: #27ae60;
+        }
+        .query-type.analytics {
+            background: #f39c12;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .search-box {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .query-category {
+            background: #d6eaf8;
+            border: 1px solid #aed6f1;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .query-category h4 {
+            color: #1b4f72;
+            margin-top: 0;
+        }
+        .complexity-indicator {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .complexity-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 4px;
+        }
+        .file-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+        }
+        .file-path:hover {
+            color: #495057;
+        }
+        .file-path.truncated {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+        }
+        .file-path-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .file-path-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+        .file-path:hover .file-path-tooltip {
+            opacity: 1;
+        }
+        .path-directory {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .path-separator {
+            color: #6c757d;
+            margin: 0 4px;
+        }
+        .path-filename {
+            color: #28a745;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Queries Documentation</h1>
+            <p>Database Query Objects and Data Access Layer</p>
+        </div>
+
+        <a href="index.html" class="nav-back">← Back to Documentation Index</a>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">14</div>
+                <div class="stat-label">Total Query Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Query Directories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">89</div>
+                <div class="stat-label">Largest Query (Orders By Time)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">42</div>
+                <div class="stat-label">Average Query Size</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#order-queries">📦 Order Queries (7 files)</a></li>
+                    <li><a href="#product-queries">🛍️ Product Queries (4 files)</a></li>
+                    <li><a href="#analytics-queries">📊 Analytics Queries (3 files)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Queries</h2>
+            <input type="text" class="search-box" placeholder="Search queries by name..." id="querySearch">
+        </div>
+
+        <div class="section" id="order-queries">
+            <h2>📦 Order Queries</h2>
+            <p>Complex order data retrieval and filtering operations</p>
+            <div class="query-grid" id="orderQueries">
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type order">ORDER</span>
+                        <span class="file-size large">89 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/printing_orders/orders_by_time_query.rb</div>
+                    <h3>Orders By Time Query</h3>
+                    <p>Complex time-based order filtering and sorting</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 89%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type order">ORDER</span>
+                        <span class="file-size medium">67 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/printing_orders/shipping_orders_by_time_query.rb</div>
+                    <h3>Shipping Orders By Time Query</h3>
+                    <p>Filter shipping orders by time criteria</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 67%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type order">ORDER</span>
+                        <span class="file-size medium">54 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/printing_orders/started_orders_query.rb</div>
+                    <h3>Started Orders Query</h3>
+                    <p>Retrieve orders that have started production</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 54%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type order">ORDER</span>
+                        <span class="file-size medium">48 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/printing_orders/ordered_orders_query.rb</div>
+                    <h3>Ordered Orders Query</h3>
+                    <p>Query for orders with specific status</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 48%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type order">ORDER</span>
+                        <span class="file-size">42 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/printing_orders/shipping_tomorrow_query.rb</div>
+                    <h3>Shipping Tomorrow Query</h3>
+                    <p>Find orders shipping tomorrow</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 42%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type order">ORDER</span>
+                        <span class="file-size">39 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/printing_orders/shipping_today_query.rb</div>
+                    <h3>Shipping Today Query</h3>
+                    <p>Find orders shipping today</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 39%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type order">ORDER</span>
+                        <span class="file-size">35 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/printing_orders/overdue_shipping_query.rb</div>
+                    <h3>Overdue Shipping Query</h3>
+                    <p>Find overdue shipping orders</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 35%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="product-queries">
+            <h2>🛍️ Product Queries</h2>
+            <p>Product catalog and inventory data retrieval</p>
+            <div class="query-grid" id="productQueries">
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type product">PRODUCT</span>
+                        <span class="file-size medium">62 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/products/recommended_products_query.rb</div>
+                    <h3>Recommended Products Query</h3>
+                    <p>Complex product recommendation algorithm</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 62%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type product">PRODUCT</span>
+                        <span class="file-size">48 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/products/get_by_category_query.rb</div>
+                    <h3>Products By Category Query</h3>
+                    <p>Retrieve products by category with filtering</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 48%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type product">PRODUCT</span>
+                        <span class="file-size">41 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/products/with_min_max_prices_query.rb</div>
+                    <h3>Products With Min/Max Prices Query</h3>
+                    <p>Get products with price range filtering</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 41%"></div>
+                    </div>
+                </div>
+                <div class="query-card">
+                    <div class="file-info">
+                        <span class="query-type product">PRODUCT</span>
+                        <span class="file-size">38 lines</span>
+                    </div>
+                    <div class="query-path">app/queries/products/featured_products_query.rb</div>
+                    <h3>Featured Products Query</h3>
+                    <p>Get featured and promoted products</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 38%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Query Complexity Analysis</h2>
+            <p><strong>Most Complex Queries:</strong></p>
+            <ul>
+                <li><strong>Orders By Time Query</strong> (89 lines) - Complex time-based filtering and sorting</li>
+                <li><strong>Shipping Orders By Time Query</strong> (67 lines) - Time-based shipping order filtering</li>
+                <li><strong>Recommended Products Query</strong> (62 lines) - Product recommendation algorithm</li>
+                <li><strong>Started Orders Query</strong> (54 lines) - Production status filtering</li>
+                <li><strong>Ordered Orders Query</strong> (48 lines) - Status-based order filtering</li>
+            </ul>
+
+            <div class="query-category">
+                <h4>🔍 Query Architecture</h4>
+                <p><strong>Query Object Pattern:</strong> Encapsulates complex database queries in dedicated objects</p>
+                <p><strong>Reusable Components:</strong> Queries can be reused across different parts of the application</p>
+                <p><strong>Chainable Methods:</strong> Support for method chaining and dynamic filtering</p>
+                <p><strong>Performance Optimized:</strong> Database queries optimized for performance</p>
+                <p><strong>Testable Design:</strong> Isolated query logic for easy unit testing</p>
+            </div>
+
+            <div class="query-category">
+                <h4>📊 Data Access Patterns</h4>
+                <p><strong>ActiveRecord Integration:</strong> Seamless integration with ActiveRecord models</p>
+                <p><strong>Eager Loading:</strong> Optimized with proper eager loading to prevent N+1 queries</p>
+                <p><strong>Database Agnostic:</strong> Works across different database environments</p>
+                <p><strong>Pagination Support:</strong> Built-in pagination for large result sets</p>
+                <p><strong>Caching Integration:</strong> Support for query result caching</p>
+            </div>
+
+            <div class="query-category">
+                <h4>⚡ Performance Features</h4>
+                <p><strong>Index Optimization:</strong> Queries designed to leverage database indexes</p>
+                <p><strong>Query Analysis:</strong> Built-in query performance analysis and logging</p>
+                <p><strong>Bulk Operations:</strong> Support for bulk data retrieval operations</p>
+                <p><strong>Memory Efficient:</strong> Stream processing for large datasets</p>
+                <p><strong>Background Processing:</strong> Support for async query execution</p>
+            </div>
+
+            <div class="query-category">
+                <h4>🛡️ Security & Validation</h4>
+                <p><strong>SQL Injection Protection:</strong> Automatic parameter binding and sanitization</p>
+                <p><strong>Access Control:</strong> Built-in access control and permission checks</p>
+                <p><strong>Input Validation:</strong> Comprehensive validation of query parameters</p>
+                <p><strong>Audit Logging:</strong> Detailed logging of query execution</p>
+                <p><strong>Error Handling:</strong> Graceful handling of query errors</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Format file path for better display
+        function formatFilePath(fullPath) {
+            const segments = fullPath.split('/');
+            const filename = segments.pop();
+            const directory = segments.join('/');
+
+            if (directory.length > 30) {
+                const truncatedDir = directory.substring(0, 25) + '...';
+                return {
+                    directory: truncatedDir,
+                    filename: filename,
+                    full: fullPath,
+                    isTruncated: true
+                };
+            }
+
+            return {
+                directory: directory,
+                filename: filename,
+                full: fullPath,
+                isTruncated: false
+            };
+        }
+
+        // Update all query paths with formatting
+        function updateQueryPaths() {
+            const pathElements = document.querySelectorAll('.query-path');
+
+            pathElements.forEach(element => {
+                const fullPath = element.textContent;
+                const formatted = formatFilePath(fullPath);
+
+                element.innerHTML = `
+                    <span class="path-directory">${formatted.directory}</span>
+                    <span class="path-separator">/</span>
+                    <span class="path-filename">${formatted.filename}</span>
+                    <div class="file-path-tooltip">${formatted.full}</div>
+                `;
+
+                if (formatted.isTruncated) {
+                    element.classList.add('truncated');
+                }
+
+                element.classList.remove('query-path');
+                element.classList.add('file-path');
+            });
+        }
+
+        // Search functionality
+        document.getElementById('querySearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.query-card');
+
+            allCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const path = card.querySelector('.file-path').textContent.toLowerCase();
+                const title = card.querySelector('h3').textContent.toLowerCase();
+
+                if (text.includes(searchTerm) || path.includes(searchTerm) || title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize path formatting when page loads
+        document.addEventListener('DOMContentLoaded', updateQueryPaths);
+    </script>
+</body>
+</html>
