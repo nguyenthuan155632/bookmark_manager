@@ -1,0 +1,22 @@
+# Railway Integrated Service Configuration
+# This file configures the main application with integrated cron job
+
+[build]
+command = "npm install"
+
+[deploy]
+startCommand = "npm run start"
+
+[env]
+NODE_ENV = "production"
+
+# Health check configuration
+[health]
+path = "/api/health"
+interval = 30
+timeout = 10
+restartPolicy = "always"
+
+# Note: This configuration is for the integrated service
+# The cron job runs within the main application process
+# No separate service needed

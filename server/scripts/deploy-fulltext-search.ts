@@ -1,14 +1,7 @@
 import 'dotenv/config';
 
-if (!process.env.PGSSLMODE) {
-  process.env.PGSSLMODE = 'require';
-}
-if (!process.env.PGSSLREJECT_UNAUTHORIZED) {
-  process.env.PGSSLREJECT_UNAUTHORIZED = 'false';
-}
-
-import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { db } from '../db';
 
 /**
  * Production deployment script for full-text search

@@ -3,6 +3,7 @@ import express, { type Request, Response, NextFunction } from 'express';
 import { gzipSync } from 'node:zlib';
 import { registerRoutes } from './routes';
 import { setupVite, serveStatic, log } from './vite';
+import cronService from './services/cron-service';
 
 const MIN_HTML_COMPRESSION_SIZE = 1024; // avoid compressing tiny payloads
 
@@ -258,23 +259,39 @@ app.use((req, res, next) => {
     () => {
       log(`serving on port ${port}`);
 
-      // Global background link checker disabled; per-user schedulers handled in routes middleware
+      // Start the cron job service
+      log('Starting cron job service...');
+      cronService.start();
+      log('✅ Integrated cron job service started successfully');
+      log(`📊 Cron status: ${JSON.stringify(cronService.getStatus())}`);
     },
   );
 
   // Graceful shutdown
   process.on('SIGTERM', () => {
     log('SIGTERM received, shutting down gracefully');
+
+    // Stop cron service first
+    log('Stopping cron service...');
+    cronService.stop();
+    log('✅ Cron service stopped');
+
     server.close(() => {
-      log('Server closed');
+      log('✅ Server closed');
       process.exit(0);
     });
   });
 
   process.on('SIGINT', () => {
     log('SIGINT received, shutting down gracefully');
+
+    // Stop cron service first
+    log('Stopping cron service...');
+    cronService.stop();
+    log('✅ Cron service stopped');
+
     server.close(() => {
-      log('Server closed');
+      log('✅ Server closed');
       process.exit(0);
     });
   });
