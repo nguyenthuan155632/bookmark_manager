@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculations Documentation - Raksul Stockroom</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #f39c12;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 3px solid #f39c12;
+            padding-bottom: 10px;
+        }
+        .calculation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .calculation-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .calculation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .calculation-card h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .file-size {
+            background: #f39c12;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .file-size.large {
+            background: #dc3545;
+        }
+        .file-size.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        .calculation-type {
+            background: #6f42c1;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+        }
+        .calculation-type.pricing {
+            background: #28a745;
+        }
+        .calculation-type.shipping {
+            background: #007bff;
+        }
+        .calculation-type.date {
+            background: #fd7e14;
+        }
+        .calculation-type.refund {
+            background: #dc3545;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f39c12;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .search-box {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #f39c12;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #f39c12;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .calculation-category {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .calculation-category h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .complexity-indicator {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .complexity-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 4px;
+        }
+        .file-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+        }
+        .file-path:hover {
+            color: #495057;
+        }
+        .file-path.truncated {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+        }
+        .file-path-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .file-path-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+        .file-path:hover .file-path-tooltip {
+            opacity: 1;
+        }
+        .path-directory {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .path-separator {
+            color: #6c757d;
+            margin: 0 4px;
+        }
+        .path-filename {
+            color: #28a745;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧮 Calculations Documentation</h1>
+            <p>Business Logic Calculations and Pricing Algorithms</p>
+        </div>
+
+        <a href="index.html" class="nav-back">← Back to Documentation Index</a>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">31</div>
+                <div class="stat-label">Total Calculation Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Calculation Directories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">156</div>
+                <div class="stat-label">Largest Calculator (Shipment Fee)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">67</div>
+                <div class="stat-label">Average Calculator Size</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#pricing-calculations">💰 Pricing Calculations (8 files)</a></li>
+                    <li><a href="#shipping-calculations">🚚 Shipping Calculations (10 files)</a></li>
+                    <li><a href="#date-calculations">📅 Date Calculations (7 files)</a></li>
+                    <li><a href="#refund-calculations">💸 Refund Calculations (3 files)</a></li>
+                    <li><a href="#utility-calculations">⚙️ Utility Calculations (3 files)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Calculations</h2>
+            <input type="text" class="search-box" placeholder="Search calculations by name..." id="calculationSearch">
+        </div>
+
+        <div class="section" id="pricing-calculations">
+            <h2>💰 Pricing Calculations</h2>
+            <p>Price calculation algorithms and cost computation logic</p>
+            <div class="calculation-grid" id="pricingCalculations">
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type pricing">PRICING</span>
+                        <span class="file-size large">156 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/shipment_fee_calculator.rb</div>
+                    <h3>Shipment Fee Calculator</h3>
+                    <p>Complex shipping fee calculation with multiple factors</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 78%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type pricing">PRICING</span>
+                        <span class="file-size medium">98 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/shipment_fee_items_split_calculator.rb</div>
+                    <h3>Shipment Fee Split Calculator</h3>
+                    <p>Calculate shipment fee distribution across items</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 49%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type pricing">PRICING</span>
+                        <span class="file-size medium">87 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/original_total_price_calculator.rb</div>
+                    <h3>Original Total Price Calculator</h3>
+                    <p>Calculate original total price before discounts</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 44%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type pricing">PRICING</span>
+                        <span class="file-size">72 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/tax_included_price_calculator.rb</div>
+                    <h3>Tax Included Price Calculator</h3>
+                    <p>Calculate prices including tax</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 36%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="shipping-calculations">
+            <h2>🚚 Shipping Calculations</h2>
+            <p>Shipping date estimation and delivery calculation logic</p>
+            <div class="calculation-grid" id="shippingCalculations">
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type shipping">SHIPPING</span>
+                        <span class="file-size medium">134 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/shortest_delivery_date_calculator.rb</div>
+                    <h3>Shortest Delivery Date Calculator</h3>
+                    <p>Calculate earliest possible delivery dates</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 67%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type shipping">SHIPPING</span>
+                        <span class="file-size medium">109 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/factory_promised_shipping_date_calculator.rb</div>
+                    <h3>Factory Promised Shipping Date Calculator</h3>
+                    <p>Calculate factory shipping promises</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 55%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type shipping">SHIPPING</span>
+                        <span class="file-size medium">95 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/transport_days_calculator.rb</div>
+                    <h3>Transport Days Calculator</h3>
+                    <p>Calculate transportation time requirements</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 48%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type shipping">SHIPPING</span>
+                        <span class="file-size">78 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/extended_ordered_date_calculator.rb</div>
+                    <h3>Extended Order Date Calculator</h3>
+                    <p>Calculate extended order processing dates</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 39%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="date-calculations">
+            <h2>📅 Date Calculations</h2>
+            <p>Date and time calculation utilities for business logic</p>
+            <div class="calculation-grid" id="dateCalculations">
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type date">DATE</span>
+                        <span class="file-size medium">112 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/date_range_by_step_calculator.rb</div>
+                    <h3>Date Range by Step Calculator</h3>
+                    <p>Calculate date ranges with custom steps</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 56%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type date">DATE</span>
+                        <span class="file-size">68 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/business_day_calculator.rb</div>
+                    <h3>Business Day Calculator</h3>
+                    <p>Calculate business days excluding holidays</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 34%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type date">DATE</span>
+                        <span class="file-size">54 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/production_deadline_calculator.rb</div>
+                    <h3>Production Deadline Calculator</h3>
+                    <p>Calculate production deadlines</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 27%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="refund-calculations">
+            <h2>💸 Refund Calculations</h2>
+            <p>Refund amount calculation and financial logic</p>
+            <div class="calculation-grid" id="refundCalculations">
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type refund">REFUND</span>
+                        <span class="file-size medium">125 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/refund_amount_calculator.rb</div>
+                    <h3>Refund Amount Calculator</h3>
+                    <p>Complex refund calculation with multiple factors</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 63%"></div>
+                    </div>
+                </div>
+                <div class="calculation-card">
+                    <div class="file-info">
+                        <span class="calculation-type refund">REFUND</span>
+                        <span class="file-size">78 lines</span>
+                    </div>
+                    <div class="calculation-path">app/calculations/cancellation_fee_calculator.rb</div>
+                    <h3>Cancellation Fee Calculator</h3>
+                    <p>Calculate cancellation fees and penalties</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 39%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Calculation Complexity Analysis</h2>
+            <p><strong>Most Complex Calculators:</strong></p>
+            <ul>
+                <li><strong>Shipment Fee Calculator</strong> (156 lines) - Complex pricing with multiple factors</li>
+                <li><strong>Shortest Delivery Date Calculator</strong> (134 lines) - Delivery date optimization</li>
+                <li><strong>Refund Amount Calculator</strong> (125 lines) - Financial refund calculations</li>
+                <li><strong>Factory Promised Shipping Date Calculator</strong> (109 lines) - Factory scheduling</li>
+                <li><strong>Shipment Fee Split Calculator</strong> (98 lines) - Cost distribution logic</li>
+            </ul>
+
+            <div class="calculation-category">
+                <h4>🧮 Calculation Architecture</h4>
+                <p><strong>Service Object Pattern:</strong> Calculations encapsulated as dedicated calculator objects</p>
+                <p><strong>Immutable Results:</strong> Calculators return results without modifying input data</p>
+                <p><strong>Composable Design:</strong> Calculators can be combined for complex scenarios</p>
+                <p><strong>Testable Logic:</strong> Pure calculation logic easily unit tested</p>
+                <p><strong>Performance Optimized:</strong> Efficient algorithms for frequent calculations</p>
+            </div>
+
+            <div class="calculation-category">
+                <h4>💰 Pricing Logic</h4>
+                <p><strong>Multi-Factor Pricing:</strong> Prices calculated based on multiple variables</p>
+                <p><strong>Tax Handling:</strong> Proper tax inclusion and exclusion calculations</p>
+                <p><strong>Discount Support:</strong> Complex discount and promotion logic</p>
+                <p><strong>Currency Handling:</strong> Multi-currency support and conversion</p>
+                <p><strong>Rounding Rules:</strong> Business-specific rounding and precision rules</p>
+            </div>
+
+            <div class="calculation-category">
+                <h4>🚚 Shipping Logic</h4>
+                <p><strong>Carrier Integration:</strong> Multiple shipping carrier APIs</p>
+                <p><strong>Zone-Based Pricing:</strong> Geographic shipping zone calculations</p>
+                <p><strong>Weight/Volume:</strong> Dimensional weight and volume calculations</p>
+                <p><strong>Time Windows:</strong> Delivery time window calculations</p>
+                <p><strong>Tracking Integration:</strong> Real-time shipping cost updates</p>
+            </div>
+
+            <div class="calculation-category">
+                <h4>🔍 Validation & Error Handling</h4>
+                <p><strong>Input Validation:</strong> Comprehensive validation of calculation inputs</p>
+                <p><strong>Edge Cases:</strong> Handling of edge cases and boundary conditions</p>
+                <p><strong>Error Recovery:</strong> Graceful handling of calculation failures</p>
+                <p><strong>Logging:</strong> Detailed logging of calculation steps and results</p>
+                <p><strong>Fallback Logic:</strong> Alternative calculation methods when primary fails</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Format file path for better display
+        function formatFilePath(fullPath) {
+            const segments = fullPath.split('/');
+            const filename = segments.pop();
+            const directory = segments.join('/');
+
+            if (directory.length > 30) {
+                const truncatedDir = directory.substring(0, 25) + '...';
+                return {
+                    directory: truncatedDir,
+                    filename: filename,
+                    full: fullPath,
+                    isTruncated: true
+                };
+            }
+
+            return {
+                directory: directory,
+                filename: filename,
+                full: fullPath,
+                isTruncated: false
+            };
+        }
+
+        // Update all calculation paths with formatting
+        function updateCalculationPaths() {
+            const pathElements = document.querySelectorAll('.calculation-path');
+
+            pathElements.forEach(element => {
+                const fullPath = element.textContent;
+                const formatted = formatFilePath(fullPath);
+
+                element.innerHTML = `
+                    <span class="path-directory">${formatted.directory}</span>
+                    <span class="path-separator">/</span>
+                    <span class="path-filename">${formatted.filename}</span>
+                    <div class="file-path-tooltip">${formatted.full}</div>
+                `;
+
+                if (formatted.isTruncated) {
+                    element.classList.add('truncated');
+                }
+
+                element.classList.remove('calculation-path');
+                element.classList.add('file-path');
+            });
+        }
+
+        // Search functionality
+        document.getElementById('calculationSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.calculation-card');
+
+            allCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const path = card.querySelector('.file-path').textContent.toLowerCase();
+                const title = card.querySelector('h3').textContent.toLowerCase();
+
+                if (text.includes(searchTerm) || path.includes(searchTerm) || title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize path formatting when page loads
+        document.addEventListener('DOMContentLoaded', updateCalculationPaths);
+    </script>
+</body>
+</html>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controllers Documentation - Raksul Stockroom</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .controller-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .controller-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .controller-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .controller-card h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .path-display {
+            margin-bottom: 0.5rem;
+        }
+        .file-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            word-break: break-all;
+            position: relative;
+        }
+        .file-path.full-path {
+            white-space: pre-wrap;
+            font-size: 0.8rem;
+        }
+        .file-path.truncated {
+            cursor: pointer;
+            position: relative;
+        }
+        .file-path.truncated::after {
+            content: '...';
+            color: #007bff;
+            font-weight: bold;
+        }
+        .file-path-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            top: 100%;
+            left: 0;
+            margin-top: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .file-path:hover .file-path-tooltip {
+            opacity: 1;
+        }
+        .path-segments {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .path-segment {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.4rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+        .path-segment:last-child {
+            border-left-color: #28a745;
+            font-weight: bold;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .file-size {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .controller-type {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+        }
+        .controller-type.api {
+            background: #007bff;
+        }
+        .controller-type.web {
+            background: #17a2b8;
+        }
+        .controller-type.ops {
+            background: #dc3545;
+        }
+        .controller-type.concern {
+            background: #ffc107;
+            color: #212529;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .search-box {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Controllers Documentation</h1>
+            <p>Complete API and Web Interface Controllers</p>
+        </div>
+
+        <a href="index.html" class="nav-back">← Back to Documentation Index</a>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">260</div>
+                <div class="stat-label">Total Controllers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">90</div>
+                <div class="stat-label">OPS Controllers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">31</div>
+                <div class="stat-label">Web Controllers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">117</div>
+                <div class="stat-label">Total Concerns</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#web-controllers">🌐 Web Controllers (31 files)</a></li>
+                    <li><a href="#ops-controllers">⚙️ OPS Controllers (90 files)</a></li>
+                    <li><a href="#api-controllers">🔌 API Controllers (15 files)</a></li>
+                    <li><a href="#concerns">🔧 Concerns (117 files)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Controllers</h2>
+            <input type="text" class="search-box" placeholder="Search controllers by name..." id="controllerSearch">
+        </div>
+
+        <div class="section" id="web-controllers">
+            <h2>🌐 Web Controllers</h2>
+            <p>Public-facing controllers for the main website functionality</p>
+            <div class="controller-grid" id="webControllers">
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">122 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/categories_controller.rb</div>
+                    <h3>Categories Controller</h3>
+                    <p>Handles category browsing and navigation</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">59 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/products_controller.rb</div>
+                    <h3>Products Controller</h3>
+                    <p>Product listing, details, and search functionality</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">53 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/cart_items_controller.rb</div>
+                    <h3>Cart Items Controller</h3>
+                    <p>Shopping cart management and operations</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">19 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/orders_controller.rb</div>
+                    <h3>Orders Controller</h3>
+                    <p>Order management and checkout process</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">110 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/base_controller.rb</div>
+                    <h3>Web Base Controller</h3>
+                    <p>Base controller for all web functionality</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">101 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/graphql_controller.rb</div>
+                    <h3>GraphQL Controller</h3>
+                    <p>GraphQL API endpoint for web frontend</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">60 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/auth_controller.rb</div>
+                    <h3>Auth Controller</h3>
+                    <p>Authentication and session management</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type web">WEB</span>
+                        <span class="file-size">52 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/web/estimate_items_controller.rb</div>
+                    <h3>Estimate Items Controller</h3>
+                    <p>Price estimation and quote management</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="ops-controllers">
+            <h2>⚙️ OPS Controllers</h2>
+            <p>Administrative and operator controllers for backend management</p>
+            <div class="controller-grid" id="opsControllers">
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">139 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/skus_controller.rb</div>
+                    <h3>SKUs Controller</h3>
+                    <p>Stock Keeping Unit management and operations</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">128 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/refunds_controller.rb</div>
+                    <h3>Refunds Controller</h3>
+                    <p>Refund processing and management</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">111 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/products_controller.rb</div>
+                    <h3>Products Controller (OPS)</h3>
+                    <p>Administrative product management</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">95 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/base_controller.rb</div>
+                    <h3>OPS Base Controller</h3>
+                    <p>Base controller for administrative operations</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">89 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/coupons_controller.rb</div>
+                    <h3>Coupons Controller</h3>
+                    <p>Coupon and discount management</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">85 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/order_complaints_controller.rb</div>
+                    <h3>Order Complaints Controller</h3>
+                    <p>Customer complaint management</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">82 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/api/v1/raksul_pay_callback_controller.rb</div>
+                    <h3>Raksul Pay Callback Controller</h3>
+                    <p>Payment callback handling</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">78 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/products/bulk_imports_controller.rb</div>
+                    <h3>Products Bulk Import Controller</h3>
+                    <p>Mass product import functionality</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">77 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/categories_controller.rb</div>
+                    <h3>Categories Controller (OPS)</h3>
+                    <p>Administrative category management</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type ops">OPS</span>
+                        <span class="file-size">76 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/ops/announcements_controller.rb</div>
+                    <h3>Announcements Controller</h3>
+                    <p>System announcements management</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="api-controllers">
+            <h2>🔌 API Controllers</h2>
+            <p>RESTful API endpoints for external integrations</p>
+            <div class="controller-grid" id="apiControllers">
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type api">API</span>
+                        <span class="file-size">64 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/api/v1/confirm_orders_controller.rb</div>
+                    <h3>Confirm Orders Controller</h3>
+                    <p>Order confirmation API endpoints</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type api">API</span>
+                        <span class="file-size">43 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/api/v1/payment_callback_v2_controller.rb</div>
+                    <h3>Payment Callback V2 Controller</h3>
+                    <p>Payment gateway callback handling</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type api">API</span>
+                        <span class="file-size">42 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/api/v1/apidocs_controller.rb</div>
+                    <h3>API Documentation Controller</h3>
+                    <p>Swagger API documentation</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type api">API</span>
+                        <span class="file-size">28 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/api/v1/payment_callback_controller.rb</div>
+                    <h3>Payment Callback Controller</h3>
+                    <p>Legacy payment callback handling</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type api">API</span>
+                        <span class="file-size">20 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/api/v1/order_item_thumbnails_controller.rb</div>
+                    <h3>Order Item Thumbnails Controller</h3>
+                    <p>Thumbnail generation API</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="concerns">
+            <h2>🔧 Controller Concerns</h2>
+            <p>Shared controller functionality and mixins</p>
+            <div class="controller-grid" id="concerns">
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">509 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/web/api/v1/swagger/products_api.rb</div>
+                    <h3>Products API Documentation</h3>
+                    <p>Swagger documentation for products API</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">309 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/web/api/v1/swagger/orders_api.rb</div>
+                    <h3>Orders API Documentation</h3>
+                    <p>Swagger documentation for orders API</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">255 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/web/api/v1/swagger/cart_items_api.rb</div>
+                    <h3>Cart Items API Documentation</h3>
+                    <p>Swagger documentation for cart items API</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">173 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/web/api/v1/swagger/social_preview_api.rb</div>
+                    <h3>Social Preview API Documentation</h3>
+                    <p>Swagger documentation for social preview API</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">149 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/web/api/v1/swagger/categories_api.rb</div>
+                    <h3>Categories API Documentation</h3>
+                    <p>Swagger documentation for categories API</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">98 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/web/api/v1/swagger/checkout_initial_data_api.rb</div>
+                    <h3>Checkout Initial Data API Documentation</h3>
+                    <p>Swagger documentation for checkout API</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">98 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/ops/api/v1/swagger/products_api.rb</div>
+                    <h3>OPS Products API Documentation</h3>
+                    <p>Swagger documentation for OPS products API</p>
+                </div>
+                <div class="controller-card">
+                    <div class="file-info">
+                        <span class="controller-type concern">CONCERN</span>
+                        <span class="file-size">48 lines</span>
+                    </div>
+                    <div class="controller-path">app/controllers/concerns/web/products_history.rb</div>
+                    <h3>Products History Concern</h3>
+                    <p>Product browsing history functionality</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Controller Complexity Analysis</h2>
+            <p><strong>Most Complex Controllers:</strong></p>
+            <ul>
+                <li><strong>Products API Documentation</strong> (509 lines) - Comprehensive API documentation</li>
+                <li><strong>Orders API Documentation</strong> (309 lines) - Order management API docs</li>
+                <li><strong>Cart Items API Documentation</strong> (255 lines) - Shopping cart API docs</li>
+                <li><strong>SKUs Controller</strong> (139 lines) - Complex SKU management</li>
+                <li><strong>Refunds Controller</strong> (128 lines) - Refund processing logic</li>
+            </ul>
+
+            <p><strong>Key Architectural Patterns:</strong></p>
+            <ul>
+                <li><strong>Namespace Separation</strong>: Clear separation between web, ops, and API controllers</li>
+                <li><strong>Base Controllers</strong>: Common functionality inherited from base classes</li>
+                <li><strong>Concerns</strong>: Shared functionality extracted into reusable modules</li>
+                <li><strong>API Documentation</strong>: Comprehensive Swagger documentation generation</li>
+                <li><strong>Versioned APIs</strong>: API versioning for backward compatibility</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Path truncation and display functionality
+        function formatFilePath(fullPath) {
+            const segments = fullPath.split('/');
+            const filename = segments.pop();
+            const directory = segments.join('/');
+
+            if (directory.length > 30) {
+                const truncatedDir = directory.substring(0, 25) + '...';
+                return {
+                    directory: truncatedDir,
+                    filename: filename,
+                    full: fullPath
+                };
+            }
+
+            return {
+                directory: directory,
+                filename: filename,
+                full: fullPath
+            };
+        }
+
+        function createPathDisplay(path) {
+            const formatted = formatFilePath(path);
+            const pathDisplay = document.createElement('div');
+            pathDisplay.className = 'path-display';
+
+            if (formatted.directory.length > 25) {
+                const dirSpan = document.createElement('div');
+                dirSpan.className = 'file-path truncated';
+                dirSpan.textContent = formatted.directory;
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'file-path-tooltip';
+                tooltip.textContent = formatted.directory;
+                dirSpan.appendChild(tooltip);
+
+                const fileSpan = document.createElement('div');
+                fileSpan.className = 'file-path';
+                fileSpan.style.fontWeight = 'bold';
+                fileSpan.textContent = formatted.filename;
+
+                pathDisplay.appendChild(dirSpan);
+                pathDisplay.appendChild(fileSpan);
+            } else {
+                const fullPath = document.createElement('div');
+                fullPath.className = 'file-path';
+                fullPath.textContent = path;
+                pathDisplay.appendChild(fullPath);
+            }
+
+            return pathDisplay;
+        }
+
+        // Initialize path displays
+        document.addEventListener('DOMContentLoaded', function() {
+            const controllerCards = document.querySelectorAll('.controller-card');
+
+            controllerCards.forEach(card => {
+                const pathElement = card.querySelector('.controller-path');
+                if (pathElement) {
+                    const fullPath = pathElement.textContent;
+                    const pathDisplay = createPathDisplay(fullPath);
+                    pathElement.parentNode.replaceChild(pathDisplay, pathElement);
+                }
+            });
+        });
+
+        // Search functionality
+        document.getElementById('controllerSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.controller-card');
+
+            allCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const pathElement = card.querySelector('.file-path');
+                const path = pathElement ? pathElement.textContent.toLowerCase() : '';
+                const title = card.querySelector('h3').textContent.toLowerCase();
+
+                if (text.includes(searchTerm) || path.includes(searchTerm) || title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services Documentation - Raksul Stockroom</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #fd7e14;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 3px solid #fd7e14;
+            padding-bottom: 10px;
+        }
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .service-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .service-card h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .service-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .file-size {
+            background: #fd7e14;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .file-size.large {
+            background: #dc3545;
+        }
+        .file-size.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        .service-type {
+            background: #6f42c1;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+        }
+        .service-type.order {
+            background: #007bff;
+        }
+        .service-type.product {
+            background: #28a745;
+        }
+        .service-type.payment {
+            background: #dc3545;
+        }
+        .service-type.search {
+            background: #6610f2;
+        }
+        .service-type.import {
+            background: #fd7e14;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fd7e14;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .search-box {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #fd7e14;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #fd7e14;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .service-category {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .service-category h4 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .complexity-indicator {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .complexity-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 4px;
+        }
+        .file-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+        }
+        .file-path:hover {
+            color: #495057;
+        }
+        .file-path.truncated {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+        }
+        .file-path-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .file-path-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+        .file-path:hover .file-path-tooltip {
+            opacity: 1;
+        }
+        .path-directory {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .path-separator {
+            color: #6c757d;
+            margin: 0 4px;
+        }
+        .path-filename {
+            color: #28a745;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Services Documentation</h1>
+            <p>Business Logic Layer - Service Objects Architecture</p>
+        </div>
+
+        <a href="index.html" class="nav-back">← Back to Documentation Index</a>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">99</div>
+                <div class="stat-label">Service Directories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">331</div>
+                <div class="stat-label">Total Service Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">403</div>
+                <div class="stat-label">Largest Service (SKU Import)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">277</div>
+                <div class="stat-label">Order Creation Service</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#core-services">🏛️ Core Services (5 files)</a></li>
+                    <li><a href="#order-services">📦 Order Management (25 files)</a></li>
+                    <li><a href="#product-services">🛍️ Product Services (40 files)</a></li>
+                    <li><a href="#payment-services">💳 Payment Services (20 files)</a></li>
+                    <li><a href="#import-export-services">📤 Import/Export Services (30 files)</a></li>
+                    <li><a href="#search-services">🔍 Search Services (8 files)</a></li>
+                    <li><a href="#notification-services">📧 Notification Services (15 files)</a></li>
+                    <li><a href="#utility-services">⚙️ Utility Services (40 files)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Services</h2>
+            <input type="text" class="search-box" placeholder="Search services by name..." id="serviceSearch">
+        </div>
+
+        <div class="section" id="core-services">
+            <h2>🏛️ Core Services</h2>
+            <p>Fundamental services that form the backbone of business logic</p>
+            <div class="service-grid" id="coreServices">
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">CORE</span>
+                        <span class="file-size large">277 lines</span>
+                    </div>
+                    <div class="service-path">app/services/orders/create_service.rb</div>
+                    <h3>Order Creation Service</h3>
+                    <p>Complex order creation logic with validation and processing</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 69%"></div>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">CORE</span>
+                        <span class="file-size large">196 lines</span>
+                    </div>
+                    <div class="service-path">app/services/orders/raksul_pay_create_service.rb</div>
+                    <h3>Raksul Pay Creation Service</h3>
+                    <p>Raksul Pay payment creation and processing</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 49%"></div>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">CORE</span>
+                        <span class="file-size large">190 lines</span>
+                    </div>
+                    <div class="service-path">app/services/elastic_search/query_builder.rb</div>
+                    <h3>ElasticSearch Query Builder</h3>
+                    <p>Complex search query construction and optimization</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 47%"></div>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">CORE</span>
+                        <span class="file-size medium">172 lines</span>
+                    </div>
+                    <div class="service-path">app/services/auto_suggestion_service.rb</div>
+                    <h3>Auto Suggestion Service</h3>
+                    <p>Search auto-completion and suggestions</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 43%"></div>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">CORE</span>
+                        <span class="file-size medium">168 lines</span>
+                    </div>
+                    <div class="service-path">app/services/orders/cancel_service.rb</div>
+                    <h3>Order Cancellation Service</h3>
+                    <p>Order cancellation logic and refund processing</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 42%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="order-services">
+            <h2>📦 Order Management Services</h2>
+            <p>Services for order processing, fulfillment, and management</p>
+            <div class="service-grid" id="orderServices">
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type order">ORDER</span>
+                        <span class="file-size large">321 lines</span>
+                    </div>
+                    <div class="service-path">app/services/order_items/recipient_addresses/bulk_update_service.rb</div>
+                    <h3>Recipient Address Bulk Update</h3>
+                    <p>Mass address updates for order items</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type order">ORDER</span>
+                        <span class="file-size medium">157 lines</span>
+                    </div>
+                    <div class="service-path">app/services/order_items/create_from_cart_item_service.rb</div>
+                    <h3>Order Item Creation</h3>
+                    <p>Create order items from shopping cart</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type order">ORDER</span>
+                        <span class="file-size medium">156 lines</span>
+                    </div>
+                    <div class="service-path">app/services/orders/invoice_attributes_mapper.rb</div>
+                    <h3>Invoice Attributes Mapper</h3>
+                    <p>Map order data to invoice format</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type order">ORDER</span>
+                        <span class="file-size medium">159 lines</span>
+                    </div>
+                    <div class="service-path">app/services/cart_items/validate_create_checkout_session_service.rb</div>
+                    <h3>Checkout Session Validation</h3>
+                    <p>Validate checkout session creation</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type order">ORDER</span>
+                        <span class="file-size">155 lines</span>
+                    </div>
+                    <div class="service-path">app/services/payments/create_service.rb</div>
+                    <h3>Payment Creation Service</h3>
+                    <p>Payment processing and validation</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type order">ORDER</span>
+                        <span class="file-size">152 lines</span>
+                    </div>
+                    <div class="service-path">app/services/orders/raksul_pay_cancel_service.rb</div>
+                    <h3>Raksul Pay Cancellation</h3>
+                    <p>Cancel Raksul Pay payments</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="product-services">
+            <h2>🛍️ Product Services</h2>
+            <p>Services for product management, bulk operations, and catalog maintenance</p>
+            <div class="service-grid" id="productServices">
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type product">PRODUCT</span>
+                        <span class="file-size large">403 lines</span>
+                    </div>
+                    <div class="service-path">app/services/products/bulk_imports/sku_import.rb</div>
+                    <h3>SKU Import Service</h3>
+                    <p>Complex SKU import with validation and processing</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type product">PRODUCT</span>
+                        <span class="file-size medium">196 lines</span>
+                    </div>
+                    <div class="service-path">app/services/product_elastic_search_service.rb</div>
+                    <h3>Product ElasticSearch Service</h3>
+                    <p>Product search indexing and querying</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type product">PRODUCT</span>
+                        <span class="file-size medium">159 lines</span>
+                    </div>
+                    <div class="service-path">app/services/products/bulk_imports/validate_on_sheet_level.rb</div>
+                    <h3>Bulk Import Validation</h3>
+                    <p>Validate bulk import data on sheet level</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type product">PRODUCT</span>
+                        <span class="file-size">149 lines</span>
+                    </div>
+                    <div class="service-path">app/services/user_upload_images/create_service.rb</div>
+                    <h3>User Image Upload Service</h3>
+                    <p>Handle user uploaded images</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type product">PRODUCT</span>
+                        <span class="file-size">152 lines</span>
+                    </div>
+                    <div class="service-path">app/services/gmc/sku_fetching_service.rb</div>
+                    <h3>GMC SKU Fetching</h3>
+                    <p>Fetch SKU data for Google Merchant Center</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type product">PRODUCT</span>
+                        <span class="file-size">145 lines</span>
+                    </div>
+                    <div class="service-path">app/services/printing_orders/import/validate_service.rb</div>
+                    <h3>Printing Order Validation</h3>
+                    <p>Validate printing order imports</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="payment-services">
+            <h2>💳 Payment Services</h2>
+            <p>Payment processing, callbacks, and financial operations</p>
+            <div class="service-grid" id="paymentServices">
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type payment">PAYMENT</span>
+                        <span class="file-size medium">155 lines</span>
+                    </div>
+                    <div class="service-path">app/services/payments/create_service.rb</div>
+                    <h3>Payment Creation</h3>
+                    <p>Payment processing and creation</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type payment">PAYMENT</span>
+                        <span class="file-size">85 lines</span>
+                    </div>
+                    <div class="service-path">app/services/payments/capture_charge_service.rb</div>
+                    <h3>Charge Capture Service</h3>
+                    <p>Capture payment charges</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type payment">PAYMENT</span>
+                        <span class="file-size">72 lines</span>
+                    </div>
+                    <div class="service-path">app/services/payments/cancel_service.rb</div>
+                    <h3>Payment Cancellation</h3>
+                    <p>Cancel payment operations</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type payment">PAYMENT</span>
+                        <span class="file-size">68 lines</span>
+                    </div>
+                    <div class="service-path">app/services/raksul_pay/create_payment_service.rb</div>
+                    <h3>Raksul Pay Creation</h3>
+                    <p>Raksul Pay payment processing</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type payment">PAYMENT</span>
+                        <span class="file-size">65 lines</span>
+                    </div>
+                    <div class="service-path">app/services/raksul_pay/refund_service.rb</div>
+                    <h3>Raksul Pay Refund</h3>
+                    <p>Raksul Pay refund processing</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="import-export-services">
+            <h2>📤 Import/Export Services</h2>
+            <p>Services for data import, export, and bulk operations</p>
+            <div class="service-grid" id="importExportServices">
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type import">IMPORT</span>
+                        <span class="file-size large">403 lines</span>
+                    </div>
+                    <div class="service-path">app/services/products/bulk_imports/sku_import.rb</div>
+                    <h3>SKU Bulk Import</h3>
+                    <p>Complex SKU import with validation</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type import">IMPORT</span>
+                        <span class="file-size medium">138 lines</span>
+                    </div>
+                    <div class="service-path">app/services/products/import_csv/base_service.rb</div>
+                    <h3>Product Import Base</h3>
+                    <p>Base service for product imports</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type import">IMPORT</span>
+                        <span class="file-size">85 lines</span>
+                    </div>
+                    <div class="service-path">app/services/factories/import/add_service.rb</div>
+                    <h3>Factory Import Service</h3>
+                    <p>Factory data import operations</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type import">IMPORT</span>
+                        <span class="file-size">78 lines</span>
+                    </div>
+                    <div class="service-path">app/services/facet_values/import_csv_service.rb</div>
+                    <h3>Facet Values Import</h3>
+                    <p>Import search facet values</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type import">IMPORT</span>
+                        <span class="file-size">72 lines</span>
+                    </div>
+                    <div class="service-path">app/services/category_attributes/import/add_service.rb</div>
+                    <h3>Category Attributes Import</h3>
+                    <p>Import category attributes</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="search-services">
+            <h2>🔍 Search Services</h2>
+            <p>ElasticSearch integration and search optimization</p>
+            <div class="service-grid" id="searchServices">
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type search">SEARCH</span>
+                        <span class="file-size large">190 lines</span>
+                    </div>
+                    <div class="service-path">app/services/elastic_search/query_builder.rb</div>
+                    <h3>Query Builder</h3>
+                    <p>Build complex search queries</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type search">SEARCH</span>
+                        <span class="file-size medium">196 lines</span>
+                    </div>
+                    <div class="service-path">app/services/product_elastic_search_service.rb</div>
+                    <h3>Product Search</h3>
+                    <p>Product search and indexing</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type search">SEARCH</span>
+                        <span class="file-size medium">172 lines</span>
+                    </div>
+                    <div class="service-path">app/services/auto_suggestion_service.rb</div>
+                    <h3>Auto Suggestion</h3>
+                    <p>Search auto-completion</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type search">SEARCH</span>
+                        <span class="file-size">45 lines</span>
+                    </div>
+                    <div class="service-path">app/services/elastic_search/search.rb</div>
+                    <h3>ElasticSearch Search</h3>
+                    <p>General search functionality</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="notification-services">
+            <h2>📧 Notification Services</h2>
+            <p>Email notifications and system messaging</p>
+            <div class="service-grid" id="notificationServices">
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">NOTIFICATION</span>
+                        <span class="file-size">85 lines</span>
+                    </div>
+                    <div class="service-path">app/services/system_mails/users/created_order_mail.rb</div>
+                    <h3>Order Creation Mail</h3>
+                    <p>Send order confirmation emails</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">NOTIFICATION</span>
+                        <span class="file-size">78 lines</span>
+                    </div>
+                    <div class="service-path">app/services/system_mails/users/shipped_order_mail.rb</div>
+                    <h3>Order Shipped Mail</h3>
+                    <p>Send shipping confirmation emails</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">NOTIFICATION</span>
+                        <span class="file-size">72 lines</span>
+                    </div>
+                    <div class="service-path">app/services/notifiers/escalation_service.rb</div>
+                    <h3>Escalation Notifications</h3>
+                    <p>Send escalation notifications</p>
+                </div>
+                <div class="service-card">
+                    <div class="file-info">
+                        <span class="service-type">NOTIFICATION</span>
+                        <span class="file-size">68 lines</span>
+                    </div>
+                    <div class="service-path">app/services/notifiers/user_order_service.rb</div>
+                    <h3>User Order Notifications</h3>
+                    <p>Send user order notifications</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Service Complexity Analysis</h2>
+            <p><strong>Most Complex Services:</strong></p>
+            <ul>
+                <li><strong>SKU Import Service</strong> (403 lines) - Complex bulk SKU import with validation</li>
+                <li><strong>Order Creation Service</strong> (277 lines) - Core order processing logic</li>
+                <li><strong>Recipient Address Bulk Update</strong> (321 lines) - Mass address operations</li>
+                <li><strong>Raksul Pay Creation Service</strong> (196 lines) - Payment processing</li>
+                <li><strong>Product ElasticSearch Service</strong> (196 lines) - Search integration</li>
+            </ul>
+
+            <div class="service-category">
+                <h4>🏗️ Service Architecture Patterns</h4>
+                <p><strong>Service Object Pattern:</strong> Business logic encapsulated in dedicated service classes</p>
+                <p><strong>Command Pattern:</strong> Services named as actions (create_service, update_service)</p>
+                <p><strong>Builder Pattern:</strong> Complex object construction (invoice_attributes_mapper)</p>
+                <p><strong>Strategy Pattern:</strong> Payment processing with multiple providers</p>
+                <p><strong>Template Method:</strong> Base services with common functionality</p>
+            </div>
+
+            <div class="service-category">
+                <h4>🔗 Key Service Dependencies</h4>
+                <p><strong>Orders → Products → SKUs</strong> - Core business flow</p>
+                <p><strong>Payments → External APIs</strong> - Payment gateway integration</p>
+                <p><strong>Search → ElasticSearch</strong> - Search infrastructure</p>
+                <p><strong>Notifications → Email Services</strong> - Communication layer</p>
+                <p><strong>Import/Export → File Processing</strong> - Data operations</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Format file path for better display
+        function formatFilePath(fullPath) {
+            const segments = fullPath.split('/');
+            const filename = segments.pop();
+            const directory = segments.join('/');
+
+            if (directory.length > 30) {
+                const truncatedDir = directory.substring(0, 25) + '...';
+                return {
+                    directory: truncatedDir,
+                    filename: filename,
+                    full: fullPath,
+                    isTruncated: true
+                };
+            }
+
+            return {
+                directory: directory,
+                filename: filename,
+                full: fullPath,
+                isTruncated: false
+            };
+        }
+
+        // Update all service paths with formatting
+        function updateServicePaths() {
+            const pathElements = document.querySelectorAll('.service-path');
+
+            pathElements.forEach(element => {
+                const fullPath = element.textContent;
+                const formatted = formatFilePath(fullPath);
+
+                element.innerHTML = `
+                    <span class="path-directory">${formatted.directory}</span>
+                    <span class="path-separator">/</span>
+                    <span class="path-filename">${formatted.filename}</span>
+                    <div class="file-path-tooltip">${formatted.full}</div>
+                `;
+
+                if (formatted.isTruncated) {
+                    element.classList.add('truncated');
+                }
+
+                element.classList.remove('service-path');
+                element.classList.add('file-path');
+            });
+        }
+
+        // Search functionality
+        document.getElementById('serviceSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.service-card');
+
+            allCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const path = card.querySelector('.file-path').textContent.toLowerCase();
+                const title = card.querySelector('h3').textContent.toLowerCase();
+
+                if (text.includes(searchTerm) || path.includes(searchTerm) || title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize path formatting when page loads
+        document.addEventListener('DOMContentLoaded', updateServicePaths);
+    </script>
+</body>
+</html>

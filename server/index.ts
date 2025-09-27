@@ -6,10 +6,58 @@ import { setupVite, serveStatic, log } from './vite';
 
 const MIN_HTML_COMPRESSION_SIZE = 1024; // avoid compressing tiny payloads
 
+const venseraAuthUser = process.env.VENSERA_BASIC_AUTH_USER?.trim();
+const venseraAuthPassword = process.env.VENSERA_BASIC_AUTH_PASSWORD;
+
+function venseraAuthChallenge(res: Response) {
+  res.setHeader('WWW-Authenticate', 'Basic realm="Restricted"');
+  res.status(401).end('Authentication required');
+}
+
+function requireVenseraBasicAuth(req: Request, res: Response, next: NextFunction) {
+  if (!venseraAuthUser || !venseraAuthPassword) {
+    return next();
+  }
+
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Basic ')) {
+    venseraAuthChallenge(res);
+    return;
+  }
+
+  const base64Credentials = header.slice('Basic '.length);
+  let decoded = '';
+
+  try {
+    decoded = Buffer.from(base64Credentials, 'base64').toString('utf-8');
+  } catch (_error) {
+    venseraAuthChallenge(res);
+    return;
+  }
+
+  const separatorIndex = decoded.indexOf(':');
+  if (separatorIndex === -1) {
+    venseraAuthChallenge(res);
+    return;
+  }
+
+  const username = decoded.slice(0, separatorIndex);
+  const password = decoded.slice(separatorIndex + 1);
+
+  if (username === venseraAuthUser && password === venseraAuthPassword) {
+    next();
+    return;
+  }
+
+  venseraAuthChallenge(res);
+}
+
 const app = express();
 app.set('trust proxy', true);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+app.use('/vensera', requireVenseraBasicAuth);
 
 app.use((req, res, next) => {
   if (req.method === 'HEAD') {

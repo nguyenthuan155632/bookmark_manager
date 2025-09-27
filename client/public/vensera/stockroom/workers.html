@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workers Documentation - Raksul Stockroom</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #17a2b8;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
+        }
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 3px solid #17a2b8;
+            padding-bottom: 10px;
+        }
+        .worker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .worker-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .worker-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .worker-card h3 {
+            color: #495057;
+            margin-top: 0;
+            font-size: 1.1rem;
+        }
+        .worker-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .file-size {
+            background: #17a2b8;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .file-size.large {
+            background: #dc3545;
+        }
+        .file-size.medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        .worker-type {
+            background: #6f42c1;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+        }
+        .worker-type.product {
+            background: #28a745;
+        }
+        .worker-type.search {
+            background: #007bff;
+        }
+        .worker-type.import {
+            background: #fd7e14;
+        }
+        .worker-type.notification {
+            background: #e83e8c;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #17a2b8;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .search-box {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #17a2b8;
+        }
+        .toc {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .toc h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #17a2b8;
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .worker-category {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .worker-category h4 {
+            color: #0c5460;
+            margin-top: 0;
+        }
+        .complexity-indicator {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .complexity-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 4px;
+        }
+        .queue-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+        .queue-high {
+            background: #dc3545;
+            color: white;
+        }
+        .queue-medium {
+            background: #ffc107;
+            color: #212529;
+        }
+        .queue-low {
+            background: #28a745;
+            color: white;
+        }
+        .file-path {
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+        }
+        .file-path:hover {
+            color: #495057;
+        }
+        .file-path.truncated {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
+        }
+        .file-path-tooltip {
+            position: absolute;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .file-path-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #333;
+        }
+        .file-path:hover .file-path-tooltip {
+            opacity: 1;
+        }
+        .path-directory {
+            color: #007bff;
+            font-weight: 500;
+        }
+        .path-separator {
+            color: #6c757d;
+            margin: 0 4px;
+        }
+        .path-filename {
+            color: #28a745;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Workers Documentation</h1>
+            <p>Sidekiq Background Jobs and Asynchronous Processing</p>
+        </div>
+
+        <a href="index.html" class="nav-back">← Back to Documentation Index</a>
+
+        <div class="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number">27</div>
+                <div class="stat-label">Worker Directories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">80</div>
+                <div class="stat-label">Total Worker Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">186</div>
+                <div class="stat-number">Largest Worker (Category Rebuild)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">96</div>
+                <div class="stat-label">Session Batch Processor</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#core-workers">🏛️ Core Workers (5 files)</a></li>
+                    <li><a href="#product-workers">🛍️ Product Workers (15 files)</a></li>
+                    <li><a href="#search-workers">🔍 Search Workers (8 files)</a></li>
+                    <li><a href="#import-workers">📤 Import/Export Workers (20 files)</a></li>
+                    <li><a href="#notification-workers">📧 Notification Workers (10 files)</a></li>
+                    <li><a href="#maintenance-workers">🔧 Maintenance Workers (8 files)</a></li>
+                    <li><a href="#utility-workers">⚙️ Utility Workers (21 files)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 Search Workers</h2>
+            <input type="text" class="search-box" placeholder="Search workers by name..." id="workerSearch">
+        </div>
+
+        <div class="section" id="core-workers">
+            <h2>🏛️ Core Workers</h2>
+            <p>Fundamental background workers for core business operations</p>
+            <div class="worker-grid" id="coreWorkers">
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">CORE</span>
+                        <span class="file-size large">186 lines</span>
+                        <span class="queue-indicator queue-high">HIGH PRIORITY</span>
+                    </div>
+                    <div class="worker-path">app/workers/categories/rebuild_category_tree_worker.rb</div>
+                    <h3>Category Tree Rebuild Worker</h3>
+                    <p>Rebuild category hierarchy and navigation trees</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 93%"></div>
+                    </div>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">CORE</span>
+                        <span class="file-size large">96 lines</span>
+                        <span class="queue-indicator queue-medium">MEDIUM PRIORITY</span>
+                    </div>
+                    <div class="worker-path">app/workers/session_ubid_batch_processor_worker.rb</div>
+                    <h3>Session UBID Batch Processor</h3>
+                    <p>Batch process session UBIDs for tracking</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 48%"></div>
+                    </div>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">CORE</span>
+                        <span class="file-size large">97 lines</span>
+                        <span class="queue-indicator queue-high">HIGH PRIORITY</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/bulk_imports/import_worker.rb</div>
+                    <h3>Product Bulk Import Worker</h3>
+                    <p>Handle bulk product import operations</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 49%"></div>
+                    </div>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">CORE</span>
+                        <span class="file-size medium">105 lines</span>
+                        <span class="queue-indicator queue-medium">MEDIUM PRIORITY</span>
+                    </div>
+                    <div class="worker-path">app/workers/gmc/cleanup_worker.rb</div>
+                    <h3>GMC Cleanup Worker</h3>
+                    <p>Cleanup Google Merchant Center data</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 53%"></div>
+                    </div>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">CORE</span>
+                        <span class="file-size large">123 lines</span>
+                        <span class="queue-indicator queue-high">HIGH PRIORITY</span>
+                    </div>
+                    <div class="worker-path">app/workers/gmc/generation_worker.rb</div>
+                    <h3>GMC Generation Worker</h3>
+                    <p>Generate Google Merchant Center feeds</p>
+                    <div class="complexity-indicator">
+                        <div class="complexity-bar" style="width: 62%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="product-workers">
+            <h2>🛍️ Product Workers</h2>
+            <p>Background jobs for product management and processing</p>
+            <div class="worker-grid" id="productWorkers">
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type product">PRODUCT</span>
+                        <span class="file-size medium">44 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/bulk_imports/process_images_worker.rb</div>
+                    <h3>Product Image Processing</h3>
+                    <p>Process and optimize product images</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type product">PRODUCT</span>
+                        <span class="file-size medium">43 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/bulk_imports/validate_worker.rb</div>
+                    <h3>Product Import Validation</h3>
+                    <p>Validate bulk product import data</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type product">PRODUCT</span>
+                        <span class="file-size">35 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/destroy_worker.rb</div>
+                    <h3>Product Destruction</h3>
+                    <p>Safely delete products and associated data</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type product">PRODUCT</span>
+                        <span class="file-size">32 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/bulk_imports/extract_images_worker.rb</div>
+                    <h3>Product Image Extraction</h3>
+                    <p>Extract images from import files</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type product">PRODUCT</span>
+                        <span class="file-size">30 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/export_worker.rb</div>
+                    <h3>Product Export</h3>
+                    <p>Export product data to external formats</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type product">PRODUCT</span>
+                        <span class="file-size">32 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/merge_export_files_worker.rb</div>
+                    <h3>Product Export Merging</h3>
+                    <p>Merge multiple export files</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="search-workers">
+            <h2>🔍 Search Workers</h2>
+            <p>ElasticSearch indexing and search optimization workers</p>
+            <div class="worker-grid" id="searchWorkers">
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type search">SEARCH</span>
+                        <span class="file-size">33 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/search/bulk_update_index_worker.rb</div>
+                    <h3>Bulk Index Update</h3>
+                    <p>Bulk update ElasticSearch indices</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type search">SEARCH</span>
+                        <span class="file-size">30 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/search/create_index_worker.rb</div>
+                    <h3>Index Creation</h3>
+                    <p>Create new ElasticSearch indices</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type search">SEARCH</span>
+                        <span class="file-size">28 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/search/create_suggestion_index_worker.rb</div>
+                    <h3>Suggestion Index Creation</h3>
+                    <p>Create search suggestion indices</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type search">SEARCH</span>
+                        <span class="file-size">28 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/search/delete_index_worker.rb</div>
+                    <h3>Index Deletion</h3>
+                    <p>Delete ElasticSearch indices</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type search">SEARCH</span>
+                        <span class="file-size">28 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/search/update_index_worker.rb</div>
+                    <h3>Index Update</h3>
+                    <p>Update existing indices</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type search">SEARCH</span>
+                        <span class="file-size">29 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/search/update_suggestion_index_worker.rb</div>
+                    <h3>Suggestion Index Update</h3>
+                    <p>Update search suggestion indices</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="import-workers">
+            <h2>📤 Import/Export Workers</h2>
+            <p>Background jobs for data import and export operations</p>
+            <div class="worker-grid" id="importWorkers">
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type import">IMPORT</span>
+                        <span class="file-size medium">43 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/bulk_imports/validate_worker.rb</div>
+                    <h3>Product Import Validation</h3>
+                    <p>Validate bulk product imports</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type import">IMPORT</span>
+                        <span class="file-size">32 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/bulk_imports/extract_images_worker.rb</div>
+                    <h3>Image Extraction</h3>
+                    <p>Extract images from import files</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type import">IMPORT</span>
+                        <span class="file-size">44 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/products/bulk_imports/process_images_worker.rb</div>
+                    <h3>Image Processing</h3>
+                    <p>Process extracted images</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type import">IMPORT</span>
+                        <span class="file-size">30 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/skus/imports/costs_worker.rb</div>
+                    <h3>SKU Cost Import</h3>
+                    <p>Import SKU cost data</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type import">IMPORT</span>
+                        <span class="file-size">29 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/skus/imports/prices_worker.rb</div>
+                    <h3>SKU Price Import</h3>
+                        <p>Import SKU price data</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type import">IMPORT</span>
+                        <span class="file-size">29 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/skus/imports/shipment_days_worker.rb</div>
+                    <h3>SKU Shipment Import</h3>
+                    <p>Import SKU shipment data</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="notification-workers">
+            <h2>📧 Notification Workers</h2>
+            <p>Background jobs for email and notification processing</p>
+            <div class="worker-grid" id="notificationWorkers">
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type notification">NOTIFICATION</span>
+                        <span class="file-size">33 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/orders/convenience_store_create_mail_worker.rb</div>
+                    <h3>Convenience Store Mail</h3>
+                    <p>Send convenience store payment emails</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type notification">NOTIFICATION</span>
+                        <span class="file-size">30 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/orders/create_mail_worker.rb</div>
+                    <h3>Order Creation Mail</h3>
+                    <p>Send order confirmation emails</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type notification">NOTIFICATION</span>
+                        <span class="file-size">29 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/orders/bank_transfer_create_mail_worker.rb</div>
+                    <h3>Bank Transfer Mail</h3>
+                    <p>Send bank transfer payment emails</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type notification">NOTIFICATION</span>
+                        <span class="file-size">28 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/contacts/thanks_mail_worker.rb</div>
+                    <h3>Contact Thanks Mail</h3>
+                    <p>Send contact form confirmation emails</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="maintenance-workers">
+            <h2>🔧 Maintenance Workers</h2>
+            <p>System maintenance and cleanup workers</p>
+            <div class="worker-grid" id="maintenanceWorkers">
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">MAINTENANCE</span>
+                        <span class="file-size">33 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/caches/delete_cache_worker.rb</div>
+                    <h3>Cache Cleanup</h3>
+                    <p>Delete expired cache entries</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">MAINTENANCE</span>
+                        <span class="file-size">30 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/update_lowest_price_and_min_quantity_worker.rb</div>
+                    <h3>Price Updates</h3>
+                    <p>Update product price and quantity data</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">MAINTENANCE</span>
+                        <span class="file-size">29 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/categories/update_min_max_data_worker.rb</div>
+                    <h3>Category Data Updates</h3>
+                    <p>Update category min/max data</p>
+                </div>
+                <div class="worker-card">
+                    <div class="file-info">
+                        <span class="worker-type">MAINTENANCE</span>
+                        <span class="file-size">28 lines</span>
+                    </div>
+                    <div class="worker-path">app/workers/shipment_fee_tax_exclusion_worker.rb</div>
+                    <h3>Shipment Fee Updates</h3>
+                    <p>Update shipment fee tax exclusions</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Worker Complexity Analysis</h2>
+            <p><strong>Most Complex Workers:</strong></p>
+            <ul>
+                <li><strong>Category Tree Rebuild Worker</strong> (186 lines) - Complex hierarchy reconstruction</li>
+                <li><strong>GMC Generation Worker</strong> (123 lines) - Google Merchant Center feed generation</li>
+                <li><strong>Session UBID Batch Processor</strong> (96 lines) - Session tracking and processing</li>
+                <li><strong>Product Bulk Import Worker</strong> (97 lines) - Complex import operations</li>
+                <li><strong>GMC Cleanup Worker</strong> (105 lines) - Data cleanup and optimization</li>
+            </ul>
+
+            <div class="worker-category">
+                <h4>🔄 Background Processing Architecture</h4>
+                <p><strong>Sidekiq Integration:</strong> All workers use Sidekiq for background job processing</p>
+                <p><strong>Queue Management:</strong> Different queues for different priority levels</p>
+                <p><strong>Error Handling:</strong> Comprehensive error handling and retry mechanisms</p>
+                <p><strong>Performance Monitoring:</strong> Built-in performance tracking and logging</p>
+                <p><strong>Resource Management:</strong> Efficient resource utilization and cleanup</p>
+            </div>
+
+            <div class="worker-category">
+                <h4>⚡ Performance Optimization</h4>
+                <p><strong>Bulk Operations:</strong> Workers designed for bulk data processing</p>
+                <p><strong>Batch Processing:</strong> Efficient batch processing for large datasets</p>
+                <p><strong>Async Processing:</strong> Non-blocking operations for better user experience</p>
+                <p><strong>Memory Management:</strong> Proper memory cleanup and garbage collection</p>
+                <p><strong>Database Optimization:</strong> Optimized database queries and indexing</p>
+            </div>
+
+            <div class="worker-category">
+                <h4>🛡️ Reliability Features</h4>
+                <p><strong>Retry Mechanisms:</strong> Automatic retry for failed operations</p>
+                <p><strong>Dead Letter Queue:</strong> Handling of permanently failed jobs</p>
+                <p><strong>Monitoring:</strong> Comprehensive monitoring and alerting</p>
+                <p><strong>Idempotency:</strong> Safe retry without duplicate processing</p>
+                <p><strong>Fallback Strategies:</strong> Alternative approaches for failed operations</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Format file path for better display
+        function formatFilePath(fullPath) {
+            const segments = fullPath.split('/');
+            const filename = segments.pop();
+            const directory = segments.join('/');
+
+            if (directory.length > 30) {
+                const truncatedDir = directory.substring(0, 25) + '...';
+                return {
+                    directory: truncatedDir,
+                    filename: filename,
+                    full: fullPath,
+                    isTruncated: true
+                };
+            }
+
+            return {
+                directory: directory,
+                filename: filename,
+                full: fullPath,
+                isTruncated: false
+            };
+        }
+
+        // Update all worker paths with formatting
+        function updateWorkerPaths() {
+            const pathElements = document.querySelectorAll('.worker-path');
+
+            pathElements.forEach(element => {
+                const fullPath = element.textContent;
+                const formatted = formatFilePath(fullPath);
+
+                element.innerHTML = `
+                    <span class="path-directory">${formatted.directory}</span>
+                    <span class="path-separator">/</span>
+                    <span class="path-filename">${formatted.filename}</span>
+                    <div class="file-path-tooltip">${formatted.full}</div>
+                `;
+
+                if (formatted.isTruncated) {
+                    element.classList.add('truncated');
+                }
+
+                element.classList.remove('worker-path');
+                element.classList.add('file-path');
+            });
+        }
+
+        // Search functionality
+        document.getElementById('workerSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const allCards = document.querySelectorAll('.worker-card');
+
+            allCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const path = card.querySelector('.file-path').textContent.toLowerCase();
+                const title = card.querySelector('h3').textContent.toLowerCase();
+
+                if (text.includes(searchTerm) || path.includes(searchTerm) || title.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize path formatting when page loads
+        document.addEventListener('DOMContentLoaded', updateWorkerPaths);
+    </script>
+</body>
+</html>
