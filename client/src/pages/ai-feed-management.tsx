@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -405,7 +406,7 @@ export default function AiFeedManagementPage() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onCreateFolder={() => {}}
+        onCreateFolder={() => { }}
         stats={stats}
       />
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden bg-muted/10">
@@ -584,17 +585,27 @@ export default function AiFeedManagementPage() {
                                     </a>
                                   </div>
                                   <div className="flex flex-wrap gap-2 justify-end">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleTriggerSource(source.id)}
-                                      disabled={
-                                        triggerSourceMutation.isPending ||
-                                        source.status === 'running'
-                                      }
-                                    >
-                                      <RefreshCw className="h-4 w-4" />
-                                    </Button>
+                                    <TooltipProvider delayDuration={150}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleTriggerSource(source.id)}
+                                            disabled={
+                                              triggerSourceMutation.isPending ||
+                                              source.status === 'running'
+                                            }
+                                          >
+                                            <RefreshCw className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs text-xs">
+                                          Run now ignores the scheduled interval and queues the
+                                          source immediately.
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                     <Button
                                       size="sm"
                                       variant="outline"
@@ -681,8 +692,8 @@ export default function AiFeedManagementPage() {
                                 <Calendar className="h-3 w-3" />
                                 {article.publishedAt
                                   ? formatDistanceToNow(new Date(article.publishedAt), {
-                                      addSuffix: true,
-                                    })
+                                    addSuffix: true,
+                                  })
                                   : 'No publish date'}
                               </span>
                               {article.sourceUrl && (
@@ -712,10 +723,14 @@ export default function AiFeedManagementPage() {
                             <Button
                               size="sm"
                               variant="ghost"
+                              className={`inline-flex items-center gap-2 font-medium transition-colors ${article.isShared
+                                  ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
+                                  : 'text-muted-foreground hover:text-foreground'
+                                }`}
                               onClick={() => shareArticleMutation.mutate(article.id)}
                               disabled={shareArticleMutation.isPending}
                             >
-                              <Share2 className="h-4 w-4 mr-1" />
+                              <Share2 className="h-4 w-4" />
                               Share Article
                             </Button>
                             <Button

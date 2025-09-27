@@ -4,7 +4,7 @@ import {
   aiFeedSources,
   userPreferences,
   type InsertAiCrawlerSettings,
-  type InsertAiFeedSource
+  type InsertAiFeedSource,
 } from '@shared/schema.js';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import type { Express } from 'express';
@@ -29,7 +29,7 @@ export function registerAiFeedRoutes(app: Express) {
         const newSettings: InsertAiCrawlerSettings = {
           userId,
           maxFeedsPerSource: 5,
-          isEnabled: true
+          isEnabled: true,
         };
         await db.insert(aiCrawlerSettings).values(newSettings);
         crawlerSettings = [newSettings];
@@ -45,7 +45,7 @@ export function registerAiFeedRoutes(app: Express) {
 
       res.json({
         settings: crawlerSettings,
-        preferences: preferences[0] || null
+        preferences: preferences[0] || null,
       });
     } catch (error) {
       console.error('Error fetching AI feed settings:', error);
@@ -59,7 +59,7 @@ export function registerAiFeedRoutes(app: Express) {
       const userId = getUserId(req);
       const updateSettingsSchema = z.object({
         maxFeedsPerSource: z.number().int().min(1).max(50).optional(),
-        isEnabled: z.boolean().optional()
+        isEnabled: z.boolean().optional(),
       });
 
       const updates = updateSettingsSchema.parse(req.body);
@@ -101,7 +101,7 @@ export function registerAiFeedRoutes(app: Express) {
       const insertSourceSchema = z.object({
         url: z.string().url('Please provide a valid URL'),
         crawlInterval: z.number().int().min(1).max(1440).default(60),
-        isActive: z.boolean().default(true)
+        isActive: z.boolean().default(true),
       });
 
       const { url, crawlInterval, isActive } = insertSourceSchema.parse(req.body);
@@ -110,7 +110,7 @@ export function registerAiFeedRoutes(app: Express) {
         url,
         userId,
         crawlInterval,
-        isActive
+        isActive,
       };
 
       const result = await db.insert(aiFeedSources).values(newSource).returning();
@@ -130,7 +130,7 @@ export function registerAiFeedRoutes(app: Express) {
       const updateSourceSchema = z.object({
         url: z.string().url('Please provide a valid URL').optional(),
         crawlInterval: z.number().int().min(1).max(1440).optional(),
-        isActive: z.boolean().optional()
+        isActive: z.boolean().optional(),
       });
 
       const updates = updateSourceSchema.parse(req.body);
@@ -168,9 +168,7 @@ export function registerAiFeedRoutes(app: Express) {
       }
 
       // Also delete associated articles
-      await db
-        .delete(aiFeedArticles)
-        .where(eq(aiFeedArticles.sourceId, sourceId));
+      await db.delete(aiFeedArticles).where(eq(aiFeedArticles.sourceId, sourceId));
 
       res.json({ message: 'Source deleted successfully' });
     } catch (error) {
@@ -199,7 +197,9 @@ export function registerAiFeedRoutes(app: Express) {
           notificationSent: aiFeedArticles.notificationSent,
           publishedAt: aiFeedArticles.publishedAt,
           createdAt: aiFeedArticles.createdAt,
-          sourceUrl: aiFeedSources.url
+          shareId: aiFeedArticles.shareId,
+          isShared: aiFeedArticles.isShared,
+          sourceUrl: aiFeedSources.url,
         })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
@@ -220,8 +220,8 @@ export function registerAiFeedRoutes(app: Express) {
           page,
           limit,
           total: parseInt(totalCount[0].count as string),
-          totalPages: Math.ceil(parseInt(totalCount[0].count as string) / limit)
-        }
+          totalPages: Math.ceil(parseInt(totalCount[0].count as string) / limit),
+        },
       });
     } catch (error) {
       console.error('Error fetching AI feed articles:', error);
@@ -259,7 +259,7 @@ export function registerAiFeedRoutes(app: Express) {
       res.json({
         message: 'Feed processing queued successfully',
         jobId: job.id,
-        estimatedWaitTime: 'Job will be processed within 30 seconds'
+        estimatedWaitTime: 'Job will be processed within 30 seconds',
       });
     } catch (error) {
       console.error('Error triggering feed processing:', error);
@@ -279,7 +279,7 @@ export function registerAiFeedRoutes(app: Express) {
           status: aiFeedSources.status,
           lastRunAt: aiFeedSources.lastRunAt,
           crawlInterval: aiFeedSources.crawlInterval,
-          isActive: aiFeedSources.isActive
+          isActive: aiFeedSources.isActive,
         })
         .from(aiFeedSources)
         .where(eq(aiFeedSources.userId, userId));
@@ -305,8 +305,8 @@ export function registerAiFeedRoutes(app: Express) {
         stats: {
           totalArticles: parseInt(totalArticles[0].count as string),
           unreadArticles: parseInt(unreadArticles[0].count as string),
-          jobQueue: jobStats
-        }
+          jobQueue: jobStats,
+        },
       });
     } catch (error) {
       console.error('Error fetching AI feed status:', error);
@@ -352,7 +352,7 @@ export function registerAiFeedRoutes(app: Express) {
         .select({
           id: aiFeedArticles.id,
           title: aiFeedArticles.title,
-          sourceId: aiFeedArticles.sourceId
+          sourceId: aiFeedArticles.sourceId,
         })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
@@ -370,14 +370,14 @@ export function registerAiFeedRoutes(app: Express) {
         .update(aiFeedArticles)
         .set({
           shareId,
-          isShared: true
+          isShared: true,
         })
         .where(eq(aiFeedArticles.id, articleId))
         .returning();
 
       res.json({
         article: result[0],
-        shareUrl: `/shared-article/${shareId}`
+        shareUrl: `/shared-article/${shareId}`,
       });
     } catch (error) {
       console.error('Error sharing article:', error);
@@ -401,7 +401,7 @@ export function registerAiFeedRoutes(app: Express) {
           imageUrl: aiFeedArticles.imageUrl,
           publishedAt: aiFeedArticles.publishedAt,
           createdAt: aiFeedArticles.createdAt,
-          sourceUrl: aiFeedSources.url
+          sourceUrl: aiFeedSources.url,
         })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
@@ -436,10 +436,7 @@ export function registerAiFeedRoutes(app: Express) {
       }
 
       // Delete the article (we already verified ownership above)
-      await db
-        .delete(aiFeedArticles)
-        .where(eq(aiFeedArticles.id, articleId))
-        .returning();
+      await db.delete(aiFeedArticles).where(eq(aiFeedArticles.id, articleId)).returning();
 
       res.json({ message: 'Article deleted successfully' });
     } catch (error) {
@@ -470,7 +467,7 @@ export function registerAiFeedRoutes(app: Express) {
         .update(aiFeedArticles)
         .set({
           shareId: null,
-          isShared: false
+          isShared: false,
         })
         .where(eq(aiFeedArticles.id, articleId))
         .returning();
