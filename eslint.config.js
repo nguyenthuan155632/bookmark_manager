@@ -1,12 +1,12 @@
 // ESLint Flat Config for TypeScript, React, Node
 import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
+import tseslint from 'typescript-eslint';
 
 export default [
-  { ignores: ['dist/**', 'node_modules/**', 'scripts/**', 'extension/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'scripts/**', 'extension/**', '.ruby-lsp'] },
   { rules: { '@typescript-eslint/no-require-imports': 'off' } },
   js.configs.recommended,
   ...tseslint.configs.recommended,

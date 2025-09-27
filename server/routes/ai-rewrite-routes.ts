@@ -77,7 +77,7 @@ Adapt your approach based on the specific content you're processing.`;
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'http://localhost:4001',
+          'HTTP-Referer': process.env.VITE_PUBLIC_BASE_URL || 'http://localhost:4001',
           'X-Title': 'Memorize Vault AI Content Rewriter',
         },
         body: JSON.stringify({
@@ -203,7 +203,7 @@ Adapt your approach based on the specific content you're processing.`;
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'http://localhost:4001',
+          'HTTP-Referer': process.env.VITE_PUBLIC_BASE_URL || 'http://localhost:4001',
           'X-Title': 'Memorize Vault AI Content Rewriter',
         },
         body: JSON.stringify({
