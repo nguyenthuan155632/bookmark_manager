@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -167,13 +166,22 @@ export default function AiFeedManagementPage() {
       toast({ description: 'Feed source created successfully' });
     },
     onError: (error: any) => {
-      toast({ variant: 'destructive', description: error?.message || 'Failed to create feed source' });
+      toast({
+        variant: 'destructive',
+        description: error?.message || 'Failed to create feed source',
+      });
     },
   });
 
   // Update feed source
   const updateSourceMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: { url?: string; crawlInterval?: number; isActive?: boolean } }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: { url?: string; crawlInterval?: number; isActive?: boolean };
+    }) => {
       const res = await apiRequest('PUT', `/api/ai-feeds/sources/${id}`, data);
       return res.json();
     },
@@ -184,7 +192,10 @@ export default function AiFeedManagementPage() {
       toast({ description: 'Feed source updated successfully' });
     },
     onError: (error: any) => {
-      toast({ variant: 'destructive', description: error?.message || 'Failed to update feed source' });
+      toast({
+        variant: 'destructive',
+        description: error?.message || 'Failed to update feed source',
+      });
     },
   });
 
@@ -201,7 +212,10 @@ export default function AiFeedManagementPage() {
       toast({ description: 'Feed source deleted successfully' });
     },
     onError: (error: any) => {
-      toast({ variant: 'destructive', description: error?.message || 'Failed to delete feed source' });
+      toast({
+        variant: 'destructive',
+        description: error?.message || 'Failed to delete feed source',
+      });
     },
   });
 
@@ -231,7 +245,10 @@ export default function AiFeedManagementPage() {
       toast({ description: 'Feed processing triggered' });
     },
     onError: (error: any) => {
-      toast({ variant: 'destructive', description: error?.message || 'Failed to trigger feed processing' });
+      toast({
+        variant: 'destructive',
+        description: error?.message || 'Failed to trigger feed processing',
+      });
     },
   });
 
@@ -244,24 +261,30 @@ export default function AiFeedManagementPage() {
     onSuccess: (data, _articleId) => {
       toast({
         title: 'Article Shared',
-        description: 'Share link copied to clipboard!'
+        description: 'Share link copied to clipboard!',
       });
 
       // Copy share URL to clipboard
       if (data.shareUrl) {
         const fullUrl = `${window.location.origin}${data.shareUrl}`;
-        navigator.clipboard.writeText(fullUrl).catch(() => {
-          toast({
-            variant: 'destructive',
-            description: 'Failed to copy share URL to clipboard'
+        navigator.clipboard
+          .writeText(fullUrl)
+          .then(() => {
+            window.open(fullUrl, '_blank', 'noopener,noreferrer');
+          })
+          .catch(() => {
+            toast({
+              variant: 'destructive',
+              description: 'Failed to copy share URL to clipboard',
+            });
+            window.open(fullUrl, '_blank', 'noopener,noreferrer');
           });
-        });
       }
     },
     onError: (error: any) => {
       toast({
         variant: 'destructive',
-        description: error?.message || 'Failed to share article'
+        description: error?.message || 'Failed to share article',
       });
     },
   });
@@ -280,7 +303,7 @@ export default function AiFeedManagementPage() {
     onError: (error: any) => {
       toast({
         variant: 'destructive',
-        description: error?.message || 'Failed to delete article'
+        description: error?.message || 'Failed to delete article',
       });
     },
   });
@@ -318,7 +341,11 @@ export default function AiFeedManagementPage() {
   };
 
   const handleDeleteSource = (id: number) => {
-    if (confirm('Are you sure you want to delete this feed source? This will also delete all articles from this source.')) {
+    if (
+      confirm(
+        'Are you sure you want to delete this feed source? This will also delete all articles from this source.',
+      )
+    ) {
       deleteSourceMutation.mutate(id);
     }
   };
@@ -378,374 +405,473 @@ export default function AiFeedManagementPage() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onCreateFolder={() => { }}
+        onCreateFolder={() => {}}
         stats={stats}
       />
-      <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        <div className="px-6 py-4 border-b flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href="/">
-              <Button variant="ghost" size="sm" className="px-2">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="ml-1 hidden sm:inline">Home</span>
-              </Button>
-            </Link>
-            <h1 className="text-xl font-semibold truncate">AI Feed Management</h1>
+      <main className="flex-1 flex flex-col min-h-screen overflow-hidden bg-muted/10">
+        <div className="border-b bg-card/60 backdrop-blur px-4 py-4 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <Link href="/">
+                <Button variant="ghost" size="sm" className="px-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="ml-1 hidden sm:inline">Home</span>
+                </Button>
+              </Link>
+              <h1 className="text-xl font-semibold truncate">AI Feed Management</h1>
+            </div>
+            <div className="text-sm text-muted-foreground">Signed in as {user?.username}</div>
           </div>
-          <div className="text-sm text-muted-foreground">Signed in as {user?.username}</div>
         </div>
 
-        <div className="w-full p-6 overflow-y-auto px-4">
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="sources">Feed Sources</TabsTrigger>
-              <TabsTrigger value="articles">Articles</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="sources" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Rss className="h-5 w-5" />
+        <div className="w-full overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+              <div className="overflow-x-auto pb-1">
+                <TabsList className="inline-flex min-w-full justify-start gap-2 rounded-2xl border bg-card/80 p-1.5 shadow-sm">
+                  <TabsTrigger
+                    value="sources"
+                    className="flex min-w-[180px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <Rss className="h-4 w-4" />
                     Feed Sources
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Add New Source */}
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
-                    <h3 className="text-sm font-medium">Add New Feed Source</h3>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                      <div className="lg:col-span-2">
-                        <Input
-                          placeholder="Feed URL (Atom)"
-                          value={newSourceUrl}
-                          onChange={(e) => setNewSourceUrl(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          type="number"
-                          placeholder="Interval (minutes)"
-                          value={newSourceInterval}
-                          onChange={(e) => setNewSourceInterval(parseInt(e.target.value) || 60)}
-                          min={1}
-                          max={1440}
-                        />
-                      </div>
-                      <Button
-                        onClick={handleCreateSource}
-                        disabled={!newSourceUrl.trim() || createSourceMutation.isPending}
-                        className="flex items-center gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Source
-                      </Button>
-                    </div>
-                  </div>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="articles"
+                    className="flex min-w-[180px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Articles
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="settings"
+                    className="flex min-w-[180px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-                  {/* Sources List */}
-                  <div className="space-y-4">
-                    {sources.map((source) => (
-                      <div key={source.id} className="border rounded-lg p-4 space-y-3">
-                        {editingSource?.id === source.id ? (
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Settings className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">Editing Source</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={handleCancelEdit}
-                                  disabled={updateSourceMutation.isPending}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={handleSaveEdit}
-                                  disabled={updateSourceMutation.isPending || !editSourceUrl.trim()}
-                                >
-                                  <Save className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <div>
-                                <Label className="text-xs">Feed URL</Label>
-                                <Input
-                                  value={editSourceUrl}
-                                  onChange={(e) => setEditSourceUrl(e.target.value)}
-                                  className="text-sm"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-xs">Interval (minutes)</Label>
-                                <Input
-                                  type="number"
-                                  value={editSourceInterval}
-                                  onChange={(e) => setEditSourceInterval(parseInt(e.target.value) || 60)}
-                                  className="text-sm"
-                                  min={1}
-                                  max={1440}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                  {getStatusIcon(source.status)}
-                                  <span className="text-sm font-medium">{source.status}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Rss className="h-4 w-4 text-muted-foreground" />
-                                  <a
-                                    href={source.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm font-medium hover:underline flex items-center gap-1"
-                                  >
-                                    {source.url}
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleTriggerSource(source.id)}
-                                  disabled={triggerSourceMutation.isPending || source.status === 'running'}
-                                >
-                                  <RefreshCw className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleToggleSource(source)}
-                                >
-                                  {source.isActive ? 'Disable' : 'Enable'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleStartEdit(source)}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleDeleteSource(source.id)}
-                                  disabled={deleteSourceMutation.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                Last run: {formatLastRun(source.lastRunAt)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                Interval: {source.crawlInterval} minutes
-                              </span>
-                              <Badge variant={source.isActive ? 'default' : 'secondary'}>
-                                {source.isActive ? 'Active' : 'Inactive'}
-                              </Badge>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {sources.length === 0 && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Rss className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No feed sources configured yet.</p>
-                        <p className="text-sm">Add your first Atom feed source above.</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="articles" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    AI Processed Articles
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {articlesData?.articles?.map((article) => (
-                      <div key={article.id} className="border rounded-lg p-4 space-y-3">
-                        <div className="flex-1 min-w-0 space-y-3">
-                          <div>
-                            <h3 className="text-lg font-medium mb-2">{article.title}</h3>
-                            {article.summary && (
-                              <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
-                                {article.summary}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {article.publishedAt
-                                ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })
-                                : 'No publish date'}
-                            </span>
-                            {article.sourceUrl && (
-                              <span className="flex items-center gap-1">
-                                <Rss className="h-3 w-3" />
-                                <a
-                                  href={article.sourceUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="hover:underline"
-                                >
-                                  View Source
-                                </a>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border/60">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(article.url, '_blank')}
-                          >
-                            <Eye className="h-4 w-4" />
-                            Read
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => shareArticleMutation.mutate(article.id)}
-                            disabled={shareArticleMutation.isPending}
-                          >
-                            <Share2 className="h-4 w-4 mr-2" />
-                            Share Article
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteArticle(article.id)}
-                            disabled={deleteArticleMutation.isPending}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {(!articlesData?.articles || articlesData.articles.length === 0) && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>No articles processed yet.</p>
-                        <p className="text-sm">Add feed sources and wait for the AI to process them.</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="settings" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    AI Crawler Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {settings && (
-                    <div className="space-y-4">
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label>Max Articles per Source</Label>
+              <TabsContent value="sources" className="space-y-6">
+                <Card className="shadow-sm border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Rss className="h-5 w-5" />
+                      Feed Sources
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Add New Source */}
+                    <div className="space-y-4 rounded-xl border border-dashed bg-muted/40 p-4 sm:p-5">
+                      <h3 className="text-sm font-medium text-muted-foreground">
+                        Add New Feed Source
+                      </h3>
+                      <div className="grid gap-3 md:grid-cols-12">
+                        <div className="md:col-span-7">
                           <Input
-                            type="number"
-                            value={settings.maxFeedsPerSource}
-                            onChange={(e) => {
-                              const value = parseInt(e.target.value);
-                              if (value >= 1 && value <= 50) {
-                                updateSettingsMutation.mutate({
-                                  maxFeedsPerSource: value,
-                                });
-                              }
-                            }}
-                            min={1}
-                            max={50}
+                            placeholder="Feed URL (Atom)"
+                            value={newSourceUrl}
+                            onChange={(e) => setNewSourceUrl(e.target.value)}
+                            className="h-11"
                           />
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="isEnabled"
-                          checked={settings.isEnabled}
-                          onChange={(e) => {
-                            updateSettingsMutation.mutate({
-                              isEnabled: e.target.checked,
-                            });
-                          }}
-                        />
-                        <Label htmlFor="isEnabled">Enable AI Crawler</Label>
-                      </div>
-                    </div>
-                  )}
-
-                  {preferences && (
-                    <>
-                      <Separator />
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium">AI Processing Preferences</h3>
-                        <div className="space-y-2">
-                          <Label>Default AI Language</Label>
-                          <div className="text-sm text-muted-foreground">
-                            {preferences.defaultAiLanguage === 'auto' ? 'Auto Detect' : preferences.defaultAiLanguage}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            This setting is configured in the main Settings page
-                          </div>
+                        <div className="md:col-span-3">
+                          <Input
+                            type="number"
+                            placeholder="Interval (minutes)"
+                            value={newSourceInterval}
+                            onChange={(e) => setNewSourceInterval(parseInt(e.target.value) || 60)}
+                            min={1}
+                            max={1440}
+                            className="h-11"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Button
+                            onClick={handleCreateSource}
+                            disabled={!newSourceUrl.trim() || createSourceMutation.isPending}
+                            className="w-full h-11 flex items-center justify-center gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add
+                          </Button>
                         </div>
                       </div>
-                    </>
-                  )}
+                    </div>
 
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium">System Status</h3>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="p-4 border rounded-lg">
-                        <div className="text-sm font-medium">Total Sources</div>
-                        <div className="text-2xl font-bold">{sources.length}</div>
-                      </div>
-                      {statusData?.stats && (
-                        <div className="p-4 border rounded-lg">
-                          <div className="text-sm font-medium">Total Articles</div>
-                          <div className="text-2xl font-bold">{statusData.stats.totalArticles}</div>
+                    {/* Sources List */}
+                    <div className="grid gap-4 xl:grid-cols-2">
+                      {sources.map((source) => {
+                        const isEditingSource = editingSource?.id === source.id;
+                        return (
+                          <div
+                            key={source.id}
+                            className={`rounded-xl border bg-card p-5 shadow-sm space-y-4 ${isEditingSource ? 'xl:col-span-2' : ''}`}
+                          >
+                            {isEditingSource ? (
+                              <div className="space-y-4">
+                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                    <Settings className="h-4 w-4" />
+                                    Editing Source
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={handleCancelEdit}
+                                      disabled={updateSourceMutation.isPending}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={handleSaveEdit}
+                                      disabled={
+                                        updateSourceMutation.isPending || !editSourceUrl.trim()
+                                      }
+                                    >
+                                      <Save className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="grid gap-3 md:grid-cols-2">
+                                  <div className="space-y-2">
+                                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                      Feed URL
+                                    </Label>
+                                    <Input
+                                      value={editSourceUrl}
+                                      onChange={(e) => setEditSourceUrl(e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                      Interval (minutes)
+                                    </Label>
+                                    <Input
+                                      type="number"
+                                      value={editSourceInterval}
+                                      onChange={(e) =>
+                                        setEditSourceInterval(parseInt(e.target.value) || 60)
+                                      }
+                                      className="text-sm"
+                                      min={1}
+                                      max={1440}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      {getStatusIcon(source.status)}
+                                      <span className="capitalize">{source.status}</span>
+                                    </div>
+                                    <a
+                                      href={source.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 text-sm font-medium text-primary hover:underline break-all"
+                                    >
+                                      <Rss className="h-4 w-4" />
+                                      {source.url}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 justify-end">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleTriggerSource(source.id)}
+                                      disabled={
+                                        triggerSourceMutation.isPending ||
+                                        source.status === 'running'
+                                      }
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleToggleSource(source)}
+                                    >
+                                      {source.isActive ? 'Disable' : 'Enable'}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleStartEdit(source)}
+                                    >
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleDeleteSource(source.id)}
+                                      disabled={deleteSourceMutation.isPending}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-3 w-3" />
+                                    Last run: {formatLastRun(source.lastRunAt)}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-3 w-3" />
+                                    Interval: {source.crawlInterval} minutes
+                                  </div>
+                                </div>
+                                <Badge
+                                  variant={source.isActive ? 'default' : 'secondary'}
+                                  className="uppercase tracking-wide w-fit"
+                                >
+                                  {source.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {sources.length === 0 && (
+                        <div className="rounded-xl border bg-muted/20 p-8 text-center text-muted-foreground xl:col-span-2">
+                          <Rss className="h-12 w-12 mx-auto mb-4 opacity-60" />
+                          <p className="font-medium mb-1">No feed sources configured yet.</p>
+                          <p className="text-sm">Add your first Atom feed source above.</p>
                         </div>
                       )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="articles" className="space-y-6">
+                <Card className="shadow-sm border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      AI Processed Articles
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 xl:grid-cols-2">
+                      {articlesData?.articles?.map((article) => (
+                        <div
+                          key={article.id}
+                          className="rounded-xl border bg-card p-5 shadow-sm space-y-4 flex flex-col"
+                        >
+                          <div className="space-y-3">
+                            <h3 className="text-lg font-semibold leading-snug line-clamp-2">
+                              {article.title}
+                            </h3>
+                            {article.summary && (
+                              <p className="text-sm text-muted-foreground line-clamp-3">
+                                {article.summary}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {article.publishedAt
+                                  ? formatDistanceToNow(new Date(article.publishedAt), {
+                                      addSuffix: true,
+                                    })
+                                  : 'No publish date'}
+                              </span>
+                              {article.sourceUrl && (
+                                <span className="flex items-center gap-1">
+                                  <Rss className="h-3 w-3" />
+                                  <a
+                                    href={article.sourceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                  >
+                                    View Source
+                                  </a>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-end gap-2 pt-3 border-t border-border/60">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(article.url, '_blank')}
+                            >
+                              <Eye className="h-4 w-4" />
+                              Read
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => shareArticleMutation.mutate(article.id)}
+                              disabled={shareArticleMutation.isPending}
+                            >
+                              <Share2 className="h-4 w-4 mr-1" />
+                              Share Article
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteArticle(article.id)}
+                              disabled={deleteArticleMutation.isPending}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      {(!articlesData?.articles || articlesData.articles.length === 0) && (
+                        <div className="rounded-xl border bg-muted/20 p-10 text-center text-muted-foreground xl:col-span-2">
+                          <FileText className="h-12 w-12 mx-auto mb-4 opacity-60" />
+                          <p className="font-medium mb-1">No articles processed yet.</p>
+                          <p className="text-sm">
+                            Add feed sources and wait for the AI to process them.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="settings" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      AI Crawler Settings
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+                      {settings && (
+                        <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5">
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground">
+                              Crawler Behaviour
+                            </h3>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Control how many items are queued per crawl and whether the crawler is
+                              active.
+                            </p>
+                          </div>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-2">
+                              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Max Articles per Source
+                              </Label>
+                              <Input
+                                type="number"
+                                value={settings.maxFeedsPerSource}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value);
+                                  if (value >= 1 && value <= 50) {
+                                    updateSettingsMutation.mutate({
+                                      maxFeedsPerSource: value,
+                                    });
+                                  }
+                                }}
+                                min={1}
+                                max={50}
+                                className="h-10"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-3">
+                            <input
+                              type="checkbox"
+                              id="isEnabled"
+                              checked={settings.isEnabled}
+                              onChange={(e) => {
+                                updateSettingsMutation.mutate({
+                                  isEnabled: e.target.checked,
+                                });
+                              }}
+                              className="h-4 w-4"
+                            />
+                            <div className="space-y-1">
+                              <Label htmlFor="isEnabled" className="text-sm font-medium">
+                                Enable AI crawler
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                Pause crawling at any time without removing feed sources.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-6">
+                        {preferences && (
+                          <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-3">
+                            <h3 className="text-sm font-semibold text-foreground">
+                              AI Preferences
+                            </h3>
+                            <div className="space-y-1">
+                              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Default AI language
+                              </Label>
+                              <div className="text-sm text-foreground">
+                                {preferences.defaultAiLanguage === 'auto'
+                                  ? 'Auto Detect'
+                                  : preferences.defaultAiLanguage}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Change this in Settings → AI Preferences to influence summaries and
+                                formatting.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-semibold text-foreground">System Status</h3>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="flex items-center gap-3 rounded-xl border bg-card/80 p-4 shadow-sm">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <Rss className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Total sources
+                                </div>
+                                <div className="text-xl font-semibold text-foreground">
+                                  {sources.length}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 rounded-xl border bg-card/80 p-4 shadow-sm">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <FileText className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Total articles
+                                </div>
+                                <div className="text-xl font-semibold text-foreground">
+                                  {statusData?.stats?.totalArticles ?? 0}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </main>
     </div>

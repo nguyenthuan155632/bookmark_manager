@@ -40,6 +40,7 @@ import {
 import { apiRequest } from '@/lib/queryClient';
 import { categorySlug } from '@/lib/slug';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { useState, useRef, useEffect } from 'react';
 import {
   DndContext,
@@ -334,6 +335,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
   const [location, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingCategory, setPendingCategory] = useState<
     (Category & { bookmarkCount: number }) | null
@@ -528,7 +530,7 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       active: isActive('/documentation'),
       external: true,
     },
-  ];
+  ].filter(item => item.path !== '/ai-feed-management' || user?.username === 'vensera');
 
   return (
     <>

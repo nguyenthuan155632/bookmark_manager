@@ -250,18 +250,19 @@ class CronService {
     }
   }
 
-  private async fetchHtmlWithHeaders(url: string): Promise<string | null> {
-    try {
-      const headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-      };
+  private async fetchHtmlWithHeaders(url: string, attempt = 0): Promise<string | null> {
+    const maxAttempts = 3;
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Accept-Encoding': 'gzip, deflate',
+      'DNT': '1',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1'
+    } as const;
 
+    try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -272,6 +273,24 @@ class CronService {
 
       clearTimeout(timeoutId);
 
+      if (response.status === 429 || response.status === 503) {
+        if (attempt < maxAttempts - 1) {
+          const retryAfterHeader = response.headers.get('retry-after');
+          let retryMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : 0;
+
+          if (!retryMs || Number.isNaN(retryMs)) {
+            retryMs = Math.min(15000, 2000 * Math.pow(2, attempt));
+          }
+
+          console.warn(`⚠️ Received ${response.status} from ${url}. Retrying in ${retryMs}ms (attempt ${attempt + 1}/${maxAttempts})`);
+          await new Promise(resolve => setTimeout(resolve, retryMs));
+          return this.fetchHtmlWithHeaders(url, attempt + 1);
+        }
+
+        console.error(`❌ Received ${response.status} from ${url} after ${maxAttempts} attempts`);
+        return null;
+      }
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -280,7 +299,14 @@ class CronService {
       console.log(`📄 Fetched HTML content: ${content.length} characters from ${url}`);
       return content;
     } catch (error) {
-      console.error(`❌ Error fetching HTML from ${url}:`, error);
+      if (attempt < maxAttempts - 1) {
+        const backoff = Math.min(10000, 1500 * Math.pow(2, attempt));
+        console.warn(`⚠️ Error fetching HTML from ${url} (attempt ${attempt + 1}/${maxAttempts}). Retrying in ${backoff}ms`, error);
+        await new Promise(resolve => setTimeout(resolve, backoff));
+        return this.fetchHtmlWithHeaders(url, attempt + 1);
+      }
+
+      console.error(`❌ Error fetching HTML from ${url} after ${maxAttempts} attempts:`, error);
       return null;
     }
   }
