@@ -16,6 +16,7 @@ import {
   X,
   MoreVertical,
   BookOpen,
+  Rss,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -507,6 +508,12 @@ export function Sidebar({ isOpen, onClose, onCreateFolder, stats }: SidebarProps
       icon: Globe,
       label: 'Domain Tags',
       active: isActive('/domain-tags'),
+    },
+    {
+      path: '/ai-feed-management',
+      icon: Rss,
+      label: 'AI Feeds',
+      active: isActive('/ai-feed-management'),
     },
     {
       path: '/settings',

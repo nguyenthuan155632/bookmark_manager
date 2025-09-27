@@ -1,16 +1,15 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
-  pgTable,
-  text,
-  varchar,
   boolean,
-  timestamp,
+  index,
   integer,
   json,
   jsonb,
-  index,
+  pgTable,
+  text,
+  timestamp,
+  varchar,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
@@ -320,3 +319,144 @@ export const insertDomainTagSchema = createInsertSchema(domainTags).omit({
 
 export type InsertDomainTag = z.infer<typeof insertDomainTagSchema>;
 export type DomainTag = typeof domainTags.$inferSelect;
+
+// AI Feed Crawler Schema
+
+// AI Crawler Settings - User-specific configuration for feed crawling
+export const aiCrawlerSettings = pgTable('ai_crawler_settings', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  userId: varchar('user_id').notNull().unique(),
+  maxFeedsPerSource: integer('max_feeds_per_source').default(5),
+  isEnabled: boolean('is_enabled').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('ai_crawler_settings_user_id_idx').on(table.userId),
+}));
+
+export const aiFeedSources = pgTable('ai_feed_sources', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  url: text('url').notNull(),
+  userId: varchar('user_id').notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('idle'),
+  lastRunAt: timestamp('last_run_at'),
+  crawlInterval: integer('crawl_interval').default(60),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userUrlIdx: index('ai_feed_sources_user_url_idx').on(table.userId, table.url),
+}));
+
+// AI Feed Articles - Individual articles fetched from feeds
+export const aiFeedArticles = pgTable('ai_feed_articles', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  sourceId: integer('source_id').notNull(),
+  title: varchar('title', { length: 500 }).notNull(),
+  originalContent: text('original_content'),
+  formattedContent: text('formatted_content'),
+  summary: text('summary'),
+  url: text('url').notNull(),
+  imageUrl: text('image_url'),
+  notificationContent: varchar('notification_content', { length: 200 }),
+  notificationSent: boolean('notification_sent').default(false),
+  publishedAt: timestamp('published_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  shareId: varchar('share_id', { length: 20 }),
+  isShared: boolean('is_shared').default(false),
+}, (table) => ({
+  sourceIdIdx: index('ai_feed_articles_source_id_idx').on(table.sourceId),
+  urlIdx: index('ai_feed_articles_url_idx').on(table.url),
+  notificationIdx: index('ai_feed_articles_notification_idx').on(table.notificationSent),
+  shareIdIdx: index('ai_feed_articles_share_id_idx').on(table.shareId),
+}));
+
+// Relations for AI Feed Crawler
+export const aiCrawlerSettingsRelations = relations(aiCrawlerSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [aiCrawlerSettings.userId],
+    references: [users.id],
+  }),
+}));
+
+export const aiFeedSourcesRelations = relations(aiFeedSources, ({ one, many }) => ({
+  user: one(users, {
+    fields: [aiFeedSources.userId],
+    references: [users.id],
+  }),
+  articles: many(aiFeedArticles),
+}));
+
+export const aiFeedArticlesRelations = relations(aiFeedArticles, ({ one }) => ({
+  source: one(aiFeedSources, {
+    fields: [aiFeedArticles.sourceId],
+    references: [aiFeedSources.id],
+  }),
+}));
+
+// Insert schemas for AI Feed Crawler
+export const insertAiCrawlerSettingsSchema = createInsertSchema(aiCrawlerSettings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAiFeedSourceSchema = createInsertSchema(aiFeedSources).omit({
+  id: true,
+  status: true,
+  lastRunAt: true,
+  createdAt: true,
+});
+
+export const insertAiFeedArticleSchema = createInsertSchema(aiFeedArticles).omit({
+  id: true,
+  notificationSent: true,
+  createdAt: true,
+});
+
+// AI Feed Job Queue for persistent processing
+export const aiFeedJobs = pgTable('ai_feed_jobs', {
+  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+  sourceId: integer('source_id').notNull(),
+  userId: varchar('user_id').notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending, running, completed, failed
+  priority: integer('priority').default(0),
+  scheduledAt: timestamp('scheduled_at').defaultNow().notNull(),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  errorMessage: text('error_message'),
+  retryCount: integer('retry_count').default(0),
+  maxRetries: integer('max_retries').default(3),
+  settings: json('settings').notNull(), // Store AI settings with the job
+}, (table) => ({
+  sourceIdIdx: index('ai_feed_jobs_source_id_idx').on(table.sourceId),
+  userIdIdx: index('ai_feed_jobs_user_id_idx').on(table.userId),
+  statusIdx: index('ai_feed_jobs_status_idx').on(table.status),
+  scheduledAtIdx: index('ai_feed_jobs_scheduled_at_idx').on(table.scheduledAt),
+}));
+
+// Relations for AI Feed Jobs
+export const aiFeedJobsRelations = relations(aiFeedJobs, ({ one }) => ({
+  source: one(aiFeedSources, {
+    fields: [aiFeedJobs.sourceId],
+    references: [aiFeedSources.id],
+  }),
+}));
+
+// Insert schema for AI Feed Jobs
+export const insertAiFeedJobSchema = createInsertSchema(aiFeedJobs).omit({
+  id: true,
+  status: true,
+  scheduledAt: true,
+  startedAt: true,
+  completedAt: true,
+  errorMessage: true,
+  retryCount: true,
+});
+
+// Types for AI Feed Crawler
+export type AiCrawlerSettings = typeof aiCrawlerSettings.$inferSelect;
+export type InsertAiCrawlerSettings = z.infer<typeof insertAiCrawlerSettingsSchema>;
+export type AiFeedSource = typeof aiFeedSources.$inferSelect;
+export type InsertAiFeedSource = z.infer<typeof insertAiFeedSourceSchema>;
+export type AiFeedArticle = typeof aiFeedArticles.$inferSelect;
+export type InsertAiFeedArticle = z.infer<typeof insertAiFeedArticleSchema>;
+export type AiFeedJob = typeof aiFeedJobs.$inferSelect;
+export type InsertAiFeedJob = z.infer<typeof insertAiFeedJobSchema>;

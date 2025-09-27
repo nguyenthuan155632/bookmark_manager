@@ -1,0 +1,484 @@
+import {
+  aiCrawlerSettings,
+  aiFeedArticles,
+  aiFeedSources,
+  userPreferences,
+  type InsertAiCrawlerSettings,
+  type InsertAiFeedSource
+} from '@shared/schema.js';
+import { and, desc, eq, sql } from 'drizzle-orm';
+import type { Express } from 'express';
+import { z } from 'zod';
+import { requireAuth } from '../auth';
+import { db } from '../db';
+import { getUserId } from './shared';
+
+export function registerAiFeedRoutes(app: Express) {
+  // Get crawler settings for current user
+  app.get('/api/ai-feeds/settings', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const settings = await db
+        .select()
+        .from(aiCrawlerSettings)
+        .where(eq(aiCrawlerSettings.userId, userId));
+
+      let crawlerSettings;
+      if (settings.length === 0) {
+        // Create default settings if none exist
+        const newSettings: InsertAiCrawlerSettings = {
+          userId,
+          maxFeedsPerSource: 5,
+          isEnabled: true
+        };
+        await db.insert(aiCrawlerSettings).values(newSettings);
+        crawlerSettings = [newSettings];
+      } else {
+        crawlerSettings = settings;
+      }
+
+      // Get user preferences for language settings
+      const preferences = await db
+        .select()
+        .from(userPreferences)
+        .where(eq(userPreferences.userId, userId));
+
+      res.json({
+        settings: crawlerSettings,
+        preferences: preferences[0] || null
+      });
+    } catch (error) {
+      console.error('Error fetching AI feed settings:', error);
+      res.status(500).json({ message: 'Failed to fetch settings' });
+    }
+  });
+
+  // Update crawler settings
+  app.put('/api/ai-feeds/settings', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const updateSettingsSchema = z.object({
+        maxFeedsPerSource: z.number().int().min(1).max(50).optional(),
+        isEnabled: z.boolean().optional()
+      });
+
+      const updates = updateSettingsSchema.parse(req.body);
+
+      const result = await db
+        .update(aiCrawlerSettings)
+        .set(updates)
+        .where(eq(aiCrawlerSettings.userId, userId))
+        .returning();
+
+      res.json({ settings: result[0] });
+    } catch (error) {
+      console.error('Error updating AI feed settings:', error);
+      res.status(500).json({ message: 'Failed to update settings' });
+    }
+  });
+
+  // Get all feed sources for current user
+  app.get('/api/ai-feeds/sources', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const sources = await db
+        .select()
+        .from(aiFeedSources)
+        .where(eq(aiFeedSources.userId, userId))
+        .orderBy(desc(aiFeedSources.createdAt));
+
+      res.json({ sources });
+    } catch (error) {
+      console.error('Error fetching AI feed sources:', error);
+      res.status(500).json({ message: 'Failed to fetch sources' });
+    }
+  });
+
+  // Add new feed source
+  app.post('/api/ai-feeds/sources', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const insertSourceSchema = z.object({
+        url: z.string().url('Please provide a valid URL'),
+        crawlInterval: z.number().int().min(1).max(1440).default(60),
+        isActive: z.boolean().default(true)
+      });
+
+      const { url, crawlInterval, isActive } = insertSourceSchema.parse(req.body);
+
+      const newSource: InsertAiFeedSource = {
+        url,
+        userId,
+        crawlInterval,
+        isActive
+      };
+
+      const result = await db.insert(aiFeedSources).values(newSource).returning();
+      res.status(201).json({ source: result[0] });
+    } catch (error) {
+      console.error('Error adding AI feed source:', error);
+      res.status(500).json({ message: 'Failed to add source' });
+    }
+  });
+
+  // Update feed source
+  app.put('/api/ai-feeds/sources/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const sourceId = parseInt(req.params.id);
+
+      const updateSourceSchema = z.object({
+        url: z.string().url('Please provide a valid URL').optional(),
+        crawlInterval: z.number().int().min(1).max(1440).optional(),
+        isActive: z.boolean().optional()
+      });
+
+      const updates = updateSourceSchema.parse(req.body);
+
+      const result = await db
+        .update(aiFeedSources)
+        .set(updates)
+        .where(and(eq(aiFeedSources.id, sourceId), eq(aiFeedSources.userId, userId)))
+        .returning();
+
+      if (result.length === 0) {
+        return res.status(404).json({ message: 'Source not found' });
+      }
+
+      res.json({ source: result[0] });
+    } catch (error) {
+      console.error('Error updating AI feed source:', error);
+      res.status(500).json({ message: 'Failed to update source' });
+    }
+  });
+
+  // Delete feed source
+  app.delete('/api/ai-feeds/sources/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const sourceId = parseInt(req.params.id);
+
+      const result = await db
+        .delete(aiFeedSources)
+        .where(and(eq(aiFeedSources.id, sourceId), eq(aiFeedSources.userId, userId)))
+        .returning();
+
+      if (result.length === 0) {
+        return res.status(404).json({ message: 'Source not found' });
+      }
+
+      // Also delete associated articles
+      await db
+        .delete(aiFeedArticles)
+        .where(eq(aiFeedArticles.sourceId, sourceId));
+
+      res.json({ message: 'Source deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting AI feed source:', error);
+      res.status(500).json({ message: 'Failed to delete source' });
+    }
+  });
+
+  // Get articles for current user
+  app.get('/api/ai-feeds/articles', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
+
+      const articles = await db
+        .select({
+          id: aiFeedArticles.id,
+          sourceId: aiFeedArticles.sourceId,
+          title: aiFeedArticles.title,
+          summary: aiFeedArticles.summary,
+          url: aiFeedArticles.url,
+          imageUrl: aiFeedArticles.imageUrl,
+          notificationContent: aiFeedArticles.notificationContent,
+          notificationSent: aiFeedArticles.notificationSent,
+          publishedAt: aiFeedArticles.publishedAt,
+          createdAt: aiFeedArticles.createdAt,
+          sourceUrl: aiFeedSources.url
+        })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(eq(aiFeedSources.userId, userId))
+        .orderBy(desc(aiFeedArticles.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      const totalCount = await db
+        .select({ count: sql`count(*)` })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(eq(aiFeedSources.userId, userId));
+
+      res.json({
+        articles,
+        pagination: {
+          page,
+          limit,
+          total: parseInt(totalCount[0].count as string),
+          totalPages: Math.ceil(parseInt(totalCount[0].count as string) / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching AI feed articles:', error);
+      res.status(500).json({ message: 'Failed to fetch articles' });
+    }
+  });
+
+  // Manually trigger feed processing
+  app.post('/api/ai-feeds/sources/:id/trigger', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const sourceId = parseInt(req.params.id);
+
+      const source = await db
+        .select()
+        .from(aiFeedSources)
+        .where(and(eq(aiFeedSources.id, sourceId), eq(aiFeedSources.userId, userId)));
+
+      if (source.length === 0) {
+        return res.status(404).json({ message: 'Source not found' });
+      }
+
+      console.log(`🚀 Manually triggering feed processing for source: ${source[0].url}`);
+
+      // Create a job in the queue (high priority for manual triggers)
+      const { jobQueueService } = await import('../services/job-queue-service.js');
+      const job = await jobQueueService.createJob(sourceId, userId, 10); // Priority 10 for manual triggers
+
+      // Update source status to indicate it's queued
+      await db
+        .update(aiFeedSources)
+        .set({ status: 'pending' })
+        .where(eq(aiFeedSources.id, sourceId));
+
+      res.json({
+        message: 'Feed processing queued successfully',
+        jobId: job.id,
+        estimatedWaitTime: 'Job will be processed within 30 seconds'
+      });
+    } catch (error) {
+      console.error('Error triggering feed processing:', error);
+      res.status(500).json({ message: 'Failed to queue processing' });
+    }
+  });
+
+  // Get feed processing status
+  app.get('/api/ai-feeds/status', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+
+      const sources = await db
+        .select({
+          id: aiFeedSources.id,
+          url: aiFeedSources.url,
+          status: aiFeedSources.status,
+          lastRunAt: aiFeedSources.lastRunAt,
+          crawlInterval: aiFeedSources.crawlInterval,
+          isActive: aiFeedSources.isActive
+        })
+        .from(aiFeedSources)
+        .where(eq(aiFeedSources.userId, userId));
+
+      const totalArticles = await db
+        .select({ count: sql`count(*)` })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(eq(aiFeedSources.userId, userId));
+
+      const unreadArticles = await db
+        .select({ count: sql`count(*)` })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(and(eq(aiFeedSources.userId, userId), eq(aiFeedArticles.notificationSent, false)));
+
+      // Get job queue stats
+      const { jobQueueService } = await import('../services/job-queue-service.js');
+      const jobStats = await jobQueueService.getJobStats(userId);
+
+      res.json({
+        sources,
+        stats: {
+          totalArticles: parseInt(totalArticles[0].count as string),
+          unreadArticles: parseInt(unreadArticles[0].count as string),
+          jobQueue: jobStats
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching AI feed status:', error);
+      res.status(500).json({ message: 'Failed to fetch status' });
+    }
+  });
+
+  // Get user's job queue
+  app.get('/api/ai-feeds/jobs', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { jobQueueService } = await import('../services/job-queue-service.js');
+      const jobs = await jobQueueService.getUserJobs(userId);
+
+      res.json({ jobs });
+    } catch (error) {
+      console.error('Error fetching user jobs:', error);
+      res.status(500).json({ message: 'Failed to fetch jobs' });
+    }
+  });
+
+  // Manually trigger job processing
+  app.post('/api/ai-feeds/jobs/process', requireAuth, async (req, res) => {
+    try {
+      const { jobQueueService } = await import('../services/job-queue-service.js');
+      await jobQueueService.triggerProcessing();
+
+      res.json({ message: 'Job processing triggered manually' });
+    } catch (error) {
+      console.error('Error triggering job processing:', error);
+      res.status(500).json({ message: 'Failed to trigger job processing' });
+    }
+  });
+
+  // Share an article
+  app.post('/api/ai-feeds/articles/:id/share', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const articleId = parseInt(req.params.id);
+
+      // Verify the article belongs to the current user
+      const article = await db
+        .select({
+          id: aiFeedArticles.id,
+          title: aiFeedArticles.title,
+          sourceId: aiFeedArticles.sourceId
+        })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)));
+
+      if (article.length === 0) {
+        return res.status(404).json({ message: 'Article not found' });
+      }
+
+      // Generate a unique share ID
+      const shareId = Math.random().toString(36).substring(2, 15);
+
+      // Update the article with share information
+      const result = await db
+        .update(aiFeedArticles)
+        .set({
+          shareId,
+          isShared: true
+        })
+        .where(eq(aiFeedArticles.id, articleId))
+        .returning();
+
+      res.json({
+        article: result[0],
+        shareUrl: `/shared-article/${shareId}`
+      });
+    } catch (error) {
+      console.error('Error sharing article:', error);
+      res.status(500).json({ message: 'Failed to share article' });
+    }
+  });
+
+  // Get shared article (public endpoint)
+  app.get('/api/shared-article/:shareId', async (req, res) => {
+    try {
+      const { shareId } = req.params;
+
+      const article = await db
+        .select({
+          id: aiFeedArticles.id,
+          title: aiFeedArticles.title,
+          summary: aiFeedArticles.summary,
+          formattedContent: aiFeedArticles.formattedContent,
+          originalContent: aiFeedArticles.originalContent,
+          url: aiFeedArticles.url,
+          imageUrl: aiFeedArticles.imageUrl,
+          publishedAt: aiFeedArticles.publishedAt,
+          createdAt: aiFeedArticles.createdAt,
+          sourceUrl: aiFeedSources.url
+        })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(and(eq(aiFeedArticles.shareId, shareId), eq(aiFeedArticles.isShared, true)));
+
+      if (article.length === 0) {
+        return res.status(404).json({ message: 'Article not found or is no longer shared' });
+      }
+
+      res.json({ article: article[0] });
+    } catch (error) {
+      console.error('Error fetching shared article:', error);
+      res.status(500).json({ message: 'Failed to fetch article' });
+    }
+  });
+
+  // Delete an article
+  app.delete('/api/ai-feeds/articles/:id', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const articleId = parseInt(req.params.id, 10);
+
+      // Verify the article belongs to the current user
+      const article = await db
+        .select()
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)));
+
+      if (article.length === 0) {
+        return res.status(404).json({ message: 'Article not found' });
+      }
+
+      // Delete the article (we already verified ownership above)
+      await db
+        .delete(aiFeedArticles)
+        .where(eq(aiFeedArticles.id, articleId))
+        .returning();
+
+      res.json({ message: 'Article deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting article:', error);
+      res.status(500).json({ message: 'Failed to delete article' });
+    }
+  });
+
+  // Unshare an article
+  app.delete('/api/ai-feeds/articles/:id/share', requireAuth, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const articleId = parseInt(req.params.id);
+
+      // Verify the article belongs to the current user
+      const article = await db
+        .select()
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)));
+
+      if (article.length === 0) {
+        return res.status(404).json({ message: 'Article not found' });
+      }
+
+      // Remove share information
+      await db
+        .update(aiFeedArticles)
+        .set({
+          shareId: null,
+          isShared: false
+        })
+        .where(eq(aiFeedArticles.id, articleId))
+        .returning();
+
+      res.json({ message: 'Article unshared successfully' });
+    } catch (error) {
+      console.error('Error unsharing article:', error);
+      res.status(500).json({ message: 'Failed to unshare article' });
+    }
+  });
+}

@@ -16,6 +16,8 @@ import { registerLinkCheckerRoutes } from './routes/link-checker-routes';
 import { registerDomainTagsRoutes } from './routes/domain-tags-routes';
 import { registerDocumentationRoutes } from './routes/documentation-routes';
 import { registerBookmarkDiscoveryRoutes } from './routes/bookmark-discovery-routes';
+import { registerAiFeedRoutes } from './routes/ai-feed-routes';
+import { registerAIRewriteRoutes } from './routes/ai-rewrite-routes';
 
 const CANONICAL_BASE_URL =
   process.env.CANONICAL_BASE_URL?.trim() || process.env.VITE_PUBLIC_BASE_URL?.trim();
@@ -111,6 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerBookmarkDiscoveryRoutes(app); // Must be before bookmark routes to avoid conflicts
   registerBookmarkRoutes(app);
   registerAiRoutes(app);
+  registerAiFeedRoutes(app);
+  registerAIRewriteRoutes(app);
   registerCategoryRoutes(app);
   registerStatsRoutes(app);
   registerPreferencesRoutes(app);

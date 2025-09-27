@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import express, { type Request, Response, NextFunction } from 'express';
+import express, { NextFunction, type Request, Response } from 'express';
 import { gzipSync } from 'node:zlib';
 import { registerRoutes } from './routes';
-import { setupVite, serveStatic, log } from './vite';
 import cronService from './services/cron-service';
+import { log, serveStatic, setupVite } from './vite';
 
 const MIN_HTML_COMPRESSION_SIZE = 1024; // avoid compressing tiny payloads
 
