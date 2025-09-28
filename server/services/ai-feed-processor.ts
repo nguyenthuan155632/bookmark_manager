@@ -8,6 +8,7 @@ import { eq } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { db } from '../db';
 import { pushNotificationService } from './push-notification-service.js';
+import { ensureShareLinkForArticle } from './share-link-service.js';
 
 export class AiFeedProcessor {
   private openai: OpenAI;
@@ -71,9 +72,16 @@ export class AiFeedProcessor {
 
         if (inserted.length > 0) {
           const createdArticle = inserted[0];
+
+          const shareId = await ensureShareLinkForArticle(createdArticle.id, feed.userId);
+          const sharedArticle = {
+            ...createdArticle,
+            url: `/shared-article/${shareId}`,
+          };
+
           const notificationResult = await pushNotificationService.sendArticleNotification(
             feed.userId,
-            createdArticle,
+            sharedArticle,
           );
 
           if (notificationResult?.sent) {
