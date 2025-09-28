@@ -4,6 +4,7 @@ import type { Express } from 'express';
 import { requireAuth } from '../auth';
 import { db } from '../db';
 import { pushNotificationService } from '../services/push-notification-service.js';
+import { ensureShareLinkForArticle } from '../services/share-link-service.js';
 
 export function registerPushSubscriptionRoutes(app: Express): void {
   app.post('/api/push-subscriptions', requireAuth, async (req, res) => {
@@ -74,13 +75,7 @@ export function registerPushSubscriptionRoutes(app: Express): void {
       }
 
       const latestArticle = await db
-        .select({
-          id: aiFeedArticles.id,
-          title: aiFeedArticles.title,
-          notificationContent: aiFeedArticles.notificationContent,
-          summary: aiFeedArticles.summary,
-          url: aiFeedArticles.url,
-        })
+        .select({ article: aiFeedArticles })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
         .where(eq(aiFeedSources.userId, userId))
@@ -92,7 +87,10 @@ export function registerPushSubscriptionRoutes(app: Express): void {
         return;
       }
 
-      const article = latestArticle[0];
+      const article = latestArticle[0].article;
+
+      const shareId = await ensureShareLinkForArticle(article.id, userId);
+      const shareUrl = `/shared-article/${shareId}`;
       const body =
         article.notificationContent ||
         article.summary?.slice(0, 180) ||
@@ -101,7 +99,7 @@ export function registerPushSubscriptionRoutes(app: Express): void {
       res.json({
         title: article.title,
         body,
-        url: article.url,
+        url: shareUrl,
       });
     } catch (error) {
       console.error('Failed to load latest push article', error);
@@ -136,10 +134,13 @@ export function registerPushSubscriptionRoutes(app: Express): void {
         return;
       }
 
-      const delivered = await pushNotificationService.sendArticleNotification(
-        userId,
-        articleResult[0].article,
-      );
+      const shareId = await ensureShareLinkForArticle(articleResult[0].article.id, userId);
+      const sharedArticle = {
+        ...articleResult[0].article,
+        url: `/shared-article/${shareId}`,
+      };
+
+      const delivered = await pushNotificationService.sendArticleNotification(userId, sharedArticle);
 
       if (!delivered?.sent) {
         res.status(400).json({ message: 'No active push subscriptions' });
