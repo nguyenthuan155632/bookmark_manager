@@ -567,10 +567,15 @@ export default function AiFeedManagementPage() {
     },
   });
 
+  const [sendingArticleId, setSendingArticleId] = useState<number | null>(null);
+
   const sendPushMutation = useMutation({
-    mutationFn: async (articleId: number) => {
+    mutationFn: async ({ articleId }: { articleId: number }) => {
       const res = await apiRequest('POST', `/api/push/articles/${articleId}/send`);
       return res.json();
+    },
+    onMutate: ({ articleId }) => {
+      setSendingArticleId(articleId);
     },
     onSuccess: () => {
       toast({ description: 'Push notification sent' });
@@ -580,6 +585,9 @@ export default function AiFeedManagementPage() {
         variant: 'destructive',
         description: error?.message || 'Failed to send push notification',
       });
+    },
+    onSettled: () => {
+      setSendingArticleId(null);
     },
   });
 
@@ -1266,8 +1274,11 @@ export default function AiFeedManagementPage() {
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => sendPushMutation.mutate(article.id)}
-                              disabled={sendPushMutation.isPending || !canSendPushNotifications}
+                              onClick={() => sendPushMutation.mutate({ articleId: article.id })}
+                              disabled={
+                                (sendPushMutation.isPending && sendingArticleId === article.id) ||
+                                !canSendPushNotifications
+                              }
                               title={
                                 canSendPushNotifications
                                   ? undefined
@@ -1276,7 +1287,9 @@ export default function AiFeedManagementPage() {
                                     : 'Push notifications not configured'
                               }
                             >
-                              {sendPushMutation.isPending ? 'Sending…' : 'Send Push'}
+                              {sendPushMutation.isPending && sendingArticleId === article.id
+                                ? 'Sending…'
+                                : 'Send Push'}
                             </Button>
                             <Button
                               size="sm"

@@ -1,9 +1,10 @@
 import { aiFeedArticles, aiFeedSources, pushSubscriptions, type AiFeedArticle } from '@shared/schema.js';
 import { and, desc, eq } from 'drizzle-orm';
-import { createSign } from 'node:crypto';
+import { webcrypto } from 'node:crypto';
 import { db } from '../db';
 
-function base64UrlEncode(buffer: Buffer): string {
+function base64UrlEncode(data: Buffer | Uint8Array): string {
+  const buffer = data instanceof Buffer ? data : Buffer.from(data);
   return buffer
     .toString('base64')
     .replace(/\+/g, '-')
@@ -17,17 +18,58 @@ function decodeBase64Url(input: string): Buffer {
   return Buffer.from(normalized + padding, 'base64');
 }
 
-function toPemPrivateKey(privateKey: string, publicKey: string): string {
-  const privateKeyBuffer = decodeBase64Url(privateKey);
-  const publicKeyBuffer = decodeBase64Url(publicKey);
+function derToJose(derSignature: Buffer): Buffer {
+  if (derSignature.length === 64 && derSignature[0] !== 0x30) {
+    // Already raw (r||s)
+    return Buffer.from(derSignature);
+  }
 
-  const asn1Prefix = Buffer.from('30740201010420', 'hex');
-  const oidSecp256r1 = Buffer.from('a00706052b8104000a', 'hex');
-  const publicKeyHeader = Buffer.from('a144034200', 'hex');
-  const der = Buffer.concat([asn1Prefix, privateKeyBuffer, oidSecp256r1, publicKeyHeader, publicKeyBuffer]);
-  const base64Der = der.toString('base64');
-  const wrapped = base64Der.match(/.{1,64}/g)?.join('\n') ?? base64Der;
-  return `-----BEGIN EC PRIVATE KEY-----\n${wrapped}\n-----END EC PRIVATE KEY-----`;
+  if (derSignature[0] !== 0x30) {
+    throw new Error('Invalid DER signature');
+  }
+
+  let offset = 2;
+  let length = derSignature[1];
+  if (length & 0x80) {
+    const byteLength = length & 0x7f;
+    length = 0;
+    for (let i = 0; i < byteLength; i += 1) {
+      length = (length << 8) | derSignature[offset + i];
+    }
+    offset += 1 + byteLength;
+  }
+
+  const readInteger = (buffer: Buffer, start: number): { value: Buffer; next: number } => {
+    if (buffer[start] !== 0x02) {
+      throw new Error('Invalid DER integer');
+    }
+
+    let len = buffer[start + 1];
+    let intStart = start + 2;
+
+    if (len & 0x80) {
+      const byteLen = len & 0x7f;
+      len = 0;
+      for (let i = 0; i < byteLen; i += 1) {
+        len = (len << 8) | buffer[intStart + i];
+      }
+      intStart += byteLen;
+    }
+
+    const value = buffer.slice(intStart, intStart + len);
+    return { value, next: intStart + len };
+  };
+
+  const { value: r, next: afterR } = readInteger(derSignature, offset);
+  const { value: s } = readInteger(derSignature, afterR);
+
+  const rPadded = Buffer.alloc(32);
+  const sPadded = Buffer.alloc(32);
+
+  r.slice(-32).copy(rPadded, 32 - Math.min(32, r.length));
+  s.slice(-32).copy(sPadded, 32 - Math.min(32, s.length));
+
+  return Buffer.concat([rPadded, sPadded]);
 }
 
 export type PushNotificationPayload = {
@@ -39,21 +81,17 @@ export type PushNotificationPayload = {
 class PushNotificationService {
   private readonly vapidPublicKey: string;
   private readonly vapidPrivateKey: string;
-  private readonly vapidPrivateKeyPem: string | null;
   private readonly contact: string;
+  private signingKeyPromise: Promise<CryptoKey> | null = null;
 
   constructor() {
-    const publicKey = process.env.WEB_PUSH_PUBLIC_KEY?.trim();
-    const privateKey = process.env.WEB_PUSH_PRIVATE_KEY?.trim();
+    this.vapidPublicKey = process.env.WEB_PUSH_PUBLIC_KEY?.trim() || '';
+    this.vapidPrivateKey = process.env.WEB_PUSH_PRIVATE_KEY?.trim() || '';
     this.contact = process.env.WEB_PUSH_CONTACT_EMAIL?.trim() || 'mailto:nt.apple.it@gmail.com';
-
-    this.vapidPublicKey = publicKey || '';
-    this.vapidPrivateKey = privateKey || '';
-    this.vapidPrivateKeyPem = publicKey && privateKey ? toPemPrivateKey(privateKey, publicKey) : null;
   }
 
   get isConfigured(): boolean {
-    return Boolean(this.vapidPrivateKeyPem && this.vapidPublicKey);
+    return Boolean(this.vapidPublicKey && this.vapidPrivateKey);
   }
 
   async registerSubscription(
@@ -98,8 +136,47 @@ class PushNotificationService {
     return existing.length > 0;
   }
 
-  private createVapidJwt(endpoint: string): string {
-    if (!this.vapidPrivateKeyPem || !this.vapidPublicKey) {
+  private async getSigningKey(): Promise<CryptoKey> {
+    if (!this.isConfigured) {
+      throw new Error('WEB_PUSH_PUBLIC_KEY and WEB_PUSH_PRIVATE_KEY must be configured');
+    }
+
+    if (!this.signingKeyPromise) {
+      const privateKeyBytes = decodeBase64Url(this.vapidPrivateKey);
+      const publicKeyBytes = decodeBase64Url(this.vapidPublicKey);
+
+      if (publicKeyBytes.length !== 65 || publicKeyBytes[0] !== 0x04) {
+        throw new Error('Invalid VAPID public key format');
+      }
+
+      const x = base64UrlEncode(publicKeyBytes.subarray(1, 33));
+      const y = base64UrlEncode(publicKeyBytes.subarray(33));
+      const d = base64UrlEncode(privateKeyBytes);
+
+      const jwk: JsonWebKey = {
+        kty: 'EC',
+        crv: 'P-256',
+        x,
+        y,
+        d,
+        ext: false,
+        key_ops: ['sign'],
+      };
+
+      this.signingKeyPromise = webcrypto.subtle.importKey(
+        'jwk',
+        jwk,
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        false,
+        ['sign'],
+      );
+    }
+
+    return this.signingKeyPromise;
+  }
+
+  private async createVapidJwt(endpoint: string): Promise<string> {
+    if (!this.isConfigured) {
       throw new Error('WEB_PUSH_PUBLIC_KEY and WEB_PUSH_PRIVATE_KEY must be configured');
     }
 
@@ -121,16 +198,19 @@ class PushNotificationService {
     );
 
     const unsignedToken = `${header}.${payload}`;
-    const signer = createSign('SHA256');
-    signer.update(unsignedToken);
-    signer.end();
-    const signature = signer.sign({ key: this.vapidPrivateKeyPem, dsaEncoding: 'ieee-p1363' });
+    const signingKey = await this.getSigningKey();
+    const signatureBuffer = await webcrypto.subtle.sign(
+      { name: 'ECDSA', hash: 'SHA-256' },
+      signingKey,
+      Buffer.from(unsignedToken),
+    );
+    const signature = derToJose(Buffer.from(signatureBuffer));
     const signatureB64 = base64UrlEncode(signature);
     return `${unsignedToken}.${signatureB64}`;
   }
 
   private async postPush(endpoint: string): Promise<Response> {
-    const jwt = this.createVapidJwt(endpoint);
+    const jwt = await this.createVapidJwt(endpoint);
     return fetch(endpoint, {
       method: 'POST',
       headers: {
