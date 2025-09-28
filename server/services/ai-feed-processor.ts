@@ -7,6 +7,7 @@ import {
 import { eq } from 'drizzle-orm';
 import OpenAI from 'openai';
 import { db } from '../db';
+import { pushNotificationService } from './push-notification-service.js';
 
 export class AiFeedProcessor {
   private openai: OpenAI;
@@ -63,7 +64,25 @@ export class AiFeedProcessor {
         );
 
         // Save to database
-        await db.insert(aiFeedArticles).values(processedArticle);
+        const inserted = await db
+          .insert(aiFeedArticles)
+          .values(processedArticle)
+          .returning();
+
+        if (inserted.length > 0) {
+          const createdArticle = inserted[0];
+          const notificationResult = await pushNotificationService.sendArticleNotification(
+            feed.userId,
+            createdArticle,
+          );
+
+          if (notificationResult?.sent) {
+            await db
+              .update(aiFeedArticles)
+              .set({ notificationSent: true })
+              .where(eq(aiFeedArticles.id, createdArticle.id));
+          }
+        }
 
         const articleEndTime = Date.now();
         const articleDuration = articleEndTime - articleStartTime;

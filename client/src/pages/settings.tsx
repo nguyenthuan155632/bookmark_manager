@@ -32,6 +32,11 @@ import {
 } from '@/components/ui/select';
 import { SEO } from '@/lib/seo';
 import { TIMEZONE_OPTIONS, normaliseTimezone } from '@/lib/timezones';
+import {
+  getCurrentSubscriptionEndpoint,
+  subscribeUserToPush,
+  unsubscribeUserFromPush,
+} from '@/lib/push-subscription';
 
 export default function SettingsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -57,6 +62,12 @@ export default function SettingsPage() {
   }>({ queryKey: ['/api/preferences'] });
 
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['/api/categories'] });
+  const {
+    data: pushStatus,
+    refetch: refetchPushStatus,
+  } = useQuery<{ subscribed: boolean; supported: boolean }>({
+    queryKey: ['/api/push-subscriptions/status'],
+  });
 
   type PrefUpdate = {
     theme?: 'light' | 'dark';
@@ -122,6 +133,38 @@ export default function SettingsPage() {
     },
     onError: (e: any) => {
       toast({ variant: 'destructive', description: e?.message || 'Failed to change password' });
+    },
+  });
+
+  const enablePushMutation = useMutation({
+    mutationFn: async () => {
+      const subscription = await subscribeUserToPush();
+      await apiRequest('POST', '/api/push-subscriptions', subscription);
+    },
+    onSuccess: () => {
+      refetchPushStatus();
+      toast({ description: 'Push notifications enabled' });
+    },
+    onError: (e: any) => {
+      toast({ variant: 'destructive', description: e?.message || 'Failed to enable push' });
+    },
+  });
+
+  const disablePushMutation = useMutation({
+    mutationFn: async () => {
+      const endpoint = await unsubscribeUserFromPush();
+      const targetEndpoint = endpoint || (await getCurrentSubscriptionEndpoint());
+      if (!targetEndpoint) {
+        throw new Error('No push subscription to remove');
+      }
+      await apiRequest('DELETE', '/api/push-subscriptions', { endpoint: targetEndpoint });
+    },
+    onSuccess: () => {
+      refetchPushStatus();
+      toast({ description: 'Push notifications disabled' });
+    },
+    onError: (e: any) => {
+      toast({ variant: 'destructive', description: e?.message || 'Failed to disable push' });
     },
   });
 
@@ -629,6 +672,53 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Push Notifications</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {pushStatus === undefined ? (
+                <div className="text-sm text-muted-foreground">Loading push preferences…</div>
+              ) : !pushStatus.supported ? (
+                <div className="rounded-md border border-dashed border-muted-foreground/50 p-4 text-sm text-muted-foreground">
+                  Configure <code>WEB_PUSH_PUBLIC_KEY</code> and <code>WEB_PUSH_PRIVATE_KEY</code> on the
+                  server to enable push notifications.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <div className="font-medium">Article alerts on new AI content</div>
+                    <p className="text-sm text-muted-foreground">
+                      Receive a browser notification whenever new AI processed articles are created for
+                      your feeds.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Status: {pushStatus?.subscribed ? 'Enabled' : 'Disabled'}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    {pushStatus?.subscribed ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => disablePushMutation.mutate()}
+                        disabled={disablePushMutation.isPending}
+                      >
+                        {disablePushMutation.isPending ? 'Disabling…' : 'Disable'}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => enablePushMutation.mutate()}
+                        disabled={enablePushMutation.isPending}
+                      >
+                        {enablePushMutation.isPending ? 'Enabling…' : 'Enable'}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

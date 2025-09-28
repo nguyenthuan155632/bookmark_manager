@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
   varchar,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -411,6 +412,22 @@ export const aiFeedArticlesRelations = relations(aiFeedArticles, ({ one }) => ({
   }),
 }));
 
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
+    userId: varchar('user_id').notNull(),
+    endpoint: text('endpoint').notNull(),
+    authKey: varchar('auth_key', { length: 255 }).notNull(),
+    p256dhKey: varchar('p256dh_key', { length: 255 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    endpointUniqueIdx: uniqueIndex('push_subscriptions_endpoint_idx').on(table.endpoint),
+    userIdx: index('push_subscriptions_user_idx').on(table.userId),
+  }),
+);
+
 // Insert schemas for AI Feed Crawler
 export const insertAiCrawlerSettingsSchema = createInsertSchema(aiCrawlerSettings).omit({
   id: true,
@@ -483,3 +500,5 @@ export type AiFeedArticle = typeof aiFeedArticles.$inferSelect;
 export type InsertAiFeedArticle = z.infer<typeof insertAiFeedArticleSchema>;
 export type AiFeedJob = typeof aiFeedJobs.$inferSelect;
 export type InsertAiFeedJob = z.infer<typeof insertAiFeedJobSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
