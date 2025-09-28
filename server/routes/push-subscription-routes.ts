@@ -108,4 +108,48 @@ export function registerPushSubscriptionRoutes(app: Express): void {
       res.status(500).json({ message: 'Failed to load latest article' });
     }
   });
+
+  app.post('/api/push/articles/:id/send', requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user.id as string;
+      const articleId = Number.parseInt(req.params.id, 10);
+
+      if (!Number.isFinite(articleId)) {
+        res.status(400).json({ message: 'Invalid article id' });
+        return;
+      }
+
+      if (!pushNotificationService.isConfigured) {
+        res.status(400).json({ message: 'Push notifications are not configured' });
+        return;
+      }
+
+      const articleResult = await db
+        .select({ article: aiFeedArticles })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)))
+        .limit(1);
+
+      if (!articleResult.length) {
+        res.status(404).json({ message: 'Article not found' });
+        return;
+      }
+
+      const delivered = await pushNotificationService.sendArticleNotification(
+        userId,
+        articleResult[0].article,
+      );
+
+      if (!delivered?.sent) {
+        res.status(400).json({ message: 'No active push subscriptions' });
+        return;
+      }
+
+      res.json({ ok: true, payload: delivered.payload });
+    } catch (error) {
+      console.error('Failed to send push notification manually', error);
+      res.status(500).json({ message: 'Failed to send push notification' });
+    }
+  });
 }

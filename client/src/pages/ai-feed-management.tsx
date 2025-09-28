@@ -328,6 +328,10 @@ export default function AiFeedManagementPage() {
     };
   }>({ queryKey: ['/api/ai-feeds/status'] });
 
+  const { data: pushStatus } = useQuery<{ subscribed: boolean; supported: boolean }>({
+    queryKey: ['/api/push-subscriptions/status'],
+  });
+
   // Form states
   const [newSourceUrl, setNewSourceUrl] = useState('');
   const [editingSource, setEditingSource] = useState<AiFeedSource | null>(null);
@@ -563,6 +567,22 @@ export default function AiFeedManagementPage() {
     },
   });
 
+  const sendPushMutation = useMutation({
+    mutationFn: async (articleId: number) => {
+      const res = await apiRequest('POST', `/api/push/articles/${articleId}/send`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ description: 'Push notification sent' });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        description: error?.message || 'Failed to send push notification',
+      });
+    },
+  });
+
   const handleCreateSource = () => {
     if (!newSourceUrl.trim()) return;
     createSourceMutation.mutate({
@@ -697,6 +717,7 @@ export default function AiFeedManagementPage() {
   const canGoToNextArticlePage = articlesPage < totalArticlePages;
   const isInitialArticlesLoad = activeTab === 'articles' && isLoadingArticles && !articlesData;
   const isRefreshingArticles = activeTab === 'articles' && isFetchingArticles && !!articlesData;
+  const canSendPushNotifications = Boolean(pushStatus?.supported && pushStatus?.subscribed);
 
   const articlePageItems = useMemo(() => {
     const total = totalArticlePages;
@@ -1239,14 +1260,29 @@ export default function AiFeedManagementPage() {
                                 onClick={() => shareArticleMutation.mutate(article.id)}
                                 disabled={shareArticleMutation.isPending}
                               >
-                                <Share2 className="h-4 w-4" />
-                                Share Article
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleDeleteArticle(article.id)}
-                                disabled={deleteArticleMutation.isPending}
+                              <Share2 className="h-4 w-4" />
+                              Share Article
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => sendPushMutation.mutate(article.id)}
+                              disabled={sendPushMutation.isPending || !canSendPushNotifications}
+                              title={
+                                canSendPushNotifications
+                                  ? undefined
+                                  : pushStatus?.supported
+                                    ? 'Push notifications not enabled in settings'
+                                    : 'Push notifications not configured'
+                              }
+                            >
+                              {sendPushMutation.isPending ? 'Sending…' : 'Send Push'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteArticle(article.id)}
+                              disabled={deleteArticleMutation.isPending}
                               >
                                 <Trash2 className="h-4 w-4 mr-1" />
                                 Delete

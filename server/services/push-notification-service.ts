@@ -12,7 +12,9 @@ function base64UrlEncode(buffer: Buffer): string {
 }
 
 function decodeBase64Url(input: string): Buffer {
-  return Buffer.from(input.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = '='.repeat((4 - (normalized.length % 4)) % 4);
+  return Buffer.from(normalized + padding, 'base64');
 }
 
 function toPemPrivateKey(privateKey: string, publicKey: string): string {
