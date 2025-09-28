@@ -26,7 +26,7 @@ class CronService {
 
   private setupCronJob(): void {
     // Run daily in 7:00 AM
-    const cronExpression = '0 7 * * *';
+    const cronExpression = '2 1 * * *';
     // const cronExpression = '*/1 * * * *';
 
     this.cronJob = cron.schedule(cronExpression, () => {
