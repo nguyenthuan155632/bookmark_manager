@@ -1203,118 +1203,31 @@ export default function AiFeedManagementPage() {
                       </Select>
                     </div>
 
-                    <div className="grid gap-4 xl:grid-cols-2">
-                      {isInitialArticlesLoad && (
-                        <div className="col-span-full flex justify-center py-12">
-                          <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-                        </div>
-                      )}
+                    {isInitialArticlesLoad && (
+                      <div className="flex justify-center py-12">
+                        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
 
-                      {!isInitialArticlesLoad &&
-                        articlesData?.articles?.map((article) => (
-                          <div
-                            key={article.id}
-                            className="rounded-xl border bg-card p-5 shadow-sm space-y-4 flex flex-col"
-                          >
-                            <div className="space-y-3">
-                              <h3 className="text-lg font-semibold leading-snug line-clamp-2">
-                                {article.title}
-                              </h3>
-                              {article.summary && (
-                                <p className="text-sm text-muted-foreground line-clamp-3">
-                                  {article.summary}
-                                </p>
-                              )}
-                              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {article.publishedAt
-                                    ? formatDistanceToNow(new Date(article.publishedAt), {
-                                      addSuffix: true,
-                                    })
-                                    : 'No publish date'}
-                                </span>
-                                {article.sourceUrl && (
-                                  <span className="flex items-center gap-1">
-                                    <Rss className="h-3 w-3" />
-                                    <a
-                                      href={article.sourceUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="hover:underline"
-                                    >
-                                      View Source
-                                    </a>
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-end gap-2 pt-3 border-t border-border/60">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(article.url, '_blank')}
-                              >
-                                <Eye className="h-4 w-4" />
-                                Read
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className={`inline-flex items-center gap-2 font-medium transition-colors ${article.isShared
-                                  ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
-                                  : 'text-muted-foreground hover:text-foreground'
-                                  }`}
-                                onClick={() => shareArticleMutation.mutate(article.id)}
-                                disabled={shareArticleMutation.isPending}
-                              >
-                              <Share2 className="h-4 w-4" />
-                              Share Article
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => sendPushMutation.mutate({ articleId: article.id })}
-                              disabled={
-                                (sendPushMutation.isPending && sendingArticleId === article.id) ||
-                                !canSendPushNotifications
-                              }
-                              title={
-                                canSendPushNotifications
-                                  ? undefined
-                                  : pushStatus?.supported
-                                    ? 'Push notifications not enabled in settings'
-                                    : 'Push notifications not configured'
-                              }
-                            >
-                              {sendPushMutation.isPending && sendingArticleId === article.id
-                                ? 'Sending…'
-                                : 'Send Push'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteArticle(article.id)}
-                              disabled={deleteArticleMutation.isPending}
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                    {!isInitialArticlesLoad && articlesData?.articles && articlesData.articles.length > 0 && (
+                      <ArticlesNewsLayout
+                        articles={articlesData.articles}
+                        canSendPush={canSendPushNotifications}
+                        pushStatus={pushStatus}
+                        onShare={(id) => shareArticleMutation.mutate(id)}
+                        onSendPush={(id) => sendPushMutation.mutate({ articleId: id })}
+                        onDelete={(id) => handleDeleteArticle(id)}
+                        isSendingPush={(id) => sendPushMutation.isPending && sendingArticleId === id}
+                      />
+                    )}
 
-                      {!isInitialArticlesLoad &&
-                        (!articlesData?.articles || articlesData.articles.length === 0) && (
-                          <div className="rounded-xl border bg-muted/20 p-10 text-center text-muted-foreground xl:col-span-2">
-                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-60" />
-                            <p className="font-medium mb-1">No articles processed yet.</p>
-                            <p className="text-sm">
-                              Add feed sources and wait for the AI to process them.
-                            </p>
-                          </div>
-                        )}
-                    </div>
+                    {!isInitialArticlesLoad && (!articlesData?.articles || articlesData.articles.length === 0) && (
+                      <div className="rounded-xl border bg-muted/20 p-10 text-center text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-4 opacity-60" />
+                        <p className="font-medium mb-1">No articles processed yet.</p>
+                        <p className="text-sm">Add feed sources and wait for the AI to process them.</p>
+                      </div>
+                    )}
 
                     {totalArticlePages > 1 && !isInitialArticlesLoad && (
                       <div className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1623,4 +1536,160 @@ export default function AiFeedManagementPage() {
       </main>
     </div>
   );
+}
+
+type ArticlesNewsLayoutProps = {
+  articles: AiFeedArticle[];
+  canSendPush: boolean;
+  pushStatus?: { subscribed: boolean; supported: boolean };
+  onShare: (articleId: number) => void;
+  onSendPush: (articleId: number) => void;
+  onDelete: (articleId: number) => void;
+  isSendingPush: (articleId: number) => boolean;
+};
+
+function ArticlesNewsLayout({
+  articles,
+  canSendPush,
+  pushStatus,
+  onShare,
+  onSendPush,
+  onDelete,
+  isSendingPush,
+}: ArticlesNewsLayoutProps) {
+  const [featured, ...rest] = articles;
+
+  const pushTooltip = !canSendPush
+    ? pushStatus?.supported
+      ? 'Push notifications not enabled in settings'
+      : 'Push notifications not configured'
+    : undefined;
+
+  const renderMeta = (article: AiFeedArticle) => (
+    <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-wide text-muted-foreground">
+      <span className="flex items-center gap-1">
+        <Calendar className="h-3 w-3" />
+        {article.publishedAt
+          ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })
+          : 'No publish date'}
+      </span>
+      {article.sourceUrl && (
+        <span className="flex items-center gap-1">
+          <Rss className="h-3 w-3" />
+          <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+            Original Source
+          </a>
+        </span>
+      )}
+    </div>
+  );
+
+  const renderActions = (article: AiFeedArticle) => {
+    const sending = isSendingPush(article.id);
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={() => window.open(article.url, '_blank')}>
+          <Eye className="h-4 w-4" />
+          Read
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className={`inline-flex items-center gap-2 font-medium transition-colors ${
+            article.isShared
+              ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+          onClick={() => onShare(article.id)}
+        >
+          <Share2 className="h-4 w-4" />
+          Share Article
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => onSendPush(article.id)}
+          disabled={sending || !canSendPush}
+          title={pushTooltip}
+        >
+          {sending ? 'Sending…' : 'Send Push'}
+        </Button>
+        <Button size="sm" variant="destructive" onClick={() => onDelete(article.id)}>
+          <Trash2 className="h-4 w-4 mr-1" />
+          Delete
+        </Button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-10">
+      {featured && (
+        <article
+          key={featured.id}
+          className="grid gap-6 border-b pb-8 md:grid-cols-[2fr_1fr] md:items-start"
+        >
+          <div className="space-y-4">
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              Top Story
+            </span>
+            <h2 className="text-2xl font-semibold leading-tight text-foreground md:text-3xl">
+              {featured.title}
+            </h2>
+            {renderMeta(featured)}
+            {truncateSummary(featured.summary) && (
+              <p className="text-base leading-7 text-muted-foreground line-clamp-4">
+                {truncateSummary(featured.summary, 320)}
+              </p>
+            )}
+            {renderActions(featured)}
+          </div>
+          {featured.imageUrl && (
+            <div className="overflow-hidden rounded-lg border">
+              <img src={featured.imageUrl} alt="" className="h-full w-full object-cover" />
+            </div>
+          )}
+        </article>
+      )}
+
+      {rest.length > 0 && (
+        <div className="space-y-6">
+          {rest.map((article) => (
+            <article key={article.id} className="border-b pb-6 last:border-none last:pb-0">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+                <div className="flex-1 space-y-3">
+                  <h3 className="text-xl font-semibold leading-snug text-foreground md:text-2xl">
+                    {article.title}
+                  </h3>
+                  {renderMeta(article)}
+                  {truncateSummary(article.summary) && (
+                    <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
+                      {truncateSummary(article.summary)}
+                    </p>
+                  )}
+                  {renderActions(article)}
+                </div>
+                {article.imageUrl && (
+                  <div className="h-32 w-full overflow-hidden rounded-md border md:h-36 md:w-48">
+                    <img src={article.imageUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function truncateSummary(summary?: string, maxLength: number = 220): string {
+  if (!summary) {
+    return '';
+  }
+  if (summary.length <= maxLength) {
+    return summary;
+  }
+  return `${summary.slice(0, maxLength).trimEnd()}…`;
 }
