@@ -20,7 +20,6 @@ class CronService {
   private cronJob: cron.ScheduledTask | null = null;
   private isRunning = false;
   private openai: OpenAI | null = null;
-
   constructor() {
     this.setupCronJob();
   }
@@ -687,7 +686,10 @@ class CronService {
     const links = new Set<string>();
 
     try {
-      const dom = new JSDOM(htmlContent, { url: baseUrl });
+      const dom = this.createDom(htmlContent, baseUrl);
+      if (!dom) {
+        return Array.from(links);
+      }
       try {
         const anchorElements = Array.from(
           dom.window.document.querySelectorAll<HTMLAnchorElement>('a[href]'),
@@ -720,6 +722,46 @@ class CronService {
     }
 
     return Array.from(links);
+  }
+
+  private removeProblematicStyles(html: string): string {
+    return html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/data-styled\.[^{]+\{[^}]*\}/gi, '');
+  }
+
+  private createDom(htmlContent: string, url: string): JSDOM | null {
+    const sanitizedHtml = this.removeProblematicStyles(htmlContent);
+
+    const tryCreate = (html: string): JSDOM | null => {
+      try {
+        return new JSDOM(html, {
+          url,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('Could not parse CSS stylesheet')) {
+          return null;
+        }
+
+        console.warn(`⚠️ Failed to build DOM for ${url}:`, error);
+        return null;
+      }
+    };
+
+    const domWithoutStyles = tryCreate(sanitizedHtml);
+    if (domWithoutStyles) {
+      return domWithoutStyles;
+    }
+
+    if (sanitizedHtml !== htmlContent) {
+      const originalDom = tryCreate(htmlContent);
+      if (originalDom) {
+        return originalDom;
+      }
+    }
+
+    console.warn(`⚠️ Unable to build DOM for ${url} after removing styles`);
+    return null;
   }
 
   private looksLikeArticleLink(href: string, linkText: string): boolean {
@@ -899,7 +941,10 @@ class CronService {
     excerpt?: string;
   } | null {
     try {
-      const dom = new JSDOM(htmlContent, { url: articleUrl });
+      const dom = this.createDom(htmlContent, articleUrl);
+      if (!dom) {
+        return null;
+      }
       try {
         const reader = new Readability(dom.window.document);
         const article = reader.parse();
