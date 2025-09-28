@@ -706,7 +706,6 @@ export default function AiFeedManagementPage() {
 
     const current = Math.min(Math.max(articlesPage, 1), total);
     const pages: Array<number | 'ellipsis'> = [];
-    const isMobile = typeof window !== 'undefined' ? window.innerWidth < 640 : false;
 
     const pushPage = (value: number | 'ellipsis') => {
       if (pages[pages.length - 1] !== value) {
@@ -715,32 +714,6 @@ export default function AiFeedManagementPage() {
     };
 
     pushPage(1);
-
-    if (total <= 5 || isMobile) {
-      for (let page = 2; page <= Math.max(total, isMobile ? Math.min(3, total) : total); page += 1) {
-        pushPage(page);
-      }
-
-      if (isMobile && total > 3) {
-        const lastPage = total;
-        const firstExtra = Math.min(Math.max(current - 1, 2), lastPage - 2);
-        const secondExtra = firstExtra + 1;
-
-        pages.length = 1;
-        pushPage(firstExtra);
-        pushPage(secondExtra);
-        if (secondExtra < lastPage - 1) {
-          pushPage('ellipsis');
-        }
-        pushPage(lastPage);
-      }
-
-      if (!isMobile) {
-        return pages;
-      }
-
-      return pages.slice(0, Math.min(pages.length, 5));
-    }
 
     if (total <= 5) {
       for (let page = 2; page <= total; page += 1) {
@@ -1301,8 +1274,40 @@ export default function AiFeedManagementPage() {
                           {totalArticles ? ` · ${totalArticles} articles` : ''}
                           {isRefreshingArticles ? ' · Updating…' : ''}
                         </p>
-                        <Pagination className="justify-center sm:justify-end">
-                          <PaginationContent>
+                        <Pagination className="w-full justify-center sm:justify-end">
+                          <PaginationContent className="flex items-center gap-2 sm:hidden">
+                            <PaginationItem>
+                              <PaginationPrevious
+                                href="#"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  if (canGoToPreviousArticlePage) {
+                                    handleArticlesPageChange(articlesPage - 1);
+                                  }
+                                }}
+                                className={!canGoToPreviousArticlePage ? 'pointer-events-none opacity-50' : undefined}
+                              />
+                            </PaginationItem>
+                            <PaginationItem>
+                              <span className="px-2 text-sm text-muted-foreground">
+                                {articlesPage} / {totalArticlePages}
+                              </span>
+                            </PaginationItem>
+                            <PaginationItem>
+                              <PaginationNext
+                                href="#"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  if (canGoToNextArticlePage) {
+                                    handleArticlesPageChange(articlesPage + 1);
+                                  }
+                                }}
+                                className={!canGoToNextArticlePage ? 'pointer-events-none opacity-50' : undefined}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+
+                          <PaginationContent className="hidden items-center gap-1 sm:flex">
                             <PaginationItem>
                               <PaginationPrevious
                                 href="#"
