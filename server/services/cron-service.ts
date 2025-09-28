@@ -1,17 +1,18 @@
 import { Readability } from '@mozilla/readability';
 import {
   aiCrawlerSettings,
+  aiFeedJobs,
   aiFeedSources,
-  userPreferences,
   type AiCrawlerSettings,
-  type AiFeedSource
+  type AiFeedSource,
 } from '@shared/schema.js';
-import { and, eq, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { JSDOM } from 'jsdom';
 import cron from 'node-cron';
 import OpenAI from 'openai';
 import { db } from '../db';
 import { aiFeedProcessor } from './ai-feed-processor.js';
+import { jobQueueService } from './job-queue-service.js';
 
 type AiCrawlerSettingsWithLanguage = AiCrawlerSettings & { defaultAiLanguage?: string };
 
@@ -25,19 +26,24 @@ class CronService {
   }
 
   private setupCronJob(): void {
-    // Run daily in 7:00 AM
-    const cronExpression = '2 1 * * *';
-    // const cronExpression = '*/1 * * * *';
+    // Run hourly to evaluate feed schedules
+    const cronExpression = '0 * * * *';
 
-    this.cronJob = cron.schedule(cronExpression, () => {
-      this.executeCronJob();
-    }, {
-      scheduled: false,
-      timezone: 'UTC'
-    });
+    this.cronJob = cron.schedule(
+      cronExpression,
+      () => {
+        this.executeCronJob();
+      },
+      {
+        scheduled: false,
+        timezone: 'UTC',
+      },
+    );
 
     // Log configuration during initialization, not in constructor
-    console.log(`⏰ Cron job configured to run daily in 7:00 AM in ICT timezone with expression: ${cronExpression}`);
+    console.log(
+      `⏰ Cron job configured to run hourly with expression: ${cronExpression}`,
+    );
   }
 
   private getOpenRouterClient(): OpenAI | null {
@@ -58,8 +64,8 @@ class CronService {
         baseURL: 'https://openrouter.ai/api/v1',
         defaultHeaders: {
           'HTTP-Referer': referer,
-          'X-Title': title
-        }
+          'X-Title': title,
+        },
       });
     }
 
@@ -128,36 +134,41 @@ class CronService {
       console.log(`Found ${settings.length} enabled crawler settings`);
 
       for (const setting of settings) {
-        // Get user preferences for language settings
-        const userPrefs = await db
-          .select()
-          .from(userPreferences)
-          .where(eq(userPreferences.userId, setting.userId));
-
-        // Get active feed sources for this user that need processing
-        const feedsToProcess = await db
+        // Get active feed sources for this user
+        const activeSources = await db
           .select()
           .from(aiFeedSources)
-          .where(
-            and(
-              eq(aiFeedSources.userId, setting.userId),
-              eq(aiFeedSources.isActive, true),
-              or(
-                isNull(aiFeedSources.lastRunAt),
-                sql`${aiFeedSources.lastRunAt} + interval '1 minute' * ${aiFeedSources.crawlInterval} < ${new Date()}`
-              )
-            )
-          );
+          .where(and(eq(aiFeedSources.userId, setting.userId), eq(aiFeedSources.isActive, true)));
+
+        const feedsToProcess = activeSources.filter((source) => this.isSourceDue(source, setting));
 
         console.log(`User ${setting.userId}: ${feedsToProcess.length} feeds to process`);
 
         for (const feed of feedsToProcess) {
-          // Merge crawler settings with user preferences
-          const mergedSettings = {
-            ...setting,
-            defaultAiLanguage: userPrefs[0]?.defaultAiLanguage || 'auto'
-          };
-          await this.processSingleFeed(feed, mergedSettings);
+          const existingJob = await db
+            .select({ id: aiFeedJobs.id, status: aiFeedJobs.status })
+            .from(aiFeedJobs)
+            .where(
+              and(
+                eq(aiFeedJobs.sourceId, feed.id),
+                inArray(aiFeedJobs.status, ['pending', 'running'] as const),
+              ),
+            )
+            .limit(1);
+
+          if (existingJob.length > 0) {
+            console.log(
+              `⏳ Skipping feed ${feed.id} (${feed.url}) - job ${existingJob[0].id} already ${existingJob[0].status}`,
+            );
+            continue;
+          }
+
+          await jobQueueService.createJob(feed.id, feed.userId);
+          console.log(`📝 Queued job for feed ${feed.id} (${feed.url})`);
+        }
+
+        if (feedsToProcess.length > 0) {
+          await jobQueueService.triggerProcessing();
         }
       }
 
@@ -168,7 +179,80 @@ class CronService {
     }
   }
 
-  public async processSingleFeed(feed: AiFeedSource, setting: AiCrawlerSettingsWithLanguage): Promise<void> {
+  private resolveSourceSchedule(
+    source: typeof aiFeedSources.$inferSelect,
+    setting: AiCrawlerSettings,
+  ): { mode: 'every_hours' | 'daily'; value: string } {
+    const sourceMode = source.crawlScheduleMode || 'inherit';
+    const settingMode = setting.crawlScheduleMode || 'every_hours';
+
+    const mode =
+      sourceMode !== 'inherit'
+        ? (sourceMode as 'every_hours' | 'daily')
+        : (settingMode as 'every_hours' | 'daily');
+
+    const rawValue =
+      sourceMode !== 'inherit' ? source.crawlScheduleValue || '' : setting.crawlScheduleValue || '';
+
+    if (mode === 'daily') {
+      const value = rawValue && rawValue.includes(':') ? rawValue : '07:00';
+      return { mode: 'daily', value };
+    }
+
+    const value = rawValue && !rawValue.includes(':') ? rawValue : '6';
+    return { mode: 'every_hours', value };
+  }
+
+  private isSourceDue(
+    source: typeof aiFeedSources.$inferSelect,
+    setting: AiCrawlerSettings,
+  ): boolean {
+    const lastRun = source.lastRunAt ? new Date(source.lastRunAt) : null;
+    if (!lastRun || Number.isNaN(lastRun.getTime())) {
+      return true;
+    }
+
+    const { mode, value } = this.resolveSourceSchedule(source, setting);
+    const now = new Date();
+
+    if (mode === 'every_hours') {
+      const hours = Math.max(1, parseInt(value, 10) || 6);
+      const nextAllowed = new Date(lastRun.getTime() + hours * 60 * 60 * 1000);
+      return nextAllowed.getTime() <= now.getTime();
+    }
+
+    const [hourPart = '7', minutePart = '0'] = value.split(':');
+    const hour = Math.min(23, Math.max(0, parseInt(hourPart, 10) || 7));
+    const minute = Math.min(59, Math.max(0, parseInt(minutePart, 10) || 0));
+
+    const latestSlot = this.getLatestDailySlot(hour, minute, now);
+    return lastRun.getTime() < latestSlot.getTime();
+  }
+
+  private getLatestDailySlot(hour: number, minute: number, reference: Date): Date {
+    const slotToday = new Date(
+      Date.UTC(
+        reference.getUTCFullYear(),
+        reference.getUTCMonth(),
+        reference.getUTCDate(),
+        hour,
+        minute,
+        0,
+        0,
+      ),
+    );
+
+    if (reference.getTime() >= slotToday.getTime()) {
+      return slotToday;
+    }
+
+    return new Date(slotToday.getTime() - 24 * 60 * 60 * 1000);
+  }
+
+  public async processSingleFeed(
+    feed: AiFeedSource,
+    setting: AiCrawlerSettingsWithLanguage,
+  ): Promise<void> {
     console.log(`📡 Processing feed: ${feed.url} for user ${feed.userId}`);
     const feedStartTime = Date.now();
 
@@ -192,7 +276,9 @@ class CronService {
 
         const feedEndTime = Date.now();
         const feedDuration = feedEndTime - feedStartTime;
-        console.log(`✅ Processed ${articles.length} articles from ${feed.url} in ${feedDuration}ms`);
+        console.log(
+          `✅ Processed ${articles.length} articles from ${feed.url} in ${feedDuration}ms`,
+        );
       } else {
         console.log(`ℹ️ No new articles found in ${feed.url}`);
       }
@@ -202,7 +288,7 @@ class CronService {
         .update(aiFeedSources)
         .set({
           status: 'completed',
-          lastRunAt: new Date()
+          lastRunAt: new Date(),
         })
         .where(eq(aiFeedSources.id, feed.id));
 
@@ -211,10 +297,7 @@ class CronService {
       console.error(`❌ Error processing feed ${feed.url}:`, error);
 
       // Update feed status to failed
-      await db
-        .update(aiFeedSources)
-        .set({ status: 'failed' })
-        .where(eq(aiFeedSources.id, feed.id));
+      await db.update(aiFeedSources).set({ status: 'failed' }).where(eq(aiFeedSources.id, feed.id));
 
       throw error;
     }
@@ -222,14 +305,16 @@ class CronService {
 
   private async crawlHtmlContent(
     sourceUrl: string,
-    setting: AiCrawlerSettings
-  ): Promise<Array<{
-    title: string;
-    content: string;
-    url: string;
-    publishedAt?: Date;
-    imageUrl?: string;
-  }>> {
+    setting: AiCrawlerSettings,
+  ): Promise<
+    Array<{
+      title: string;
+      content: string;
+      url: string;
+      publishedAt?: Date;
+      imageUrl?: string;
+    }>
+  > {
     try {
       // Fetch HTML content with headers to avoid blocking
       const htmlContent = await this.fetchHtmlWithHeaders(sourceUrl);
@@ -253,13 +338,14 @@ class CronService {
   private async fetchHtmlWithHeaders(url: string, attempt = 0): Promise<string | null> {
     const maxAttempts = 3;
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.5',
       'Accept-Encoding': 'gzip, deflate',
-      'DNT': '1',
-      'Connection': 'keep-alive',
-      'Upgrade-Insecure-Requests': '1'
+      DNT: '1',
+      Connection: 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
     } as const;
 
     try {
@@ -268,7 +354,7 @@ class CronService {
 
       const response = await fetch(url, {
         headers,
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -282,8 +368,10 @@ class CronService {
             retryMs = Math.min(15000, 2000 * Math.pow(2, attempt));
           }
 
-          console.warn(`⚠️ Received ${response.status} from ${url}. Retrying in ${retryMs}ms (attempt ${attempt + 1}/${maxAttempts})`);
-          await new Promise(resolve => setTimeout(resolve, retryMs));
+          console.warn(
+            `⚠️ Received ${response.status} from ${url}. Retrying in ${retryMs}ms (attempt ${attempt + 1}/${maxAttempts})`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryMs));
           return this.fetchHtmlWithHeaders(url, attempt + 1);
         }
 
@@ -301,8 +389,11 @@ class CronService {
     } catch (error) {
       if (attempt < maxAttempts - 1) {
         const backoff = Math.min(10000, 1500 * Math.pow(2, attempt));
-        console.warn(`⚠️ Error fetching HTML from ${url} (attempt ${attempt + 1}/${maxAttempts}). Retrying in ${backoff}ms`, error);
-        await new Promise(resolve => setTimeout(resolve, backoff));
+        console.warn(
+          `⚠️ Error fetching HTML from ${url} (attempt ${attempt + 1}/${maxAttempts}). Retrying in ${backoff}ms`,
+          error,
+        );
+        await new Promise((resolve) => setTimeout(resolve, backoff));
         return this.fetchHtmlWithHeaders(url, attempt + 1);
       }
 
@@ -313,7 +404,7 @@ class CronService {
 
   private async analyzeHtmlWithAI(
     htmlContent: string,
-    baseUrl: string
+    baseUrl: string,
   ): Promise<{ pageType: 'article' | 'listing' | 'unknown'; articleUrls: string[] }> {
     const client = this.getOpenRouterClient();
     if (!client) {
@@ -333,17 +424,17 @@ class CronService {
           messages: [
             {
               role: 'system',
-              content: systemPrompt
+              content: systemPrompt,
             },
             {
               role: 'user',
-              content: `${userPrompt}\n\nRequired JSON response format:{"pageType":"article|listing|unknown","articleUrls":["url1","url2",...]}. Return 10-25 article URLs when a listing has that many. Preserve the original order from the page. Use relative paths if only those appear in HTML.`
-            }
-          ]
+              content: `${userPrompt}\n\nRequired JSON response format:{"pageType":"article|listing|unknown","articleUrls":["url1","url2",...]}. Return 10-25 article URLs when a listing has that many. Preserve the original order from the page. Use relative paths if only those appear in HTML.`,
+            },
+          ],
         }),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('AI analysis timeout after 90s')), 90000)
-        )
+          setTimeout(() => reject(new Error('AI analysis timeout after 90s')), 90000),
+        ),
       ])) as any;
 
       const rawResponse = completion?.choices?.[0]?.message?.content;
@@ -360,16 +451,17 @@ class CronService {
           articleUrls?: unknown;
         };
 
-        const pageType = parsed.pageType === 'article' || parsed.pageType === 'listing'
-          ? parsed.pageType
-          : 'unknown';
+        const pageType =
+          parsed.pageType === 'article' || parsed.pageType === 'listing'
+            ? parsed.pageType
+            : 'unknown';
         const urls = Array.isArray(parsed.articleUrls)
           ? parsed.articleUrls.filter((item): item is string => typeof item === 'string')
           : [];
 
         return {
           pageType,
-          articleUrls: urls
+          articleUrls: urls,
         };
       } catch (parseError) {
         console.error('❌ Failed to parse AI article analysis response as JSON:', parseError);
@@ -393,7 +485,7 @@ class CronService {
     const anchorMatches = withoutNoise.match(/<a[^>]*>[^<]*<\/a>/gi) || [];
     const anchorSample = anchorMatches
       .slice(0, 200)
-      .map(anchor => anchor.replace(/\s+/g, ' ').trim().slice(0, 300))
+      .map((anchor) => anchor.replace(/\s+/g, ' ').trim().slice(0, 300))
       .join('\n');
 
     const truncatedMain = withoutNoise.slice(0, 40000);
@@ -471,14 +563,16 @@ class CronService {
   private async extractArticlesFromHtml(
     htmlContent: string,
     baseUrl: string,
-    setting: AiCrawlerSettings
-  ): Promise<Array<{
-    title: string;
-    content: string;
-    url: string;
-    publishedAt?: Date;
-    imageUrl?: string;
-  }>> {
+    setting: AiCrawlerSettings,
+  ): Promise<
+    Array<{
+      title: string;
+      content: string;
+      url: string;
+      publishedAt?: Date;
+      imageUrl?: string;
+    }>
+  > {
     const articles: Array<{
       title: string;
       content: string;
@@ -492,7 +586,9 @@ class CronService {
       const aiAnalysis = await this.analyzeHtmlWithAI(htmlContent, baseUrl);
       const aiPageType = aiAnalysis.pageType;
       if (aiPageType) {
-        console.log(`🤖 AI page analysis (${baseUrl}): ${aiPageType} | ${aiAnalysis.articleUrls.length} suggested links`);
+        console.log(
+          `🤖 AI page analysis (${baseUrl}): ${aiPageType} | ${aiAnalysis.articleUrls.length} suggested links`,
+        );
       }
 
       const tryAddArticle = async (content: string, url: string) => {
@@ -516,7 +612,9 @@ class CronService {
         if (articles.length > 0) {
           return articles.slice(0, maxArticles);
         }
-        console.log('⚠️ AI indicated article page but extraction failed, falling back to link discovery');
+        console.log(
+          '⚠️ AI indicated article page but extraction failed, falling back to link discovery',
+        );
       }
 
       if (aiAnalysis.pageType !== 'listing' && this.isArticlePage(baseUrl)) {
@@ -527,9 +625,10 @@ class CronService {
         }
       }
 
-      const aiLinks = aiAnalysis.articleUrls.length > 0
-        ? this.normalizeArticleUrls(aiAnalysis.articleUrls, baseUrl)
-        : [];
+      const aiLinks =
+        aiAnalysis.articleUrls.length > 0
+          ? this.normalizeArticleUrls(aiAnalysis.articleUrls, baseUrl)
+          : [];
       const heuristicLinks = this.extractArticleLinks(htmlContent, baseUrl);
       const articleLinks = this.mergeArticleLinks(aiLinks, heuristicLinks);
 
@@ -537,7 +636,9 @@ class CronService {
         console.log(`📋 AI did not provide links, using heuristic extraction for ${baseUrl}`);
       }
 
-      console.log(`🔗 Found ${articleLinks.length} candidate article links, processing up to ${maxArticles}`);
+      console.log(
+        `🔗 Found ${articleLinks.length} candidate article links, processing up to ${maxArticles}`,
+      );
 
       for (const link of articleLinks) {
         if (articles.length >= maxArticles) {
@@ -576,10 +677,10 @@ class CronService {
       /\/news\/\d+/,
       /\/post\/\d+/,
       /\.html$/,
-      /\/\d+$/ // Ends with numbers
+      /\/\d+$/, // Ends with numbers
     ];
 
-    return articlePatterns.some(pattern => pattern.test(url));
+    return articlePatterns.some((pattern) => pattern.test(url));
   }
 
   private extractArticleLinks(htmlContent: string, baseUrl: string): string[] {
@@ -589,7 +690,7 @@ class CronService {
       const dom = new JSDOM(htmlContent, { url: baseUrl });
       try {
         const anchorElements = Array.from(
-          dom.window.document.querySelectorAll<HTMLAnchorElement>('a[href]')
+          dom.window.document.querySelectorAll<HTMLAnchorElement>('a[href]'),
         );
 
         for (const anchor of anchorElements) {
@@ -647,10 +748,10 @@ class CronService {
       /\/authors\//,
       /\/page\//,
       /\?/,
-      /#/
+      /#/,
     ];
 
-    if (skipHrefPatterns.some(pattern => pattern.test(normalizedHref))) {
+    if (skipHrefPatterns.some((pattern) => pattern.test(normalizedHref))) {
       return false;
     }
 
@@ -662,10 +763,10 @@ class CronService {
       /\/news\//,
       /\/post\//,
       /\/story\//,
-      /\.html?$/
+      /\.html?$/,
     ];
 
-    if (articleHrefPatterns.some(pattern => pattern.test(normalizedHref))) {
+    if (articleHrefPatterns.some((pattern) => pattern.test(normalizedHref))) {
       return true;
     }
 
@@ -676,12 +777,25 @@ class CronService {
     const text = linkText.toLowerCase();
 
     const skipTextPatterns = [
-      /home/i, /about/i, /contact/i, /login/i, /register/i,
-      /search/i, /menu/i, /category/i, /tag/i, /author/i,
-      /page \d+/i, /next/i, /previous/i, /more/i, /privacy/i, /terms/i
+      /home/i,
+      /about/i,
+      /contact/i,
+      /login/i,
+      /register/i,
+      /search/i,
+      /menu/i,
+      /category/i,
+      /tag/i,
+      /author/i,
+      /page \d+/i,
+      /next/i,
+      /previous/i,
+      /more/i,
+      /privacy/i,
+      /terms/i,
     ];
 
-    if (skipTextPatterns.some(pattern => pattern.test(text))) {
+    if (skipTextPatterns.some((pattern) => pattern.test(text))) {
       return false;
     }
 
@@ -695,15 +809,15 @@ class CronService {
       /announcement/i,
       /launch/i,
       /insights?/i,
-      /overview/i
+      /overview/i,
     ];
 
-    return articleTextPatterns.some(pattern => pattern.test(text));
+    return articleTextPatterns.some((pattern) => pattern.test(text));
   }
 
   private async extractSingleArticle(
     htmlContent: string,
-    articleUrl: string
+    articleUrl: string,
   ): Promise<{
     title: string;
     content: string;
@@ -745,7 +859,9 @@ class CronService {
       content = content.trim();
 
       if (!content || content.length < 150) {
-        console.log(`⚠️ No sufficient content found for article: ${articleUrl} (${content?.length || 0} chars)`);
+        console.log(
+          `⚠️ No sufficient content found for article: ${articleUrl} (${content?.length || 0} chars)`,
+        );
         return null;
       }
 
@@ -765,7 +881,7 @@ class CronService {
         content,
         url: articleUrl,
         publishedAt,
-        imageUrl
+        imageUrl,
       };
     } catch (error) {
       console.error(`❌ Error extracting article from ${articleUrl}:`, error);
@@ -775,7 +891,7 @@ class CronService {
 
   private parseArticleWithReadability(
     htmlContent: string,
-    articleUrl: string
+    articleUrl: string,
   ): {
     title?: string;
     textContent?: string;
@@ -796,7 +912,7 @@ class CronService {
           title: article.title || undefined,
           textContent: article.textContent || undefined,
           htmlContent: article.content || undefined,
-          excerpt: article.excerpt || undefined
+          excerpt: article.excerpt || undefined,
         };
       } finally {
         dom.window.close();
@@ -813,14 +929,15 @@ class CronService {
       /<h1[^>]*>([^<]+)<\/h1>/i,
       /<title[^>]*>([^<]+)<\/title>/i,
       /<h2[^>]*>([^<]+)<\/h2>/i,
-      /<h3[^>]*>([^<]+)<\/h3>/i
+      /<h3[^>]*>([^<]+)<\/h3>/i,
     ];
 
     for (const pattern of titlePatterns) {
       const match = htmlContent.match(pattern);
       if (match && match[1]) {
         const title = match[1].trim();
-        if (title.length > 10) { // Reasonable title length
+        if (title.length > 10) {
+          // Reasonable title length
           return this.cleanHtml(title);
         }
       }
@@ -836,14 +953,15 @@ class CronService {
       /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
       /<div[^>]*class="[^"]*article[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
       /<div[^>]*class="[^"]*post[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
-      /<main[^>]*>([\s\S]*?)<\/main>/i
+      /<main[^>]*>([\s\S]*?)<\/main>/i,
     ];
 
     for (const pattern of contentSelectors) {
       let match;
       while ((match = pattern.exec(htmlContent)) !== null) {
         const content = match[1];
-        if (content.length > 200) { // Reasonable content length
+        if (content.length > 200) {
+          // Reasonable content length
           return this.cleanAndExtractText(content);
         }
       }
@@ -853,8 +971,8 @@ class CronService {
     const paragraphMatches = htmlContent.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
     if (paragraphMatches) {
       const paragraphs = paragraphMatches
-        .map(p => p.replace(/<[^>]*>/g, ' ').trim())
-        .filter(p => p.length > 20);
+        .map((p) => p.replace(/<[^>]*>/g, ' ').trim())
+        .filter((p) => p.length > 20);
 
       if (paragraphs.length > 2) {
         return paragraphs.join('\n\n');
@@ -875,7 +993,7 @@ class CronService {
       /datetime="([^"]+)"/i,
       /<time[^>]*datetime="([^"]+)"/i,
       /<meta[^>]*property="article:published_time"[^>]*content="([^"]+)"/i,
-      /<span[^>]*class="[^"]*date[^"]*"[^>]*>([^<]+)<\/span>/gi
+      /<span[^>]*class="[^"]*date[^"]*"[^>]*>([^<]+)<\/span>/gi,
     ];
 
     for (const pattern of datePatterns) {
@@ -902,7 +1020,7 @@ class CronService {
       /<img[^>]*src="([^"]*)"[^>]*alt="[^"]*article[^"]*"/i,
       /<img[^>]*class="[^"]*featured[^"]*"[^>]*src="([^"]*)"/i,
       /<img[^>]*class="[^"]*main[^"]*"[^>]*src="([^"]*)"/i,
-      /<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i
+      /<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i,
     ];
 
     for (const pattern of imagePatterns) {
@@ -960,7 +1078,6 @@ class CronService {
     return cleaned;
   }
 
-
   public start(): void {
     if (this.cronJob && !(this.cronJob as any).running) {
       this.cronJob.start();
@@ -985,7 +1102,7 @@ class CronService {
     return {
       isRunning: this.isRunning,
       isScheduled: this.cronJob ? (this.cronJob as any).running : false,
-      lastRun: this.isRunning ? 'Currently running' : undefined
+      lastRun: this.isRunning ? 'Currently running' : undefined,
     };
   }
 

@@ -4,12 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { SEO } from '@/lib/seo';
+import { normaliseTimezone, TIMEZONE_OPTIONS } from '@/lib/timezones';
+import { BOOKMARK_LANGUAGE_LABELS, BookmarkLanguage } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -35,11 +44,28 @@ import {
 import { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 
+const SCHEDULE_HOUR_OPTIONS = ['1', '2', '3', '4', '6', '8', '12', '24'];
+const SCHEDULE_DAILY_TIMES = [
+  '00:00',
+  '02:00',
+  '04:00',
+  '06:00',
+  '07:00',
+  '08:00',
+  '09:00',
+  '12:00',
+  '15:00',
+  '18:00',
+  '21:00',
+];
+
 type AiCrawlerSettings = {
   id: number;
   userId: string;
   maxFeedsPerSource: number;
   isEnabled: boolean;
+  crawlScheduleMode: 'every_hours' | 'daily';
+  crawlScheduleValue: string;
   createdAt: string;
 };
 
@@ -59,6 +85,7 @@ type UserPreferences = {
   aiDescriptionEnabled?: boolean;
   aiUsageLimit?: number | null;
   defaultAiLanguage?: string;
+  timezone?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -69,8 +96,9 @@ type AiFeedSource = {
   userId: string;
   status: 'idle' | 'running' | 'completed' | 'failed';
   lastRunAt?: string;
-  crawlInterval: number;
   isActive: boolean;
+  crawlScheduleMode?: 'inherit' | 'every_hours' | 'daily';
+  crawlScheduleValue?: string;
   createdAt: string;
 };
 
@@ -145,17 +173,71 @@ export default function AiFeedManagementPage() {
 
   // Form states
   const [newSourceUrl, setNewSourceUrl] = useState('');
-  const [newSourceInterval, setNewSourceInterval] = useState(60);
   const [editingSource, setEditingSource] = useState<AiFeedSource | null>(null);
   const [editSourceUrl, setEditSourceUrl] = useState('');
-  const [editSourceInterval, setEditSourceInterval] = useState(60);
+  const [newSourceScheduleMode, setNewSourceScheduleMode] = useState<
+    'inherit' | 'every_hours' | 'daily'
+  >('inherit');
+  const [newSourceScheduleValue, setNewSourceScheduleValue] = useState('6');
+  const [editSourceScheduleMode, setEditSourceScheduleMode] = useState<
+    'inherit' | 'every_hours' | 'daily'
+  >('inherit');
+  const [editSourceScheduleValue, setEditSourceScheduleValue] = useState('6');
+  useEffect(() => {
+    if (newSourceScheduleMode === 'daily' && !newSourceScheduleValue.includes(':')) {
+      setNewSourceScheduleValue('07:00');
+    }
+    if (newSourceScheduleMode === 'every_hours' && newSourceScheduleValue.includes(':')) {
+      setNewSourceScheduleValue('6');
+    }
+  }, [newSourceScheduleMode, newSourceScheduleValue]);
+  useEffect(() => {
+    if (editSourceScheduleMode === 'daily' && !editSourceScheduleValue.includes(':')) {
+      setEditSourceScheduleValue('07:00');
+    }
+    if (editSourceScheduleMode === 'every_hours' && editSourceScheduleValue.includes(':')) {
+      setEditSourceScheduleValue('6');
+    }
+  }, [editSourceScheduleMode, editSourceScheduleValue]);
 
   const settings = settingsData?.settings?.[0];
   const preferences = settingsData?.preferences;
+  const scheduleMode = settings?.crawlScheduleMode || 'every_hours';
+  const scheduleValue = settings?.crawlScheduleValue || (scheduleMode === 'daily' ? '08:00' : '6');
+  const userTimezone = normaliseTimezone(preferences?.timezone);
+  const timezoneLabel =
+    TIMEZONE_OPTIONS.find((option) => option.value === userTimezone)?.label || userTimezone;
+  const describeSchedule = (
+    sourceMode?: string,
+    sourceValue?: string,
+    globalMode?: string,
+    globalValue?: string,
+    timezoneLabel?: string,
+  ) => {
+    const effectiveMode =
+      sourceMode && sourceMode !== 'inherit' ? sourceMode : globalMode || 'every_hours';
+    const rawValue = sourceMode && sourceMode !== 'inherit' ? sourceValue || '' : globalValue || '';
+
+    if (effectiveMode === 'every_hours') {
+      const hours = rawValue && !rawValue.includes(':') ? rawValue : '6';
+      const base = `Every ${hours} hour${hours === '1' ? '' : 's'}`;
+      return sourceMode === 'inherit' ? `Using global schedule — ${base}` : base;
+    }
+
+    const time = rawValue && rawValue.includes(':') ? rawValue : '07:00';
+    const zone = timezoneLabel || 'UTC';
+    const base = `Daily at ${time} ${zone}`;
+    return sourceMode === 'inherit' ? `Using global schedule — ${base}` : base;
+  };
 
   // Create new feed source
   const createSourceMutation = useMutation({
-    mutationFn: async (data: { url: string; crawlInterval: number; isActive: boolean }) => {
+    mutationFn: async (data: {
+      url: string;
+      isActive: boolean;
+      crawlScheduleMode?: 'inherit' | 'every_hours' | 'daily';
+      crawlScheduleValue?: string;
+    }) => {
       const res = await apiRequest('POST', '/api/ai-feeds/sources', data);
       return res.json();
     },
@@ -163,7 +245,8 @@ export default function AiFeedManagementPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/ai-feeds/sources'] });
       queryClient.invalidateQueries({ queryKey: ['/api/ai-feeds/status'] });
       setNewSourceUrl('');
-      setNewSourceInterval(60);
+      setNewSourceScheduleMode('inherit');
+      setNewSourceScheduleValue('6');
       toast({ description: 'Feed source created successfully' });
     },
     onError: (error: any) => {
@@ -181,7 +264,12 @@ export default function AiFeedManagementPage() {
       data,
     }: {
       id: number;
-      data: { url?: string; crawlInterval?: number; isActive?: boolean };
+      data: {
+        url?: string;
+        isActive?: boolean;
+        crawlScheduleMode?: 'inherit' | 'every_hours' | 'daily';
+        crawlScheduleValue?: string;
+      };
     }) => {
       const res = await apiRequest('PUT', `/api/ai-feeds/sources/${id}`, data);
       return res.json();
@@ -190,6 +278,8 @@ export default function AiFeedManagementPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/ai-feeds/sources'] });
       queryClient.invalidateQueries({ queryKey: ['/api/ai-feeds/status'] });
       setEditingSource(null);
+      setEditSourceScheduleMode('inherit');
+      setEditSourceScheduleValue('6');
       toast({ description: 'Feed source updated successfully' });
     },
     onError: (error: any) => {
@@ -222,7 +312,12 @@ export default function AiFeedManagementPage() {
 
   // Update crawler settings
   const updateSettingsMutation = useMutation({
-    mutationFn: async (data: { maxFeedsPerSource?: number; isEnabled?: boolean }) => {
+    mutationFn: async (data: {
+      maxFeedsPerSource?: number;
+      isEnabled?: boolean;
+      crawlScheduleMode?: 'daily' | 'every_hours';
+      crawlScheduleValue?: string;
+    }) => {
       const res = await apiRequest('PUT', '/api/ai-feeds/settings', data);
       return res.json();
     },
@@ -313,15 +408,37 @@ export default function AiFeedManagementPage() {
     if (!newSourceUrl.trim()) return;
     createSourceMutation.mutate({
       url: newSourceUrl.trim(),
-      crawlInterval: newSourceInterval,
       isActive: true,
+      crawlScheduleMode: newSourceScheduleMode,
+      crawlScheduleValue:
+        newSourceScheduleMode === 'inherit'
+          ? ''
+          : newSourceScheduleMode === 'every_hours'
+            ? newSourceScheduleValue
+            : newSourceScheduleValue,
     });
   };
 
   const handleStartEdit = (source: AiFeedSource) => {
     setEditingSource(source);
     setEditSourceUrl(source.url);
-    setEditSourceInterval(source.crawlInterval);
+    const mode = source.crawlScheduleMode || 'inherit';
+    setEditSourceScheduleMode(mode);
+    if (mode === 'every_hours') {
+      setEditSourceScheduleValue(
+        source.crawlScheduleValue && !source.crawlScheduleValue.includes(':')
+          ? source.crawlScheduleValue
+          : '6',
+      );
+    } else if (mode === 'daily') {
+      setEditSourceScheduleValue(
+        source.crawlScheduleValue && source.crawlScheduleValue.includes(':')
+          ? source.crawlScheduleValue
+          : '07:00',
+      );
+    } else {
+      setEditSourceScheduleValue('6');
+    }
   };
 
   const handleSaveEdit = () => {
@@ -330,7 +447,13 @@ export default function AiFeedManagementPage() {
       id: editingSource.id,
       data: {
         url: editSourceUrl.trim(),
-        crawlInterval: editSourceInterval,
+        crawlScheduleMode: editSourceScheduleMode,
+        crawlScheduleValue:
+          editSourceScheduleMode === 'inherit'
+            ? ''
+            : editSourceScheduleMode === 'every_hours'
+              ? editSourceScheduleValue
+              : editSourceScheduleValue,
       },
     });
   };
@@ -338,7 +461,8 @@ export default function AiFeedManagementPage() {
   const handleCancelEdit = () => {
     setEditingSource(null);
     setEditSourceUrl('');
-    setEditSourceInterval(60);
+    setEditSourceScheduleMode('inherit');
+    setEditSourceScheduleValue('6');
   };
 
   const handleDeleteSource = (id: number) => {
@@ -406,7 +530,7 @@ export default function AiFeedManagementPage() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onCreateFolder={() => { }}
+        onCreateFolder={() => {}}
         stats={stats}
       />
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden bg-muted/10">
@@ -477,18 +601,7 @@ export default function AiFeedManagementPage() {
                             className="h-11"
                           />
                         </div>
-                        <div className="md:col-span-3">
-                          <Input
-                            type="number"
-                            placeholder="Interval (minutes)"
-                            value={newSourceInterval}
-                            onChange={(e) => setNewSourceInterval(parseInt(e.target.value) || 60)}
-                            min={1}
-                            max={1440}
-                            className="h-11"
-                          />
-                        </div>
-                        <div className="md:col-span-2">
+                        <div className="md:col-span-5">
                           <Button
                             onClick={handleCreateSource}
                             disabled={!newSourceUrl.trim() || createSourceMutation.isPending}
@@ -498,6 +611,78 @@ export default function AiFeedManagementPage() {
                             Add
                           </Button>
                         </div>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-12">
+                        <div className="md:col-span-4 space-y-2">
+                          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Schedule
+                          </Label>
+                          <Select
+                            value={newSourceScheduleMode}
+                            onValueChange={(value: 'inherit' | 'every_hours' | 'daily') =>
+                              setNewSourceScheduleMode(value)
+                            }
+                          >
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder="Use global" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="inherit">Use global schedule</SelectItem>
+                              <SelectItem value="every_hours">Run every N hours</SelectItem>
+                              <SelectItem value="daily">Run daily at time</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {newSourceScheduleMode === 'every_hours' && (
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                              Interval (hours)
+                            </Label>
+                            <Select
+                              value={
+                                newSourceScheduleValue.includes(':') ? '6' : newSourceScheduleValue
+                              }
+                              onValueChange={(value) => setNewSourceScheduleValue(value)}
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select interval" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SCHEDULE_HOUR_OPTIONS.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    Every {option} hours
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                        {newSourceScheduleMode === 'daily' && (
+                          <div className="md:col-span-3 space-y-2">
+                            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                              Daily time ({timezoneLabel})
+                            </Label>
+                            <Select
+                              value={
+                                newSourceScheduleValue.includes(':')
+                                  ? newSourceScheduleValue
+                                  : '07:00'
+                              }
+                              onValueChange={(value) => setNewSourceScheduleValue(value)}
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SCHEDULE_DAILY_TIMES.map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -548,21 +733,82 @@ export default function AiFeedManagementPage() {
                                       className="text-sm"
                                     />
                                   </div>
+                                </div>
+                                <div className="grid gap-3 md:grid-cols-2">
                                   <div className="space-y-2">
                                     <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                                      Interval (minutes)
+                                      Schedule
                                     </Label>
-                                    <Input
-                                      type="number"
-                                      value={editSourceInterval}
-                                      onChange={(e) =>
-                                        setEditSourceInterval(parseInt(e.target.value) || 60)
+                                    <Select
+                                      value={editSourceScheduleMode}
+                                      onValueChange={(value: 'inherit' | 'every_hours' | 'daily') =>
+                                        setEditSourceScheduleMode(value)
                                       }
-                                      className="text-sm"
-                                      min={1}
-                                      max={1440}
-                                    />
+                                    >
+                                      <SelectTrigger className="h-10">
+                                        <SelectValue placeholder="Use global schedule" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="inherit">Use global schedule</SelectItem>
+                                        <SelectItem value="every_hours">
+                                          Run every N hours
+                                        </SelectItem>
+                                        <SelectItem value="daily">Run daily at time</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
+                                  {editSourceScheduleMode === 'every_hours' && (
+                                    <div className="space-y-2">
+                                      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                        Interval (hours)
+                                      </Label>
+                                      <Select
+                                        value={
+                                          editSourceScheduleValue.includes(':')
+                                            ? '6'
+                                            : editSourceScheduleValue
+                                        }
+                                        onValueChange={(value) => setEditSourceScheduleValue(value)}
+                                      >
+                                        <SelectTrigger className="h-10">
+                                          <SelectValue placeholder="Select interval" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {SCHEDULE_HOUR_OPTIONS.map((option) => (
+                                            <SelectItem key={option} value={option}>
+                                              Every {option} hours
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  )}
+                                  {editSourceScheduleMode === 'daily' && (
+                                    <div className="space-y-2">
+                                      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                        Daily time ({timezoneLabel})
+                                      </Label>
+                                      <Select
+                                        value={
+                                          editSourceScheduleValue.includes(':')
+                                            ? editSourceScheduleValue
+                                            : '07:00'
+                                        }
+                                        onValueChange={(value) => setEditSourceScheduleValue(value)}
+                                      >
+                                        <SelectTrigger className="h-10">
+                                          <SelectValue placeholder="Select time" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {SCHEDULE_DAILY_TIMES.map((option) => (
+                                            <SelectItem key={option} value={option}>
+                                              {option}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ) : (
@@ -583,6 +829,15 @@ export default function AiFeedManagementPage() {
                                       {source.url}
                                       <ExternalLink className="h-3 w-3" />
                                     </a>
+                                    <div className="text-xs text-muted-foreground">
+                                      {describeSchedule(
+                                        source.crawlScheduleMode,
+                                        source.crawlScheduleValue,
+                                        scheduleMode,
+                                        scheduleValue,
+                                        timezoneLabel,
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="flex flex-wrap gap-2 justify-end">
                                     <TooltipProvider delayDuration={150}>
@@ -634,10 +889,6 @@ export default function AiFeedManagementPage() {
                                   <div className="flex items-center gap-2">
                                     <Clock className="h-3 w-3" />
                                     Last run: {formatLastRun(source.lastRunAt)}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-3 w-3" />
-                                    Interval: {source.crawlInterval} minutes
                                   </div>
                                 </div>
                                 <Badge
@@ -692,8 +943,8 @@ export default function AiFeedManagementPage() {
                                 <Calendar className="h-3 w-3" />
                                 {article.publishedAt
                                   ? formatDistanceToNow(new Date(article.publishedAt), {
-                                    addSuffix: true,
-                                  })
+                                      addSuffix: true,
+                                    })
                                   : 'No publish date'}
                               </span>
                               {article.sourceUrl && (
@@ -723,10 +974,11 @@ export default function AiFeedManagementPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className={`inline-flex items-center gap-2 font-medium transition-colors ${article.isShared
+                              className={`inline-flex items-center gap-2 font-medium transition-colors ${
+                                article.isShared
                                   ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
                                   : 'text-muted-foreground hover:text-foreground'
-                                }`}
+                              }`}
                               onClick={() => shareArticleMutation.mutate(article.id)}
                               disabled={shareArticleMutation.isPending}
                             >
@@ -802,7 +1054,85 @@ export default function AiFeedManagementPage() {
                               />
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-3">
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Crawl Schedule
+                              </Label>
+                              <Select
+                                value={scheduleMode}
+                                onValueChange={(value) => {
+                                  const fallback = value === 'daily' ? '08:00' : '6';
+                                  updateSettingsMutation.mutate({
+                                    crawlScheduleMode: value as 'daily' | 'every_hours',
+                                    crawlScheduleValue:
+                                      value === scheduleMode ? scheduleValue : fallback,
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="h-10 w-[220px]">
+                                  <SelectValue placeholder="Select schedule" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="every_hours">Run every N hours</SelectItem>
+                                  <SelectItem value="daily">Run at specific time daily</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {scheduleMode === 'daily' ? (
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Daily time ({timezoneLabel})
+                                </Label>
+                                <Select
+                                  value={scheduleValue.includes(':') ? scheduleValue : '08:00'}
+                                  onValueChange={(value) =>
+                                    updateSettingsMutation.mutate({
+                                      crawlScheduleValue: value,
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="h-10 w-[180px]">
+                                    <SelectValue placeholder="Select time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {SCHEDULE_DAILY_TIMES.map((time) => (
+                                      <SelectItem key={time} value={time}>
+                                        {time}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Interval (hours)
+                                </Label>
+                                <Select
+                                  value={!scheduleValue.includes(':') ? scheduleValue : '6'}
+                                  onValueChange={(value) =>
+                                    updateSettingsMutation.mutate({
+                                      crawlScheduleValue: value,
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="h-10 w-[180px]">
+                                    <SelectValue placeholder="Select hours" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {SCHEDULE_HOUR_OPTIONS.map((hour) => (
+                                      <SelectItem key={hour} value={hour}>
+                                        Every {hour} hours
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 rounded-lg bg-muted/30">
                             <input
                               type="checkbox"
                               id="isEnabled"
@@ -839,7 +1169,11 @@ export default function AiFeedManagementPage() {
                               <div className="text-sm text-foreground">
                                 {preferences.defaultAiLanguage === 'auto'
                                   ? 'Auto Detect'
-                                  : preferences.defaultAiLanguage}
+                                  : preferences.defaultAiLanguage
+                                    ? BOOKMARK_LANGUAGE_LABELS[
+                                        preferences.defaultAiLanguage as BookmarkLanguage
+                                      ]
+                                    : ''}
                               </div>
                               <p className="text-xs text-muted-foreground">
                                 Change this in Settings → AI Preferences to influence summaries and

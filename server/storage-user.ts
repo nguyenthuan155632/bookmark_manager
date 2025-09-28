@@ -111,6 +111,7 @@ export class UserStorage {
           viewMode: preferences.viewMode || 'grid',
           aiUsageLimit: preferences.aiUsageLimit ?? 50,
           defaultAiLanguage: preferences.defaultAiLanguage || 'auto',
+          timezone: preferences.timezone || 'UTC',
         })
         .returning();
       return newPreferences;

@@ -31,6 +31,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { SEO } from '@/lib/seo';
+import { TIMEZONE_OPTIONS, normaliseTimezone } from '@/lib/timezones';
 
 export default function SettingsPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -52,6 +53,7 @@ export default function SettingsPage() {
     aiDescriptionEnabled?: boolean;
     aiUsageLimit?: number | null;
     defaultAiLanguage?: PreferenceAiLanguage;
+    timezone?: string;
   }>({ queryKey: ['/api/preferences'] });
 
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ['/api/categories'] });
@@ -68,6 +70,7 @@ export default function SettingsPage() {
     autoDescriptionEnabled?: boolean;
     aiDescriptionEnabled?: boolean;
     defaultAiLanguage?: PreferenceAiLanguage;
+    timezone?: string;
   };
 
   const updatePreferencesMutation = useMutation({
@@ -132,6 +135,7 @@ export default function SettingsPage() {
   const autoDescEnabled = preferences?.autoDescriptionEnabled ?? true;
   const aiDescEnabled = preferences?.aiDescriptionEnabled ?? false;
   const defaultAiLanguage = (preferences?.defaultAiLanguage || 'auto') as PreferenceAiLanguage;
+  const timezone = normaliseTimezone(preferences?.timezone);
   const LANGUAGE_OPTIONS = PREFERENCE_AI_LANGUAGES.map((code) => ({
     value: code,
     label: PREFERENCE_AI_LANGUAGE_LABELS[code],
@@ -527,6 +531,34 @@ export default function SettingsPage() {
                       <GridIcon className="h-4 w-4 mr-1" /> Grid
                     </ToggleGroupItem>
                   </ToggleGroup>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid gap-3 sm:grid-cols-3 sm:items-center">
+                <div className="sm:col-span-2">
+                  <div className="font-medium">Timezone</div>
+                  <div className="text-sm text-muted-foreground">
+                    Used for scheduling, timestamps, and upcoming reminders
+                  </div>
+                </div>
+                <div className="flex justify-start sm:justify-end">
+                  <Select
+                    value={timezone}
+                    onValueChange={(value) => updatePreferencesMutation.mutate({ timezone: value })}
+                  >
+                    <SelectTrigger className="w-[220px]">
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {TIMEZONE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>

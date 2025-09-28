@@ -30,6 +30,8 @@ export function registerAiFeedRoutes(app: Express) {
           userId,
           maxFeedsPerSource: 5,
           isEnabled: true,
+          crawlScheduleMode: 'every_hours',
+          crawlScheduleValue: '6',
         };
         await db.insert(aiCrawlerSettings).values(newSettings);
         crawlerSettings = [newSettings];
@@ -60,6 +62,8 @@ export function registerAiFeedRoutes(app: Express) {
       const updateSettingsSchema = z.object({
         maxFeedsPerSource: z.number().int().min(1).max(50).optional(),
         isEnabled: z.boolean().optional(),
+        crawlScheduleMode: z.enum(['every_hours', 'daily']).optional(),
+        crawlScheduleValue: z.string().max(16).optional(),
       });
 
       const updates = updateSettingsSchema.parse(req.body);
@@ -100,17 +104,20 @@ export function registerAiFeedRoutes(app: Express) {
       const userId = getUserId(req);
       const insertSourceSchema = z.object({
         url: z.string().url('Please provide a valid URL'),
-        crawlInterval: z.number().int().min(1).max(1440).default(60),
         isActive: z.boolean().default(true),
+        crawlScheduleMode: z.enum(['inherit', 'every_hours', 'daily']).default('inherit'),
+        crawlScheduleValue: z.string().max(16).optional(),
       });
 
-      const { url, crawlInterval, isActive } = insertSourceSchema.parse(req.body);
-
+      const { url, isActive, crawlScheduleMode, crawlScheduleValue } = insertSourceSchema.parse(
+        req.body,
+      );
       const newSource: InsertAiFeedSource = {
         url,
         userId,
-        crawlInterval,
         isActive,
+        crawlScheduleMode,
+        crawlScheduleValue: crawlScheduleValue || (crawlScheduleMode === 'every_hours' ? '6' : ''),
       };
 
       const result = await db.insert(aiFeedSources).values(newSource).returning();
@@ -129,15 +136,24 @@ export function registerAiFeedRoutes(app: Express) {
 
       const updateSourceSchema = z.object({
         url: z.string().url('Please provide a valid URL').optional(),
-        crawlInterval: z.number().int().min(1).max(1440).optional(),
         isActive: z.boolean().optional(),
+        crawlScheduleMode: z.enum(['inherit', 'every_hours', 'daily']).optional(),
+        crawlScheduleValue: z.string().max(16).optional(),
       });
 
       const updates = updateSourceSchema.parse(req.body);
 
+      const updatePayload: Record<string, unknown> = { ...updates };
+      if (updates.crawlScheduleMode === 'inherit') {
+        updatePayload.crawlScheduleValue = '';
+      } else if (updates.crawlScheduleMode && !updates.crawlScheduleValue) {
+        updatePayload.crawlScheduleValue =
+          updates.crawlScheduleMode === 'every_hours' ? '6' : '07:00';
+      }
+
       const result = await db
         .update(aiFeedSources)
-        .set(updates)
+        .set(updatePayload)
         .where(and(eq(aiFeedSources.id, sourceId), eq(aiFeedSources.userId, userId)))
         .returning();
 
@@ -166,9 +182,6 @@ export function registerAiFeedRoutes(app: Express) {
       if (result.length === 0) {
         return res.status(404).json({ message: 'Source not found' });
       }
-
-      // Also delete associated articles
-      await db.delete(aiFeedArticles).where(eq(aiFeedArticles.sourceId, sourceId));
 
       res.json({ message: 'Source deleted successfully' });
     } catch (error) {
@@ -278,8 +291,9 @@ export function registerAiFeedRoutes(app: Express) {
           url: aiFeedSources.url,
           status: aiFeedSources.status,
           lastRunAt: aiFeedSources.lastRunAt,
-          crawlInterval: aiFeedSources.crawlInterval,
           isActive: aiFeedSources.isActive,
+          crawlScheduleMode: aiFeedSources.crawlScheduleMode,
+          crawlScheduleValue: aiFeedSources.crawlScheduleValue,
         })
         .from(aiFeedSources)
         .where(eq(aiFeedSources.userId, userId));

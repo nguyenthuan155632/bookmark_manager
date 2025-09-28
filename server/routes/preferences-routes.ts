@@ -19,9 +19,10 @@ export function registerPreferencesRoutes(app: Express) {
           viewMode: 'grid',
           aiUsageLimit: 50,
           defaultAiLanguage: 'auto',
+          timezone: 'UTC',
         });
       }
-      res.json(preferences);
+      res.json({ ...preferences, timezone: preferences.timezone || 'UTC' });
     } catch (error: any) {
       console.error('Error fetching preferences:', error);
       if (error?.code === '42703') {
@@ -65,7 +66,7 @@ export function registerPreferencesRoutes(app: Express) {
           batch,
         );
       }
-      res.json(preferences);
+      res.json({ ...preferences, timezone: preferences.timezone || 'UTC' });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: 'Invalid preferences data', errors: error.errors });
