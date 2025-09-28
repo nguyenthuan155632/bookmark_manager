@@ -250,10 +250,10 @@ export default function SharedArticlePage() {
           <div className="border-b p-6 sm:p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex flex-col gap-2 text-sm text-muted-foreground md:flex-row md:items-center md:space-x-4">
-                {article.publishedAt && (
+                {article.createdAt && (
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-1" />
-                    {formatDate(article.publishedAt)}
+                    {formatDate(article.createdAt)}
                   </div>
                 )}
                 <div className="flex items-center">

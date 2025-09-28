@@ -1569,9 +1569,8 @@ function ArticlesNewsLayout({
     <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-wide text-muted-foreground">
       <span className="flex items-center gap-1">
         <Calendar className="h-3 w-3" />
-        {article.publishedAt
-          ? formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })
-          : 'No publish date'}
+        {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}
+        {article.publishedAt ? ` (Published ${formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })})` : ''}
       </span>
       {article.sourceUrl && (
         <span className="flex items-center gap-1">
@@ -1596,11 +1595,10 @@ function ArticlesNewsLayout({
         <Button
           size="sm"
           variant="ghost"
-          className={`inline-flex items-center gap-2 font-medium transition-colors ${
-            article.isShared
-              ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className={`inline-flex items-center gap-2 font-medium transition-colors ${article.isShared
+            ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
+            : 'text-muted-foreground hover:text-foreground'
+            }`}
           onClick={() => onShare(article.id)}
         >
           <Share2 className="h-4 w-4" />
@@ -1630,7 +1628,7 @@ function ArticlesNewsLayout({
           key={featured.id}
           className="grid gap-6 border-b pb-8 md:grid-cols-[2fr_1fr] md:items-start"
         >
-          <div className="space-y-4">
+          <div className="space-y-4 md:pr-8">
             <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               Top Story
             </span>
@@ -1646,8 +1644,10 @@ function ArticlesNewsLayout({
             {renderActions(featured)}
           </div>
           {featured.imageUrl && (
-            <div className="overflow-hidden rounded-lg border">
-              <img src={featured.imageUrl} alt="" className="h-full w-full object-cover" />
+            <div className="order-first md:order-last md:ml-auto md:w-[200px] md:pl-4">
+              <div className="overflow-hidden rounded-lg border">
+                <img src={featured.imageUrl} alt="" className="h-full w-full object-cover" />
+              </div>
             </div>
           )}
         </article>
@@ -1658,8 +1658,8 @@ function ArticlesNewsLayout({
           {rest.map((article) => (
             <article key={article.id} className="border-b pb-6 last:border-none last:pb-0">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-                <div className="flex-1 space-y-3">
-                  <h3 className="text-xl font-semibold leading-snug text-foreground md:text-2xl">
+                <div className="flex-1 space-y-3 md:pr-6">
+                  <h3 className="text-xl font-semibold leading-snug text-foreground md:text-2xl md:mr-8">
                     {article.title}
                   </h3>
                   {renderMeta(article)}
@@ -1671,8 +1671,10 @@ function ArticlesNewsLayout({
                   {renderActions(article)}
                 </div>
                 {article.imageUrl && (
-                  <div className="h-32 w-full overflow-hidden rounded-md border md:h-36 md:w-48">
-                    <img src={article.imageUrl} alt="" className="h-full w-full object-cover" />
+                  <div className="order-first md:order-last md:ml-auto md:pl-4">
+                    <div className="h-32 w-full overflow-hidden rounded-md border md:h-36 md:w-[200px]">
+                      <img src={article.imageUrl} alt="" className="h-full w-full object-cover" />
+                    </div>
                   </div>
                 )}
               </div>
