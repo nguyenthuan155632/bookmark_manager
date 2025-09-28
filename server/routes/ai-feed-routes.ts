@@ -197,6 +197,15 @@ export function registerAiFeedRoutes(app: Express) {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = (page - 1) * limit;
+      const sourceIdQuery = req.query.sourceId as string | undefined;
+      const parsedSourceId = sourceIdQuery ? Number.parseInt(sourceIdQuery, 10) : undefined;
+      const sourceFilter = parsedSourceId && Number.isFinite(parsedSourceId) && parsedSourceId > 0
+        ? parsedSourceId
+        : undefined;
+
+      const whereClause = sourceFilter
+        ? and(eq(aiFeedSources.userId, userId), eq(aiFeedArticles.sourceId, sourceFilter))
+        : eq(aiFeedSources.userId, userId);
 
       const articles = await db
         .select({
@@ -216,7 +225,7 @@ export function registerAiFeedRoutes(app: Express) {
         })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(eq(aiFeedSources.userId, userId))
+        .where(whereClause)
         .orderBy(desc(aiFeedArticles.createdAt))
         .limit(limit)
         .offset(offset);
@@ -225,7 +234,7 @@ export function registerAiFeedRoutes(app: Express) {
         .select({ count: sql`count(*)` })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(eq(aiFeedSources.userId, userId));
+        .where(whereClause);
 
       res.json({
         articles,

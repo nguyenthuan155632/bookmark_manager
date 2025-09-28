@@ -87,7 +87,21 @@ const getArticlesPageFromSearch = (): number => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 };
 
-const syncArticlesPageToUrl = (page: number) => {
+const getArticlesSourceFromSearch = (): string => {
+  if (typeof window === 'undefined') {
+    return 'all';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('articlesSource');
+  if (!raw) {
+    return 'all';
+  }
+
+  return /^\d+$/.test(raw) ? raw : 'all';
+};
+
+const syncArticlesSearchParams = (page: number, source: string) => {
   if (typeof window === 'undefined') {
     return;
   }
@@ -97,6 +111,12 @@ const syncArticlesPageToUrl = (page: number) => {
     url.searchParams.delete('articlesPage');
   } else {
     url.searchParams.set('articlesPage', String(page));
+  }
+
+  if (!source || source === 'all') {
+    url.searchParams.delete('articlesSource');
+  } else {
+    url.searchParams.set('articlesSource', source);
   }
 
   window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
@@ -171,6 +191,9 @@ export default function AiFeedManagementPage() {
     return isTabKey(initialHash) ? initialHash : 'sources';
   });
   const [articlesPage, setArticlesPage] = useState<number>(() => getArticlesPageFromSearch());
+  const [articlesSourceFilter, setArticlesSourceFilter] = useState<string>(
+    () => getArticlesSourceFromSearch(),
+  );
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -180,6 +203,13 @@ export default function AiFeedManagementPage() {
     const syncHashToTab = () => {
       const hash = window.location.hash.slice(1);
       setActiveTab(isTabKey(hash) ? hash : 'sources');
+
+      if (hash === 'articles') {
+        const currentPage = getArticlesPageFromSearch();
+        setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
+        const currentSource = getArticlesSourceFromSearch();
+        setArticlesSourceFilter((prev) => (prev === currentSource ? prev : currentSource));
+      }
     };
 
     syncHashToTab();
@@ -194,6 +224,8 @@ export default function AiFeedManagementPage() {
 
     const currentPage = getArticlesPageFromSearch();
     setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
+    const currentSource = getArticlesSourceFromSearch();
+    setArticlesSourceFilter((prev) => (prev === currentSource ? prev : currentSource));
   }, [activeTab]);
 
   useEffect(() => {
@@ -207,6 +239,8 @@ export default function AiFeedManagementPage() {
       }
       const currentPage = getArticlesPageFromSearch();
       setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
+      const currentSource = getArticlesSourceFromSearch();
+      setArticlesSourceFilter((prev) => (prev === currentSource ? prev : currentSource));
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -217,8 +251,8 @@ export default function AiFeedManagementPage() {
     if (activeTab !== 'articles') {
       return;
     }
-    syncArticlesPageToUrl(articlesPage);
-  }, [articlesPage, activeTab]);
+    syncArticlesSearchParams(articlesPage, articlesSourceFilter);
+  }, [articlesPage, activeTab, articlesSourceFilter]);
 
   // Update URL hash when tab changes
   const handleTabChange = (value: string) => {
@@ -241,6 +275,12 @@ export default function AiFeedManagementPage() {
 
   const sources = sourcesData?.sources || [];
 
+  const sourceFilterParam =
+    articlesSourceFilter !== 'all' && /^\d+$/.test(articlesSourceFilter)
+      ? articlesSourceFilter
+      : null;
+  const articleQueryString = `?page=${articlesPage}&limit=${ARTICLES_PER_PAGE}${sourceFilterParam ? `&sourceId=${sourceFilterParam}` : ''}`;
+
   const {
     data: articlesData,
     isFetching: isFetchingArticles,
@@ -254,7 +294,7 @@ export default function AiFeedManagementPage() {
       totalPages: number;
     };
   }>({
-    queryKey: ['/api/ai-feeds/articles', `?page=${articlesPage}&limit=${ARTICLES_PER_PAGE}`],
+    queryKey: ['/api/ai-feeds/articles', articleQueryString],
     enabled: activeTab === 'articles',
   });
 
@@ -268,6 +308,17 @@ export default function AiFeedManagementPage() {
       setArticlesPage(total);
     }
   }, [articlesData?.pagination, articlesPage]);
+
+  useEffect(() => {
+    if (!sourcesData || articlesSourceFilter === 'all') {
+      return;
+    }
+
+    const hasMatch = sourcesData.sources.some((source) => String(source.id) === articlesSourceFilter);
+    if (!hasMatch) {
+      setArticlesSourceFilter('all');
+    }
+  }, [articlesSourceFilter, sourcesData]);
 
   const { data: statusData } = useQuery<{
     sources: AiFeedSource[];
@@ -604,6 +655,11 @@ export default function AiFeedManagementPage() {
     const totalPages = articlesData?.pagination?.totalPages || 1;
     const nextPage = Math.max(1, Math.min(page, totalPages));
     setArticlesPage(nextPage);
+  };
+
+  const handleArticlesSourceFilterChange = (value: string) => {
+    setArticlesSourceFilter(value);
+    setArticlesPage(1);
   };
 
   const getStatusIcon = (status: string) => {
@@ -1085,13 +1141,39 @@ export default function AiFeedManagementPage() {
 
               <TabsContent value="articles" className="space-y-6">
                 <Card className="shadow-sm border">
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
                       Articles
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Filter by source
+                      </span>
+                      <Select
+                        value={articlesSourceFilter}
+                        onValueChange={handleArticlesSourceFilterChange}
+                      >
+                        <SelectTrigger className="w-full sm:w-[260px]">
+                          <SelectValue placeholder="All sources" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All sources</SelectItem>
+                          {sources.map((source) => (
+                            <SelectItem
+                              key={source.id}
+                              value={String(source.id)}
+                              className="max-w-full truncate"
+                            >
+                              {source.url}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="grid gap-4 xl:grid-cols-2">
                       {isInitialArticlesLoad && (
                         <div className="col-span-full flex justify-center py-12">
@@ -1119,8 +1201,8 @@ export default function AiFeedManagementPage() {
                                   <Calendar className="h-3 w-3" />
                                   {article.publishedAt
                                     ? formatDistanceToNow(new Date(article.publishedAt), {
-                                        addSuffix: true,
-                                      })
+                                      addSuffix: true,
+                                    })
                                     : 'No publish date'}
                                 </span>
                                 {article.sourceUrl && (
@@ -1150,11 +1232,10 @@ export default function AiFeedManagementPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className={`inline-flex items-center gap-2 font-medium transition-colors ${
-                                  article.isShared
-                                    ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`inline-flex items-center gap-2 font-medium transition-colors ${article.isShared
+                                  ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
+                                  : 'text-muted-foreground hover:text-foreground'
+                                  }`}
                                 onClick={() => shareArticleMutation.mutate(article.id)}
                                 disabled={shareArticleMutation.isPending}
                               >
