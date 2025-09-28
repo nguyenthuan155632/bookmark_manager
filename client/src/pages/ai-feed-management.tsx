@@ -5,6 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -41,7 +50,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'wouter';
 
 const SCHEDULE_HOUR_OPTIONS = ['1', '2', '3', '4', '6', '8', '12', '24'];
@@ -58,6 +67,40 @@ const SCHEDULE_DAILY_TIMES = [
   '18:00',
   '21:00',
 ];
+
+const TAB_KEYS = ['sources', 'articles', 'settings'] as const;
+type TabKey = (typeof TAB_KEYS)[number];
+
+const isTabKey = (value: string): value is TabKey =>
+  TAB_KEYS.includes(value as TabKey);
+
+const ARTICLES_PER_PAGE = 12;
+
+const getArticlesPageFromSearch = (): number => {
+  if (typeof window === 'undefined') {
+    return 1;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('articlesPage');
+  const parsed = raw ? Number.parseInt(raw, 10) : 1;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+};
+
+const syncArticlesPageToUrl = (page: number) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  if (page <= 1) {
+    url.searchParams.delete('articlesPage');
+  } else {
+    url.searchParams.set('articlesPage', String(page));
+  }
+
+  window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+};
 
 type AiCrawlerSettings = {
   id: number;
@@ -120,26 +163,71 @@ type AiFeedArticle = {
 
 export default function AiFeedManagementPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('sources');
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    if (typeof window === 'undefined') {
+      return 'sources';
+    }
+    const initialHash = window.location.hash.slice(1);
+    return isTabKey(initialHash) ? initialHash : 'sources';
+  });
+  const [articlesPage, setArticlesPage] = useState<number>(() => getArticlesPageFromSearch());
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Handle hash-based tab navigation
   useEffect(() => {
-    const hash = window.location.hash.slice(1); // Remove the # character
-    if (['sources', 'articles', 'settings'].includes(hash)) {
-      setActiveTab(hash);
-    } else if (!window.location.hash) {
-      // Set default tab if no hash
-      setActiveTab('sources');
-    }
+    const syncHashToTab = () => {
+      const hash = window.location.hash.slice(1);
+      setActiveTab(isTabKey(hash) ? hash : 'sources');
+    };
+
+    syncHashToTab();
+    window.addEventListener('hashchange', syncHashToTab);
+    return () => window.removeEventListener('hashchange', syncHashToTab);
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'articles') {
+      return;
+    }
+
+    const currentPage = getArticlesPageFromSearch();
+    setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handlePopState = () => {
+      if (window.location.hash.slice(1) !== 'articles') {
+        return;
+      }
+      const currentPage = getArticlesPageFromSearch();
+      setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'articles') {
+      return;
+    }
+    syncArticlesPageToUrl(articlesPage);
+  }, [articlesPage, activeTab]);
 
   // Update URL hash when tab changes
   const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    window.location.hash = value;
+    if (isTabKey(value)) {
+      setActiveTab(value);
+      if (typeof window !== 'undefined') {
+        window.location.hash = value;
+      }
+    }
   };
 
   const { data: settingsData } = useQuery<{
@@ -153,7 +241,11 @@ export default function AiFeedManagementPage() {
 
   const sources = sourcesData?.sources || [];
 
-  const { data: articlesData } = useQuery<{
+  const {
+    data: articlesData,
+    isFetching: isFetchingArticles,
+    isLoading: isLoadingArticles,
+  } = useQuery<{
     articles: AiFeedArticle[];
     pagination: {
       page: number;
@@ -161,7 +253,21 @@ export default function AiFeedManagementPage() {
       total: number;
       totalPages: number;
     };
-  }>({ queryKey: ['/api/ai-feeds/articles'] });
+  }>({
+    queryKey: ['/api/ai-feeds/articles', `?page=${articlesPage}&limit=${ARTICLES_PER_PAGE}`],
+    enabled: activeTab === 'articles',
+  });
+
+  useEffect(() => {
+    if (!articlesData?.pagination) {
+      return;
+    }
+
+    const total = Math.max(articlesData.pagination.totalPages, 1);
+    if (articlesPage > total) {
+      setArticlesPage(total);
+    }
+  }, [articlesData?.pagination, articlesPage]);
 
   const { data: statusData } = useQuery<{
     sources: AiFeedSource[];
@@ -360,6 +466,8 @@ export default function AiFeedManagementPage() {
         description: 'Share link copied to clipboard!',
       });
 
+      queryClient.invalidateQueries({ queryKey: ['/api/ai-feeds/articles'] });
+
       // Copy share URL to clipboard
       if (data.shareUrl) {
         const fullUrl = `${window.location.origin}${data.shareUrl}`;
@@ -492,6 +600,12 @@ export default function AiFeedManagementPage() {
     }
   };
 
+  const handleArticlesPageChange = (page: number) => {
+    const totalPages = articlesData?.pagination?.totalPages || 1;
+    const nextPage = Math.max(1, Math.min(page, totalPages));
+    setArticlesPage(nextPage);
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'idle':
@@ -521,6 +635,57 @@ export default function AiFeedManagementPage() {
       tags: string[];
     }>({ queryKey: ['/api/stats'] });
 
+  const totalArticlePages = articlesData?.pagination?.totalPages ?? 1;
+  const totalArticles = articlesData?.pagination?.total ?? 0;
+  const canGoToPreviousArticlePage = articlesPage > 1;
+  const canGoToNextArticlePage = articlesPage < totalArticlePages;
+  const isInitialArticlesLoad = activeTab === 'articles' && isLoadingArticles && !articlesData;
+  const isRefreshingArticles = activeTab === 'articles' && isFetchingArticles && !!articlesData;
+
+  const articlePageItems = useMemo(() => {
+    const total = totalArticlePages;
+    if (total <= 1) {
+      return [] as Array<number | 'ellipsis'>;
+    }
+
+    const current = Math.min(Math.max(articlesPage, 1), total);
+    const pages: Array<number | 'ellipsis'> = [];
+
+    const pushPage = (value: number | 'ellipsis') => {
+      if (pages[pages.length - 1] !== value) {
+        pages.push(value);
+      }
+    };
+
+    pushPage(1);
+
+    if (total <= 5) {
+      for (let page = 2; page <= total; page += 1) {
+        pushPage(page);
+      }
+      return pages;
+    }
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    if (start > 2) {
+      pushPage('ellipsis');
+    }
+
+    for (let page = start; page <= end; page += 1) {
+      pushPage(page);
+    }
+
+    if (end < total - 1) {
+      pushPage('ellipsis');
+    }
+
+    pushPage(total);
+
+    return pages;
+  }, [articlesPage, totalArticlePages]);
+
   return (
     <div className="flex h-screen overflow-hidden">
       <SEO
@@ -530,7 +695,7 @@ export default function AiFeedManagementPage() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        onCreateFolder={() => {}}
+        onCreateFolder={() => { }}
         stats={stats}
       />
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden bg-muted/10">
@@ -552,28 +717,31 @@ export default function AiFeedManagementPage() {
         <div className="w-full overflow-y-auto">
           <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-              <div className="overflow-x-auto pb-1">
-                <TabsList className="inline-flex min-w-full justify-start gap-2 rounded-2xl border bg-card/80 p-1.5 shadow-sm">
+              <div className="pb-1">
+                <TabsList className="grid w-full grid-cols-3 gap-2 rounded-xl border bg-card/80 p-0 shadow-sm">
                   <TabsTrigger
                     value="sources"
-                    className="flex min-w-[180px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    aria-label="Feed Sources"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <Rss className="h-4 w-4" />
-                    Feed Sources
+                    <span className="hidden sm:inline">Feed Sources</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="articles"
-                    className="flex min-w-[180px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    aria-label="Articles"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <FileText className="h-4 w-4" />
-                    Articles
+                    <span className="hidden sm:inline">Articles</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="settings"
-                    className="flex min-w-[180px] items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    aria-label="Settings"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <Settings className="h-4 w-4" />
-                    Settings
+                    <span className="hidden sm:inline">Settings</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -813,33 +981,45 @@ export default function AiFeedManagementPage() {
                               </div>
                             ) : (
                               <div className="space-y-4">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      {getStatusIcon(source.status)}
-                                      <span className="capitalize">{source.status}</span>
-                                    </div>
-                                    <a
-                                      href={source.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2 text-sm font-medium text-primary hover:underline break-all"
-                                    >
-                                      <Rss className="h-4 w-4" />
-                                      {source.url}
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                    <div className="text-xs text-muted-foreground">
-                                      {describeSchedule(
-                                        source.crawlScheduleMode,
-                                        source.crawlScheduleValue,
-                                        scheduleMode,
-                                        scheduleValue,
-                                        timezoneLabel,
-                                      )}
-                                    </div>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    {getStatusIcon(source.status)}
+                                    <span className="capitalize">{source.status}</span>
                                   </div>
-                                  <div className="flex flex-wrap gap-2 justify-end">
+                                  <a
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-sm font-medium text-primary hover:underline break-all"
+                                  >
+                                    <Rss className="h-4 w-4" />
+                                    {source.url}
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                  <div className="text-xs text-muted-foreground">
+                                    {describeSchedule(
+                                      source.crawlScheduleMode,
+                                      source.crawlScheduleValue,
+                                      scheduleMode,
+                                      scheduleValue,
+                                      timezoneLabel,
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-3 w-3" />
+                                    Last run: {formatLastRun(source.lastRunAt)}
+                                  </div>
+                                </div>
+                                <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                  <Badge
+                                    variant={source.isActive ? 'default' : 'secondary'}
+                                    className="uppercase tracking-wide w-fit"
+                                  >
+                                    {source.isActive ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                  <div className="flex flex-wrap gap-2 sm:justify-end">
                                     <TooltipProvider delayDuration={150}>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
@@ -849,7 +1029,8 @@ export default function AiFeedManagementPage() {
                                             onClick={() => handleTriggerSource(source.id)}
                                             disabled={
                                               triggerSourceMutation.isPending ||
-                                              source.status === 'running'
+                                              source.status === 'running' ||
+                                              !source.isActive
                                             }
                                           >
                                             <RefreshCw className="h-4 w-4" />
@@ -885,18 +1066,6 @@ export default function AiFeedManagementPage() {
                                     </Button>
                                   </div>
                                 </div>
-                                <div className="grid gap-3 sm:grid-cols-2 text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-3 w-3" />
-                                    Last run: {formatLastRun(source.lastRunAt)}
-                                  </div>
-                                </div>
-                                <Badge
-                                  variant={source.isActive ? 'default' : 'secondary'}
-                                  className="uppercase tracking-wide w-fit"
-                                >
-                                  {source.isActive ? 'Active' : 'Inactive'}
-                                </Badge>
                               </div>
                             )}
                           </div>
@@ -919,94 +1088,161 @@ export default function AiFeedManagementPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
-                      AI Processed Articles
+                      Articles
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 xl:grid-cols-2">
-                      {articlesData?.articles?.map((article) => (
-                        <div
-                          key={article.id}
-                          className="rounded-xl border bg-card p-5 shadow-sm space-y-4 flex flex-col"
-                        >
-                          <div className="space-y-3">
-                            <h3 className="text-lg font-semibold leading-snug line-clamp-2">
-                              {article.title}
-                            </h3>
-                            {article.summary && (
-                              <p className="text-sm text-muted-foreground line-clamp-3">
-                                {article.summary}
-                              </p>
-                            )}
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {article.publishedAt
-                                  ? formatDistanceToNow(new Date(article.publishedAt), {
-                                      addSuffix: true,
-                                    })
-                                  : 'No publish date'}
-                              </span>
-                              {article.sourceUrl && (
-                                <span className="flex items-center gap-1">
-                                  <Rss className="h-3 w-3" />
-                                  <a
-                                    href={article.sourceUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hover:underline"
-                                  >
-                                    View Source
-                                  </a>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-end gap-2 pt-3 border-t border-border/60">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => window.open(article.url, '_blank')}
-                            >
-                              <Eye className="h-4 w-4" />
-                              Read
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className={`inline-flex items-center gap-2 font-medium transition-colors ${
-                                article.isShared
-                                  ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
-                                  : 'text-muted-foreground hover:text-foreground'
-                              }`}
-                              onClick={() => shareArticleMutation.mutate(article.id)}
-                              disabled={shareArticleMutation.isPending}
-                            >
-                              <Share2 className="h-4 w-4" />
-                              Share Article
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDeleteArticle(article.id)}
-                              disabled={deleteArticleMutation.isPending}
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      {(!articlesData?.articles || articlesData.articles.length === 0) && (
-                        <div className="rounded-xl border bg-muted/20 p-10 text-center text-muted-foreground xl:col-span-2">
-                          <FileText className="h-12 w-12 mx-auto mb-4 opacity-60" />
-                          <p className="font-medium mb-1">No articles processed yet.</p>
-                          <p className="text-sm">
-                            Add feed sources and wait for the AI to process them.
-                          </p>
+                      {isInitialArticlesLoad && (
+                        <div className="col-span-full flex justify-center py-12">
+                          <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
                         </div>
                       )}
+
+                      {!isInitialArticlesLoad &&
+                        articlesData?.articles?.map((article) => (
+                          <div
+                            key={article.id}
+                            className="rounded-xl border bg-card p-5 shadow-sm space-y-4 flex flex-col"
+                          >
+                            <div className="space-y-3">
+                              <h3 className="text-lg font-semibold leading-snug line-clamp-2">
+                                {article.title}
+                              </h3>
+                              {article.summary && (
+                                <p className="text-sm text-muted-foreground line-clamp-3">
+                                  {article.summary}
+                                </p>
+                              )}
+                              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {article.publishedAt
+                                    ? formatDistanceToNow(new Date(article.publishedAt), {
+                                        addSuffix: true,
+                                      })
+                                    : 'No publish date'}
+                                </span>
+                                {article.sourceUrl && (
+                                  <span className="flex items-center gap-1">
+                                    <Rss className="h-3 w-3" />
+                                    <a
+                                      href={article.sourceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="hover:underline"
+                                    >
+                                      View Source
+                                    </a>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-end gap-2 pt-3 border-t border-border/60">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => window.open(article.url, '_blank')}
+                              >
+                                <Eye className="h-4 w-4" />
+                                Read
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className={`inline-flex items-center gap-2 font-medium transition-colors ${
+                                  article.isShared
+                                    ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                                onClick={() => shareArticleMutation.mutate(article.id)}
+                                disabled={shareArticleMutation.isPending}
+                              >
+                                <Share2 className="h-4 w-4" />
+                                Share Article
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteArticle(article.id)}
+                                disabled={deleteArticleMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+
+                      {!isInitialArticlesLoad &&
+                        (!articlesData?.articles || articlesData.articles.length === 0) && (
+                          <div className="rounded-xl border bg-muted/20 p-10 text-center text-muted-foreground xl:col-span-2">
+                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-60" />
+                            <p className="font-medium mb-1">No articles processed yet.</p>
+                            <p className="text-sm">
+                              Add feed sources and wait for the AI to process them.
+                            </p>
+                          </div>
+                        )}
                     </div>
+
+                    {totalArticlePages > 1 && !isInitialArticlesLoad && (
+                      <div className="mt-6 flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground text-center sm:text-left">
+                          Page {articlesPage} of {totalArticlePages}
+                          {totalArticles ? ` · ${totalArticles} articles` : ''}
+                          {isRefreshingArticles ? ' · Updating…' : ''}
+                        </p>
+                        <Pagination className="justify-center sm:justify-end">
+                          <PaginationContent>
+                            <PaginationItem>
+                              <PaginationPrevious
+                                href="#"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  if (canGoToPreviousArticlePage) {
+                                    handleArticlesPageChange(articlesPage - 1);
+                                  }
+                                }}
+                                className={!canGoToPreviousArticlePage ? 'pointer-events-none opacity-50' : undefined}
+                              />
+                            </PaginationItem>
+                            {articlePageItems.map((item, index) => (
+                              <PaginationItem key={`${item}-${index}`}>
+                                {item === 'ellipsis' ? (
+                                  <PaginationEllipsis />
+                                ) : (
+                                  <PaginationLink
+                                    href="#"
+                                    isActive={item === articlesPage}
+                                    onClick={(event) => {
+                                      event.preventDefault();
+                                      if (item !== articlesPage) {
+                                        handleArticlesPageChange(item);
+                                      }
+                                    }}
+                                  >
+                                    {item}
+                                  </PaginationLink>
+                                )}
+                              </PaginationItem>
+                            ))}
+                            <PaginationItem>
+                              <PaginationNext
+                                href="#"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  if (canGoToNextArticlePage) {
+                                    handleArticlesPageChange(articlesPage + 1);
+                                  }
+                                }}
+                                className={!canGoToNextArticlePage ? 'pointer-events-none opacity-50' : undefined}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1171,8 +1407,8 @@ export default function AiFeedManagementPage() {
                                   ? 'Auto Detect'
                                   : preferences.defaultAiLanguage
                                     ? BOOKMARK_LANGUAGE_LABELS[
-                                        preferences.defaultAiLanguage as BookmarkLanguage
-                                      ]
+                                    preferences.defaultAiLanguage as BookmarkLanguage
+                                    ]
                                     : ''}
                               </div>
                               <p className="text-xs text-muted-foreground">
