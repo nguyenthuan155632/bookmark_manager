@@ -214,7 +214,7 @@ export default function SharedArticlePage() {
               ? error.message
               : 'This shared article is not available or may have been removed.'}
           </p>
-          <Link href="/">
+          <Link href="/ai-feed-management#articles">
             <Button variant="outline" className="inline-flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
@@ -230,7 +230,7 @@ export default function SharedArticlePage() {
       {/* Header */}
       <header className="border-b bg-card/60 backdrop-blur">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <Link href="/">
+          <Link href="/ai-feed-management#articles">
             <Button variant="ghost" size="sm" className="justify-start gap-2 px-2">
               <ArrowLeft className="h-4 w-4" />
               Back to Home

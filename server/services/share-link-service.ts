@@ -11,7 +11,13 @@ export async function ensureShareLinkForArticle(articleId: number, userId: strin
     .select({ shareId: aiFeedArticles.shareId })
     .from(aiFeedArticles)
     .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-    .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)))
+    .where(
+      and(
+        eq(aiFeedArticles.id, articleId),
+        eq(aiFeedSources.userId, userId),
+        eq(aiFeedArticles.isDeleted, false),
+      ),
+    )
     .limit(1);
 
   if (!existing.length) {

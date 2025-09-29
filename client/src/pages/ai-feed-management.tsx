@@ -1557,8 +1557,6 @@ function ArticlesNewsLayout({
   onDelete,
   isSendingPush,
 }: ArticlesNewsLayoutProps) {
-  const [featured, ...rest] = articles;
-
   const pushTooltip = !canSendPush
     ? pushStatus?.supported
       ? 'Push notifications not enabled in settings'
@@ -1623,39 +1621,9 @@ function ArticlesNewsLayout({
 
   return (
     <div className="space-y-10">
-      {featured && (
-        <article
-          key={featured.id}
-          className="grid gap-6 border-b pb-8 md:grid-cols-[2fr_1fr] md:items-start"
-        >
-          <div className="space-y-4 md:pr-8">
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              Top Story
-            </span>
-            <h2 className="text-2xl font-semibold leading-tight text-foreground md:text-3xl">
-              {featured.title}
-            </h2>
-            {renderMeta(featured)}
-            {truncateSummary(featured.summary) && (
-              <p className="text-base leading-7 text-muted-foreground line-clamp-4">
-                {truncateSummary(featured.summary, 320)}
-              </p>
-            )}
-            {renderActions(featured)}
-          </div>
-          {featured.imageUrl && (
-            <div className="order-first md:order-last md:ml-auto md:w-[200px] md:pl-4">
-              <div className="overflow-hidden rounded-lg border">
-                <img src={featured.imageUrl} alt="" className="h-full w-full object-cover" />
-              </div>
-            </div>
-          )}
-        </article>
-      )}
-
-      {rest.length > 0 && (
+      {articles.length > 0 && (
         <div className="space-y-6">
-          {rest.map((article) => (
+          {articles.map((article) => (
             <article key={article.id} className="border-b pb-6 last:border-none last:pb-0">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
                 <div className="flex-1 space-y-3 md:pr-6">

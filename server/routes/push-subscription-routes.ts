@@ -78,7 +78,7 @@ export function registerPushSubscriptionRoutes(app: Express): void {
         .select({ article: aiFeedArticles })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(eq(aiFeedSources.userId, userId))
+        .where(and(eq(aiFeedSources.userId, userId), eq(aiFeedArticles.isDeleted, false)))
         .orderBy(desc(aiFeedArticles.createdAt))
         .limit(1);
 
@@ -126,7 +126,13 @@ export function registerPushSubscriptionRoutes(app: Express): void {
         .select({ article: aiFeedArticles })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)))
+        .where(
+          and(
+            eq(aiFeedArticles.id, articleId),
+            eq(aiFeedSources.userId, userId),
+            eq(aiFeedArticles.isDeleted, false),
+          ),
+        )
         .limit(1);
 
       if (!articleResult.length) {

@@ -377,6 +377,7 @@ export const aiFeedArticles = pgTable(
     notificationContent: varchar('notification_content', { length: 200 }),
     notificationSent: boolean('notification_sent').default(false),
     publishedAt: timestamp('published_at'),
+    isDeleted: boolean('is_deleted').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     shareId: varchar('share_id', { length: 20 }),
     isShared: boolean('is_shared').default(false),

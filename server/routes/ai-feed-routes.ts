@@ -203,9 +203,10 @@ export function registerAiFeedRoutes(app: Express) {
         ? parsedSourceId
         : undefined;
 
+      const baseCondition = and(eq(aiFeedSources.userId, userId), eq(aiFeedArticles.isDeleted, false));
       const whereClause = sourceFilter
-        ? and(eq(aiFeedSources.userId, userId), eq(aiFeedArticles.sourceId, sourceFilter))
-        : eq(aiFeedSources.userId, userId);
+        ? and(baseCondition, eq(aiFeedArticles.sourceId, sourceFilter))
+        : baseCondition;
 
       const articles = await db
         .select({
@@ -379,7 +380,13 @@ export function registerAiFeedRoutes(app: Express) {
         })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)));
+        .where(
+          and(
+            eq(aiFeedArticles.id, articleId),
+            eq(aiFeedSources.userId, userId),
+            eq(aiFeedArticles.isDeleted, false),
+          ),
+        );
 
       if (article.length === 0) {
         return res.status(404).json({ message: 'Article not found' });
@@ -428,7 +435,13 @@ export function registerAiFeedRoutes(app: Express) {
         })
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(and(eq(aiFeedArticles.shareId, shareId), eq(aiFeedArticles.isShared, true)));
+        .where(
+          and(
+            eq(aiFeedArticles.shareId, shareId),
+            eq(aiFeedArticles.isShared, true),
+            eq(aiFeedArticles.isDeleted, false),
+          ),
+        );
 
       if (article.length === 0) {
         return res.status(404).json({ message: 'Article not found or is no longer shared' });
@@ -452,14 +465,26 @@ export function registerAiFeedRoutes(app: Express) {
         .select()
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)));
+        .where(
+          and(
+            eq(aiFeedArticles.id, articleId),
+            eq(aiFeedSources.userId, userId),
+            eq(aiFeedArticles.isDeleted, false),
+          ),
+        );
 
       if (article.length === 0) {
         return res.status(404).json({ message: 'Article not found' });
       }
 
-      // Delete the article (we already verified ownership above)
-      await db.delete(aiFeedArticles).where(eq(aiFeedArticles.id, articleId)).returning();
+      await db
+        .update(aiFeedArticles)
+        .set({
+          isDeleted: true,
+          isShared: false,
+          shareId: null,
+        })
+        .where(eq(aiFeedArticles.id, articleId));
 
       res.json({ message: 'Article deleted successfully' });
     } catch (error) {
@@ -479,7 +504,13 @@ export function registerAiFeedRoutes(app: Express) {
         .select()
         .from(aiFeedArticles)
         .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
-        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedSources.userId, userId)));
+        .where(
+          and(
+            eq(aiFeedArticles.id, articleId),
+            eq(aiFeedSources.userId, userId),
+            eq(aiFeedArticles.isDeleted, false),
+          ),
+        );
 
       if (article.length === 0) {
         return res.status(404).json({ message: 'Article not found' });
@@ -492,7 +523,7 @@ export function registerAiFeedRoutes(app: Express) {
           shareId: null,
           isShared: false,
         })
-        .where(eq(aiFeedArticles.id, articleId))
+        .where(and(eq(aiFeedArticles.id, articleId), eq(aiFeedArticles.isDeleted, false)))
         .returning();
 
       res.json({ message: 'Article unshared successfully' });

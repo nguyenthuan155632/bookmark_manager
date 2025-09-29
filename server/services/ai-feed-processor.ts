@@ -567,7 +567,7 @@ IMPORTANT: Respond with ONLY the JSON object below. Do not include any markdown 
 
   async checkDuplicateArticle(url: string, _sourceId: number): Promise<boolean> {
     const existing = await db
-      .select()
+      .select({ isDeleted: aiFeedArticles.isDeleted })
       .from(aiFeedArticles)
       .where(eq(aiFeedArticles.url, url))
       .limit(1);

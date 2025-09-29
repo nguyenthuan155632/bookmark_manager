@@ -26,7 +26,7 @@ class CronService {
 
   private setupCronJob(): void {
     // Run hourly to evaluate feed schedules
-    const cronExpression = '0 * * * *';
+    const cronExpression = process.env.NODE_ENV === 'production' ? '*/1 * * * *' : '*/5 * * * *';
 
     this.cronJob = cron.schedule(
       cronExpression,
@@ -279,7 +279,7 @@ class CronService {
           `✅ Processed ${articles.length} articles from ${feed.url} in ${feedDuration}ms`,
         );
       } else {
-        console.log(`ℹ️ No new articles found in ${feed.url}`);
+        console.log(`ℹ️  No new articles found in ${feed.url}`);
       }
 
       // Update feed status to completed and set last run time
@@ -413,7 +413,15 @@ class CronService {
     try {
       const preparedHtml = this.prepareHtmlForAnalysis(htmlContent);
       const model = process.env.OPENROUTER_DESC_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1:free';
-      const systemPrompt = `You are an expert content crawler. Given an HTML snapshot of a web page, determine whether it represents a single article or an article listing. When it is a listing page, extract the canonical URLs that point to full articles. Return at least 10 article URLs when available (up to 25), sorted in reading order. Exclude navigation, pagination, tag, category, author, or utility links. Always respond with valid JSON.`;
+      const systemPrompt = `You are an expert news crawler. Given an HTML snapshot (with a trimmed main section and a list of anchors), do the following with great care:
+
+1. Decide if the page is a single article or a listing/collection page. Use the structure of the main content, not the header/footer.
+2. When it is a listing or feed page, extract only the canonical URLs that lead to full editorial stories, news articles, or blog posts.
+3. Ignore and exclude ALL navigation, footer, utility, or promotional links. This includes links for login, subscribe, store/shop, about, contact, help center, newsletters, podcasts, videos, photo galleries, trending widgets, social media, categories, tag hubs, author pages, pagination, comment sections, or site-wide promos.
+4. Prefer links that appear inside article cards, headline blocks, or story teasers within the main content area. preserve the reading order from top to bottom of the content area.
+5. Return at least 10 article URLs when that many genuine stories exist (up to a maximum of 25). Do not invent URLs and do not include duplicates.
+
+Always respond with valid JSON in the requested format.`;
       const userPrompt = `Base URL: ${baseUrl}\n\nHTML Snapshot (truncated):\n${preparedHtml}`;
 
       const completion = (await Promise.race([
@@ -510,6 +518,90 @@ class CronService {
     }
 
     return cleaned.trim();
+  }
+
+  private filterIrrelevantLinks(urls: string[], baseUrl: string): string[] {
+    const skipSubstrings = [
+      '/about',
+      '/contact',
+      '/privacy',
+      '/data-privacy',
+      '/terms',
+      '/subscribe',
+      '/login',
+      '/signin',
+      '/register',
+      '/account',
+      '/newsletter',
+      '/newsletter/',
+      '/newsletter-',
+      '/videos',
+      '/video/',
+      '/podcast',
+      '/events',
+      '/store',
+      '/shop',
+      '/author',
+      '/category',
+      '/categories',
+      '/tag',
+      '/tags',
+      '/topic',
+      '/topics',
+      '/search',
+      '/comment',
+      '/comments',
+      '/faq',
+      '/help',
+      '/library',
+      '/reviews',
+      '/benchmarks',
+      '/buying-guide',
+      '/news-archive',
+      '/magazine',
+      '/jobs',
+      '/news.152',
+      '/expert-reviews',
+      '/newsroom',
+    ];
+
+    const baseHost = (() => {
+      try {
+        return new URL(baseUrl).host;
+      } catch (_error) {
+        return '';
+      }
+    })();
+
+    const filtered = urls.filter((url) => {
+      try {
+        const absolute = new URL(url, baseUrl);
+        const href = absolute.href;
+
+        if (href === baseUrl || href === `${baseUrl}/`) {
+          return false;
+        }
+
+        if (absolute.hash) {
+          return false;
+        }
+
+        const lowerHref = href.toLowerCase();
+        if (skipSubstrings.some((fragment) => lowerHref.includes(fragment))) {
+          return false;
+        }
+
+        if (absolute.host !== baseHost && !absolute.host.endsWith(`.${baseHost}`)) {
+          return false;
+        }
+
+        return true;
+      } catch (_error) {
+        return false;
+      }
+    });
+
+    return Array.from(new Set(filtered));
   }
 
   private normalizeArticleUrls(urls: string[], baseUrl: string): string[] {
@@ -626,9 +718,15 @@ class CronService {
 
       const aiLinks =
         aiAnalysis.articleUrls.length > 0
-          ? this.normalizeArticleUrls(aiAnalysis.articleUrls, baseUrl)
+          ? this.filterIrrelevantLinks(
+            this.normalizeArticleUrls(aiAnalysis.articleUrls, baseUrl),
+            baseUrl,
+          )
           : [];
-      const heuristicLinks = this.extractArticleLinks(htmlContent, baseUrl);
+      const heuristicLinks = this.filterIrrelevantLinks(
+        this.extractArticleLinks(htmlContent, baseUrl),
+        baseUrl,
+      );
       const articleLinks = this.mergeArticleLinks(aiLinks, heuristicLinks);
 
       if (aiLinks.length === 0) {
@@ -638,6 +736,11 @@ class CronService {
       console.log(
         `🔗 Found ${articleLinks.length} candidate article links, processing up to ${maxArticles}`,
       );
+
+      // Print article links
+      console.log('--------------------------------');
+      console.log(`🔗 Article links: ${articleLinks.join('\n')}`);
+      console.log('--------------------------------');
 
       for (const link of articleLinks) {
         if (articles.length >= maxArticles) {
