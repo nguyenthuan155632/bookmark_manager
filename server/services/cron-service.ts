@@ -3,6 +3,7 @@ import {
   aiCrawlerSettings,
   aiFeedJobs,
   aiFeedSources,
+  userPreferences,
   type AiCrawlerSettings,
   type AiFeedSource,
 } from '@shared/schema.js';
@@ -26,7 +27,7 @@ class CronService {
 
   private setupCronJob(): void {
     // Run hourly to evaluate feed schedules
-    const cronExpression = process.env.NODE_ENV === 'production' ? '*/1 * * * *' : '*/5 * * * *';
+    const cronExpression = '*/1 * * * *';
 
     this.cronJob = cron.schedule(
       cronExpression,
@@ -132,14 +133,31 @@ class CronService {
 
       console.log(`Found ${settings.length} enabled crawler settings`);
 
+      const userIds = settings.map((setting) => setting.userId);
+      const timezoneByUser = new Map<string, string>();
+
+      if (userIds.length > 0) {
+        const preferences = await db
+          .select({ userId: userPreferences.userId, timezone: userPreferences.timezone })
+          .from(userPreferences)
+          .where(inArray(userPreferences.userId, userIds));
+
+        for (const preference of preferences) {
+          timezoneByUser.set(preference.userId, this.normaliseTimezone(preference.timezone));
+        }
+      }
+
       for (const setting of settings) {
+        const timezone = timezoneByUser.get(setting.userId) || 'UTC';
         // Get active feed sources for this user
         const activeSources = await db
           .select()
           .from(aiFeedSources)
           .where(and(eq(aiFeedSources.userId, setting.userId), eq(aiFeedSources.isActive, true)));
 
-        const feedsToProcess = activeSources.filter((source) => this.isSourceDue(source, setting));
+        const feedsToProcess = activeSources.filter((source) =>
+          this.isSourceDue(source, setting, timezone),
+        );
 
         console.log(`User ${setting.userId}: ${feedsToProcess.length} feeds to process`);
 
@@ -205,6 +223,7 @@ class CronService {
   private isSourceDue(
     source: typeof aiFeedSources.$inferSelect,
     setting: AiCrawlerSettings,
+    timezone: string,
   ): boolean {
     const lastRun = source.lastRunAt ? new Date(source.lastRunAt) : null;
     if (!lastRun || Number.isNaN(lastRun.getTime())) {
@@ -224,28 +243,112 @@ class CronService {
     const hour = Math.min(23, Math.max(0, parseInt(hourPart, 10) || 7));
     const minute = Math.min(59, Math.max(0, parseInt(minutePart, 10) || 0));
 
-    const latestSlot = this.getLatestDailySlot(hour, minute, now);
+    const latestSlot = this.getLatestDailySlot(hour, minute, now, timezone);
     return lastRun.getTime() < latestSlot.getTime();
   }
 
-  private getLatestDailySlot(hour: number, minute: number, reference: Date): Date {
-    const slotToday = new Date(
-      Date.UTC(
-        reference.getUTCFullYear(),
-        reference.getUTCMonth(),
-        reference.getUTCDate(),
-        hour,
-        minute,
-        0,
-        0,
-      ),
+  private getLatestDailySlot(hour: number, minute: number, reference: Date, timezone: string): Date {
+    const tz = this.normaliseTimezone(timezone);
+    const referenceParts = this.getDateTimeParts(reference, tz);
+
+    const slotToday = this.getUtcDateFromParts(
+      referenceParts.year,
+      referenceParts.month,
+      referenceParts.day,
+      hour,
+      minute,
+      tz,
     );
 
     if (reference.getTime() >= slotToday.getTime()) {
       return slotToday;
     }
 
-    return new Date(slotToday.getTime() - 24 * 60 * 60 * 1000);
+    const previousReferenceParts = this.getDateTimeParts(
+      new Date(reference.getTime() - 24 * 60 * 60 * 1000),
+      tz,
+    );
+
+    return this.getUtcDateFromParts(
+      previousReferenceParts.year,
+      previousReferenceParts.month,
+      previousReferenceParts.day,
+      hour,
+      minute,
+      tz,
+    );
+  }
+
+  private normaliseTimezone(timezone?: string | null): string {
+    if (!timezone) {
+      return 'UTC';
+    }
+
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: timezone });
+      return timezone;
+    } catch {
+      return 'UTC';
+    }
+  }
+
+  private getDateTimeParts(date: Date, timezone: string): {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+  } {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour12: false,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    const parts = formatter.formatToParts(date);
+    const lookup: Record<string, number> = {};
+
+    for (const part of parts) {
+      if (part.type !== 'literal') {
+        lookup[part.type] = Number.parseInt(part.value, 10);
+      }
+    }
+
+    return {
+      year: lookup.year || date.getUTCFullYear(),
+      month: lookup.month || date.getUTCMonth() + 1,
+      day: lookup.day || date.getUTCDate(),
+      hour: lookup.hour || 0,
+      minute: lookup.minute || 0,
+      second: lookup.second || 0,
+    };
+  }
+
+  private getTimezoneOffset(date: Date, timezone: string): number {
+    const tz = this.normaliseTimezone(timezone);
+    const parts = this.getDateTimeParts(date, tz);
+    const asUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second, 0);
+    return asUtc - date.getTime();
+  }
+
+  private getUtcDateFromParts(
+    year: number,
+    month: number,
+    day: number,
+    hour: number,
+    minute: number,
+    timezone: string,
+  ): Date {
+    const tz = this.normaliseTimezone(timezone);
+    const utcCandidate = new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
+    const offset = this.getTimezoneOffset(utcCandidate, tz);
+    return new Date(utcCandidate.getTime() - offset);
   }
 
   public async processSingleFeed(

@@ -56,16 +56,29 @@ import { Link } from 'wouter';
 const SCHEDULE_HOUR_OPTIONS = ['1', '2', '3', '4', '6', '8', '12', '24'];
 const SCHEDULE_DAILY_TIMES = [
   '00:00',
+  '01:00',
   '02:00',
+  '03:00',
   '04:00',
+  '05:00',
   '06:00',
   '07:00',
   '08:00',
   '09:00',
+  '10:00',
+  '11:00',
   '12:00',
+  '13:00',
+  '14:00',
   '15:00',
+  '16:00',
+  '17:00',
   '18:00',
+  '19:00',
+  '20:00',
   '21:00',
+  '22:00',
+  '23:00',
 ];
 
 const TAB_KEYS = ['sources', 'articles', 'settings'] as const;
@@ -74,7 +87,7 @@ type TabKey = (typeof TAB_KEYS)[number];
 const isTabKey = (value: string): value is TabKey =>
   TAB_KEYS.includes(value as TabKey);
 
-const ARTICLES_PER_PAGE = 12;
+const ARTICLES_PER_PAGE = 20;
 
 const getArticlesPageFromSearch = (): number => {
   if (typeof window === 'undefined') {

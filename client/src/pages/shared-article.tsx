@@ -85,48 +85,48 @@ export default function SharedArticlePage() {
   // Render AI-rewritten content
   const renderContent = (content: string) => {
     if (!content || content.trim().length === 0) {
-      return <div className="text-gray-500 italic">No content available for this article.</div>;
+      return <div className="text-muted-foreground italic">No content available for this article.</div>;
     }
 
     if (!article) {
-      return <div className="text-gray-500 italic">Loading article...</div>;
+      return <div className="text-muted-foreground italic">Loading article...</div>;
     }
 
     const contentId = `article-${article.id}`;
     const contentToDisplay = formattedContent[contentId] || content;
 
     return (
-      <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none prose-headings:font-semibold prose-h1:text-xl sm:prose-h1:text-2xl prose-h2:text-lg sm:prose-h2:text-xl prose-h3:text-base sm:prose-h3:text-lg prose-p:text-gray-700 prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-800 prose-strong:text-gray-900 prose-em:text-gray-700 prose-code:bg-gray-100 prose-code:text-gray-800 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs sm:prose-code:text-sm prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:font-mono prose-pre:text-xs sm:prose-pre:text-sm prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 prose-blockquote:bg-gray-50 prose-blockquote:py-2 prose-blockquote:rounded-r prose-ul:ml-0 prose-ul:pl-4 prose-ul:space-y-2 prose-ol:ml-6 prose-ol:space-y-2 prose-ol:list-decimal prose-li:leading-relaxed prose-img:max-w-full prose-img:h-auto prose-img:rounded-lg prose-img:shadow-md prose-img:my-4 prose-img:mx-auto">
+      <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none prose-headings:font-semibold prose-h1:text-xl sm:prose-h1:text-2xl prose-h2:text-lg sm:prose-h2:text-xl prose-h3:text-base sm:prose-h3:text-lg prose-p:text-muted-foreground dark:prose-p:text-muted-foreground prose-a:text-primary prose-a:underline hover:prose-a:text-primary/80 prose-strong:text-foreground dark:prose-strong:text-foreground prose-em:text-muted-foreground dark:prose-em:text-muted-foreground prose-code:bg-muted dark:prose-code:bg-muted/60 prose-code:text-foreground dark:prose-code:text-foreground prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs sm:prose-code:text-sm prose-pre:bg-muted dark:prose-pre:bg-muted/50 prose-pre:text-muted-foreground dark:prose-pre:text-muted-foreground prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:font-mono prose-pre:text-xs sm:prose-pre:text-sm prose-blockquote:border-l-4 prose-blockquote:border-border dark:prose-blockquote:border-border/60 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground dark:prose-blockquote:text-muted-foreground prose-blockquote:bg-muted/70 dark:prose-blockquote:bg-muted/40 prose-blockquote:py-2 prose-blockquote:rounded-r prose-ul:ml-0 prose-ul:pl-4 prose-ul:space-y-2 prose-ol:ml-6 prose-ol:space-y-2 prose-ol:list-decimal prose-li:leading-relaxed prose-img:max-w-full prose-img:h-auto prose-img:rounded-lg prose-img:shadow-md prose-img:my-4 prose-img:mx-auto">
         <ReactMarkdown
           remarkPlugins={[]}
           rehypePlugins={[]}
           components={{
             h1: ({ children }) => (
-              <h1 className="text-2xl font-bold mt-8 mb-6 text-gray-900 border-b border-gray-200 pb-2">
+              <h1 className="text-2xl font-bold mt-8 mb-6 text-foreground border-b border-border/70 dark:border-border/50 pb-2">
                 {children}
               </h1>
             ),
             h2: ({ children }) => (
-              <h2 className="text-xl font-semibold mt-8 mb-4 text-gray-800 border-b border-gray-100 pb-1">
+              <h2 className="text-xl font-semibold mt-8 mb-4 text-foreground border-b border-border/60 dark:border-border/40 pb-1">
                 {children}
               </h2>
             ),
             h3: ({ children }) => (
-              <h3 className="text-lg font-medium mt-6 mb-3 text-gray-700 flex items-center">
+              <h3 className="text-lg font-medium mt-6 mb-3 text-foreground flex items-center">
                 {children}
               </h3>
             ),
             h4: ({ children }) => (
-              <h4 className="text-base font-medium mt-5 mb-2 text-gray-700">{children}</h4>
+              <h4 className="text-base font-medium mt-5 mb-2 text-foreground">{children}</h4>
             ),
-            p: ({ children }) => <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>,
-            ul: ({ children }) => <ul className="mb-4 ml-6 space-y-2 text-gray-700">{children}</ul>,
+            p: ({ children }) => <p className="mb-4 text-muted-foreground leading-relaxed">{children}</p>,
+            ul: ({ children }) => <ul className="mb-4 ml-6 space-y-2 text-muted-foreground">{children}</ul>,
             ol: ({ children }) => (
-              <ol className="mb-4 ml-6 space-y-2 text-gray-700 list-decimal">{children}</ol>
+              <ol className="mb-4 ml-6 space-y-2 text-muted-foreground list-decimal">{children}</ol>
             ),
             li: ({ children }) => <li className="leading-relaxed">{children}</li>,
             blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-blue-300 pl-4 my-4 italic text-gray-600 bg-blue-50 py-2 rounded-r">
+              <blockquote className="border-l-4 border-primary/40 dark:border-primary/50 pl-4 my-4 italic text-muted-foreground bg-primary/5 dark:bg-primary/10 py-2 rounded-r">
                 {children}
               </blockquote>
             ),
@@ -134,32 +134,32 @@ export default function SharedArticlePage() {
               const { inline, children } = props;
               if (inline) {
                 return (
-                  <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono">
+                  <code className="bg-muted text-foreground px-1 py-0.5 rounded text-sm font-mono">
                     {children}
                   </code>
                 );
               }
               return (
-                <code className="block bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto font-mono text-sm my-4">
+                <code className="block bg-muted text-muted-foreground border border-border/60 dark:border-border/40 p-4 rounded-lg overflow-x-auto font-mono text-sm my-4">
                   {children}
                 </code>
               );
             },
             pre: ({ children }) => (
-              <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4">
+              <pre className="bg-muted text-muted-foreground border border-border/60 dark:border-border/40 p-4 rounded-lg overflow-x-auto my-4">
                 {children}
               </pre>
             ),
             strong: ({ children }) => (
-              <strong className="font-semibold text-gray-900">{children}</strong>
+              <strong className="font-semibold text-foreground">{children}</strong>
             ),
-            em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
+            em: ({ children }) => <em className="italic text-muted-foreground">{children}</em>,
             a: ({ href, children }) => (
               <a
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline transition-colors"
+                className="text-primary hover:text-primary/80 underline transition-colors"
               >
                 {children}
               </a>
@@ -173,16 +173,16 @@ export default function SharedArticlePage() {
             ),
             table: ({ children }) => (
               <div className="overflow-x-auto my-4">
-                <table className="min-w-full border border-gray-300">{children}</table>
+                <table className="min-w-full border border-border/60 dark:border-border/40">{children}</table>
               </div>
             ),
             th: ({ children }) => (
-              <th className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold text-gray-700">
+              <th className="border border-border/60 dark:border-border/40 bg-muted px-4 py-2 text-left font-semibold text-foreground">
                 {children}
               </th>
             ),
             td: ({ children }) => (
-              <td className="border border-gray-300 px-4 py-2 text-gray-700">{children}</td>
+              <td className="border border-border/60 dark:border-border/40 px-4 py-2 text-muted-foreground">{children}</td>
             ),
           }}
         >
