@@ -44,6 +44,7 @@ import {
   RefreshCw,
   Rss,
   Save,
+  Send,
   Settings,
   Share2,
   Trash2,
@@ -801,14 +802,17 @@ export default function AiFeedManagementPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="px-2"
+                  aria-label="Back to home"
+                >
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="ml-1 hidden sm:inline">Home</span>
                 </Button>
               </Link>
               <h1 className="text-xl font-semibold truncate">AI Feed Management</h1>
             </div>
-            <div className="text-sm text-muted-foreground">Signed in as {user?.username}</div>
           </div>
         </div>
 
@@ -818,20 +822,20 @@ export default function AiFeedManagementPage() {
               <div className="pb-1">
                 <TabsList className="grid w-full grid-cols-3 gap-2 rounded-xl border bg-card/80 p-0 shadow-sm">
                   <TabsTrigger
-                    value="sources"
-                    aria-label="Feed Sources"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  >
-                    <Rss className="h-4 w-4" />
-                    <span className="hidden sm:inline">Feed Sources</span>
-                  </TabsTrigger>
-                  <TabsTrigger
                     value="articles"
                     aria-label="Articles"
                     className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <FileText className="h-4 w-4" />
                     <span className="hidden sm:inline">Articles</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="sources"
+                    aria-label="Feed Sources"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    <Rss className="h-4 w-4" />
+                    <span className="hidden sm:inline">Feed Sources</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="settings"
@@ -871,10 +875,11 @@ export default function AiFeedManagementPage() {
                           <Button
                             onClick={handleCreateSource}
                             disabled={!newSourceUrl.trim() || createSourceMutation.isPending}
-                            className="w-full h-11 flex items-center justify-center gap-2"
+                            className="w-full h-11 justify-center"
+                            aria-label="Add feed source"
                           >
                             <Plus className="h-4 w-4" />
-                            Add
+                            <span className="sr-only">Add feed source</span>
                           </Button>
                         </div>
                       </div>
@@ -1144,8 +1149,14 @@ export default function AiFeedManagementPage() {
                                       size="sm"
                                       variant="outline"
                                       onClick={() => handleToggleSource(source)}
+                                      aria-label={source.isActive ? 'Disable source' : 'Enable source'}
+                                      title={source.isActive ? 'Disable source' : 'Enable source'}
                                     >
-                                      {source.isActive ? 'Disable' : 'Enable'}
+                                      {source.isActive ? (
+                                        <XCircle className="h-4 w-4" />
+                                      ) : (
+                                        <CheckCircle className="h-4 w-4" />
+                                      )}
                                     </Button>
                                     <Button
                                       size="sm"
@@ -1599,34 +1610,55 @@ function ArticlesNewsLayout({
 
     return (
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={() => window.open(article.url, '_blank')}>
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={() => window.open(article.url, '_blank')}
+          aria-label="Open article"
+        >
           <Eye className="h-4 w-4" />
-          Read
+          <span className="sr-only">Open article</span>
         </Button>
         <Button
-          size="sm"
+          size="icon"
           variant="ghost"
-          className={`inline-flex items-center gap-2 font-medium transition-colors ${article.isShared
-            ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
-            : 'text-muted-foreground hover:text-foreground'
+          className={`h-9 w-9 ${article.isShared
+              ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
+              : 'text-muted-foreground hover:text-foreground'
             }`}
           onClick={() => onShare(article.id)}
+          aria-label={article.isShared ? 'Unshare article' : 'Share article'}
         >
           <Share2 className="h-4 w-4" />
-          Share Article
+          <span className="sr-only">
+            {article.isShared ? 'Unshare article' : 'Share article'}
+          </span>
         </Button>
         <Button
-          size="sm"
+          size="icon"
           variant="secondary"
           onClick={() => onSendPush(article.id)}
           disabled={sending || !canSendPush}
           title={pushTooltip}
+          aria-label={sending ? 'Sending push notification' : 'Send push notification'}
         >
-          {sending ? 'Sending…' : 'Send Push'}
+          {sending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+          <span className="sr-only">
+            {sending ? 'Sending push notification' : 'Send push notification'}
+          </span>
         </Button>
-        <Button size="sm" variant="destructive" onClick={() => onDelete(article.id)}>
-          <Trash2 className="h-4 w-4 mr-1" />
-          Delete
+        <Button
+          size="icon"
+          variant="destructive"
+          onClick={() => onDelete(article.id)}
+          aria-label="Delete article"
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">Delete article</span>
         </Button>
       </div>
     );

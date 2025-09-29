@@ -666,6 +666,7 @@ Always respond with valid JSON in the requested format.`;
       '/news.152',
       '/expert-reviews',
       '/newsroom',
+      '/news-insights/'
     ];
 
     const baseHost = (() => {

@@ -215,7 +215,7 @@ export default function SharedArticlePage() {
               : 'This shared article is not available or may have been removed.'}
           </p>
           <Link href="/ai-feed-management#articles">
-            <Button variant="outline" className="inline-flex items-center gap-2">
+            <Button variant="outline" className="inline-flex items-center gap-2 pl-0">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Button>
@@ -231,7 +231,7 @@ export default function SharedArticlePage() {
       <header className="border-b bg-card/60 backdrop-blur">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <Link href="/ai-feed-management#articles">
-            <Button variant="ghost" size="sm" className="justify-start gap-2 px-2">
+            <Button variant="ghost" size="sm" className="justify-start gap-2 px-2 pl-0">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Button>
@@ -247,7 +247,7 @@ export default function SharedArticlePage() {
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8 sm:py-10">
         <article className="overflow-hidden rounded-2xl border bg-card shadow-md">
           {/* Article Header */}
-          <div className="border-b p-6 sm:p-8">
+          <div className="border-b px-3 py-6 sm:p-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex flex-col gap-2 text-sm text-muted-foreground md:flex-row md:items-center md:space-x-4">
                 {article.createdAt && (
@@ -297,7 +297,7 @@ export default function SharedArticlePage() {
           </div>
 
           {/* Summary Section */}
-          <div className="border-b border-primary/20 bg-primary/10 p-6 sm:p-8">
+          <div className="border-b border-primary/20 bg-primary/10 px-3 py-6 sm:p-8">
             <h2 className="mb-4 flex items-center text-xl font-semibold text-primary">
               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path
@@ -324,7 +324,7 @@ export default function SharedArticlePage() {
           </div>
 
           {/* Content Section */}
-          <div className="p-4 sm:p-6 lg:p-8">
+          <div className="px-3 py-6 sm:p-8">
             {renderContent(article.formattedContent)}
           </div>
 
