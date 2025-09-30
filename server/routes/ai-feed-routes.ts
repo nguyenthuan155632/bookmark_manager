@@ -6,7 +6,7 @@ import {
   type InsertAiCrawlerSettings,
   type InsertAiFeedSource,
 } from '@shared/schema.js';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import type { Express } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../auth';
@@ -203,10 +203,24 @@ export function registerAiFeedRoutes(app: Express) {
         ? parsedSourceId
         : undefined;
 
-      const baseCondition = and(eq(aiFeedSources.userId, userId), eq(aiFeedArticles.isDeleted, false));
-      const whereClause = sourceFilter
-        ? and(baseCondition, eq(aiFeedArticles.sourceId, sourceFilter))
-        : baseCondition;
+      const rawSearchQuery = typeof req.query.search === 'string' ? req.query.search : '';
+      const searchQuery = rawSearchQuery.trim().slice(0, 100);
+
+      let whereClause = and(eq(aiFeedSources.userId, userId), eq(aiFeedArticles.isDeleted, false));
+
+      if (sourceFilter) {
+        whereClause = and(whereClause, eq(aiFeedArticles.sourceId, sourceFilter));
+      }
+
+      if (searchQuery.length > 0) {
+        const likePattern = `%${searchQuery}%`;
+        const searchCondition = or(
+          ilike(aiFeedArticles.title, likePattern),
+          ilike(aiFeedArticles.summary, likePattern),
+          ilike(aiFeedArticles.notificationContent, likePattern),
+        );
+        whereClause = and(whereClause, searchCondition);
+      }
 
       const articles = await db
         .select({

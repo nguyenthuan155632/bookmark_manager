@@ -1,24 +1,24 @@
 import type { Express } from 'express';
 import { createServer, type Server } from 'http';
 import { setupAuth } from './auth';
-import { userLinkCheckerService } from './user-link-checker-service';
 import { storage } from './storage';
+import { userLinkCheckerService } from './user-link-checker-service';
 
 // Import all route modules
-import { registerAuthRoutes } from './routes/auth-routes';
-import { registerBookmarkRoutes } from './routes/bookmark-routes';
-import { registerAiRoutes } from './routes/ai-routes';
-import { registerCategoryRoutes } from './routes/category-routes';
-import { registerStatsRoutes } from './routes/stats-routes';
-import { registerPreferencesRoutes } from './routes/preferences-routes';
-import { registerScreenshotRoutes } from './routes/screenshot-routes';
-import { registerLinkCheckerRoutes } from './routes/link-checker-routes';
-import { registerDomainTagsRoutes } from './routes/domain-tags-routes';
-import { registerDocumentationRoutes } from './routes/documentation-routes';
-import { registerBookmarkDiscoveryRoutes } from './routes/bookmark-discovery-routes';
 import { registerAiFeedRoutes } from './routes/ai-feed-routes';
-import { registerAIRewriteRoutes } from './routes/ai-rewrite-routes';
+// import { registerAIRewriteRoutes } from './routes/ai-rewrite-routes';
+import { registerAiRoutes } from './routes/ai-routes';
+import { registerAuthRoutes } from './routes/auth-routes';
+import { registerBookmarkDiscoveryRoutes } from './routes/bookmark-discovery-routes';
+import { registerBookmarkRoutes } from './routes/bookmark-routes';
+import { registerCategoryRoutes } from './routes/category-routes';
+import { registerDocumentationRoutes } from './routes/documentation-routes';
+import { registerDomainTagsRoutes } from './routes/domain-tags-routes';
+import { registerLinkCheckerRoutes } from './routes/link-checker-routes';
+import { registerPreferencesRoutes } from './routes/preferences-routes';
 import { registerPushSubscriptionRoutes } from './routes/push-subscription-routes';
+import { registerScreenshotRoutes } from './routes/screenshot-routes';
+import { registerStatsRoutes } from './routes/stats-routes';
 
 const CANONICAL_BASE_URL =
   process.env.CANONICAL_BASE_URL?.trim() || process.env.VITE_PUBLIC_BASE_URL?.trim();
@@ -115,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerBookmarkRoutes(app);
   registerAiRoutes(app);
   registerAiFeedRoutes(app);
-  registerAIRewriteRoutes(app);
+  // registerAIRewriteRoutes(app);
   registerCategoryRoutes(app);
   registerStatsRoutes(app);
   registerPreferencesRoutes(app);

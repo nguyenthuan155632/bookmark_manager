@@ -22,11 +22,11 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { SEO } from '@/lib/seo';
 import { normaliseTimezone, TIMEZONE_OPTIONS } from '@/lib/timezones';
+import { useTheme } from '@/lib/theme';
 import { BOOKMARK_LANGUAGE_LABELS, BookmarkLanguage } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -44,14 +44,17 @@ import {
   RefreshCw,
   Rss,
   Save,
+  Search,
+  Moon,
   Send,
   Settings,
   Share2,
+  Sun,
   Trash2,
   X,
   XCircle,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { Link } from 'wouter';
 
 const SCHEDULE_HOUR_OPTIONS = ['1', '2', '3', '4', '6', '8', '12', '24'];
@@ -115,7 +118,23 @@ const getArticlesSourceFromSearch = (): string => {
   return /^\d+$/.test(raw) ? raw : 'all';
 };
 
-const syncArticlesSearchParams = (page: number, source: string) => {
+const normaliseArticlesSearchTerm = (value: string): string => value.trim().slice(0, 100);
+
+const getArticlesSearchFromSearch = (): string => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('articlesSearch');
+  if (!raw) {
+    return '';
+  }
+
+  return normaliseArticlesSearchTerm(raw);
+};
+
+const syncArticlesSearchParams = (page: number, source: string, search: string) => {
   if (typeof window === 'undefined') {
     return;
   }
@@ -131,6 +150,12 @@ const syncArticlesSearchParams = (page: number, source: string) => {
     url.searchParams.delete('articlesSource');
   } else {
     url.searchParams.set('articlesSource', source);
+  }
+
+  if (search && search.length > 0) {
+    url.searchParams.set('articlesSearch', search);
+  } else {
+    url.searchParams.delete('articlesSearch');
   }
 
   window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
@@ -197,18 +222,25 @@ type AiFeedArticle = {
 
 export default function AiFeedManagementPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     if (typeof window === 'undefined') {
-      return 'sources';
+      return 'articles';
     }
     const initialHash = window.location.hash.slice(1);
-    return isTabKey(initialHash) ? initialHash : 'sources';
+    return isTabKey(initialHash) ? initialHash : 'articles';
   });
   const [articlesPage, setArticlesPage] = useState<number>(() => getArticlesPageFromSearch());
   const [articlesSourceFilter, setArticlesSourceFilter] = useState<string>(
     () => getArticlesSourceFromSearch(),
   );
-  const { user } = useAuth();
+  const [articlesSearchInput, setArticlesSearchInput] = useState<string>(() =>
+    getArticlesSearchFromSearch(),
+  );
+  const [articlesSearchTerm, setArticlesSearchTerm] = useState<string>(() =>
+    normaliseArticlesSearchTerm(getArticlesSearchFromSearch()),
+  );
+  const articlesSearchInputId = useId();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -216,13 +248,17 @@ export default function AiFeedManagementPage() {
   useEffect(() => {
     const syncHashToTab = () => {
       const hash = window.location.hash.slice(1);
-      setActiveTab(isTabKey(hash) ? hash : 'sources');
+      setActiveTab(isTabKey(hash) ? hash : 'articles');
 
       if (hash === 'articles') {
         const currentPage = getArticlesPageFromSearch();
         setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
         const currentSource = getArticlesSourceFromSearch();
         setArticlesSourceFilter((prev) => (prev === currentSource ? prev : currentSource));
+        const currentSearch = getArticlesSearchFromSearch();
+        setArticlesSearchInput((prev) => (prev === currentSearch ? prev : currentSearch));
+        const normalisedSearch = normaliseArticlesSearchTerm(currentSearch);
+        setArticlesSearchTerm((prev) => (prev === normalisedSearch ? prev : normalisedSearch));
       }
     };
 
@@ -240,6 +276,10 @@ export default function AiFeedManagementPage() {
     setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
     const currentSource = getArticlesSourceFromSearch();
     setArticlesSourceFilter((prev) => (prev === currentSource ? prev : currentSource));
+    const currentSearch = getArticlesSearchFromSearch();
+    setArticlesSearchInput((prev) => (prev === currentSearch ? prev : currentSearch));
+    const normalisedSearch = normaliseArticlesSearchTerm(currentSearch);
+    setArticlesSearchTerm((prev) => (prev === normalisedSearch ? prev : normalisedSearch));
   }, [activeTab]);
 
   useEffect(() => {
@@ -255,6 +295,10 @@ export default function AiFeedManagementPage() {
       setArticlesPage((prev) => (prev === currentPage ? prev : currentPage));
       const currentSource = getArticlesSourceFromSearch();
       setArticlesSourceFilter((prev) => (prev === currentSource ? prev : currentSource));
+      const currentSearch = getArticlesSearchFromSearch();
+      setArticlesSearchInput((prev) => (prev === currentSearch ? prev : currentSearch));
+      const normalisedSearch = normaliseArticlesSearchTerm(currentSearch);
+      setArticlesSearchTerm((prev) => (prev === normalisedSearch ? prev : normalisedSearch));
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -265,8 +309,24 @@ export default function AiFeedManagementPage() {
     if (activeTab !== 'articles') {
       return;
     }
-    syncArticlesSearchParams(articlesPage, articlesSourceFilter);
-  }, [articlesPage, activeTab, articlesSourceFilter]);
+    syncArticlesSearchParams(articlesPage, articlesSourceFilter, articlesSearchTerm);
+  }, [articlesPage, activeTab, articlesSourceFilter, articlesSearchTerm]);
+
+  useEffect(() => {
+    if (activeTab !== 'articles') {
+      return;
+    }
+
+    const normalised = normaliseArticlesSearchTerm(articlesSearchInput);
+    const handle = setTimeout(() => {
+      if (normalised !== articlesSearchTerm) {
+        setArticlesSearchTerm(normalised);
+        setArticlesPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(handle);
+  }, [articlesSearchInput, articlesSearchTerm, activeTab]);
 
   // Update URL hash when tab changes
   const handleTabChange = (value: string) => {
@@ -293,7 +353,9 @@ export default function AiFeedManagementPage() {
     articlesSourceFilter !== 'all' && /^\d+$/.test(articlesSourceFilter)
       ? articlesSourceFilter
       : null;
-  const articleQueryString = `?page=${articlesPage}&limit=${ARTICLES_PER_PAGE}${sourceFilterParam ? `&sourceId=${sourceFilterParam}` : ''}`;
+  const searchQueryParam = articlesSearchTerm ? `&search=${encodeURIComponent(articlesSearchTerm)}` : '';
+  const articleQueryString = `?page=${articlesPage}&limit=${ARTICLES_PER_PAGE}${sourceFilterParam ? `&sourceId=${sourceFilterParam}` : ''
+    }${searchQueryParam}`;
 
   const {
     data: articlesData,
@@ -740,6 +802,8 @@ export default function AiFeedManagementPage() {
   const isInitialArticlesLoad = activeTab === 'articles' && isLoadingArticles && !articlesData;
   const isRefreshingArticles = activeTab === 'articles' && isFetchingArticles && !!articlesData;
   const canSendPushNotifications = Boolean(pushStatus?.supported && pushStatus?.subscribed);
+  const hasArticleFilters =
+    articlesSourceFilter !== 'all' || (articlesSearchTerm && articlesSearchTerm.length > 0);
 
   const articlePageItems = useMemo(() => {
     const total = totalArticlePages;
@@ -812,6 +876,17 @@ export default function AiFeedManagementPage() {
                 </Button>
               </Link>
               <h1 className="text-xl font-semibold truncate">AI Feed Management</h1>
+            </div>
+            <div className="flex items-center justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                data-testid="button-theme-toggle"
+                aria-label="Toggle theme"
+              >
+                {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+              </Button>
             </div>
           </div>
         </div>
@@ -1201,30 +1276,66 @@ export default function AiFeedManagementPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Filter by source
-                      </span>
-                      <Select
-                        value={articlesSourceFilter}
-                        onValueChange={handleArticlesSourceFilterChange}
-                      >
-                        <SelectTrigger className="w-full sm:w-[260px]">
-                          <SelectValue placeholder="All sources" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All sources</SelectItem>
-                          {sources.map((source) => (
-                            <SelectItem
-                              key={source.id}
-                              value={String(source.id)}
-                              className="max-w-full truncate"
+                    <div className="mb-4 grid gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
+                      <div className="space-y-2">
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Filter by source
+                        </span>
+                        <Select
+                          value={articlesSourceFilter}
+                          onValueChange={handleArticlesSourceFilterChange}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="All sources" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All sources</SelectItem>
+                            {sources.map((source) => (
+                              <SelectItem
+                                key={source.id}
+                                value={String(source.id)}
+                                className="max-w-full truncate"
+                              >
+                                {source.url}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={articlesSearchInputId}
+                          className="text-xs uppercase tracking-wide text-muted-foreground"
+                        >
+                          Search articles
+                        </Label>
+                        <div className="relative">
+                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            id={articlesSearchInputId}
+                            type="search"
+                            placeholder="Search titles or summaries"
+                            value={articlesSearchInput}
+                            onChange={(event) => setArticlesSearchInput(event.target.value)}
+                            maxLength={100}
+                            className="pl-8"
+                          />
+                          {normaliseArticlesSearchTerm(articlesSearchInput).length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setArticlesSearchInput('');
+                                setArticlesSearchTerm('');
+                                setArticlesPage(1);
+                              }}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition hover:text-foreground"
+                              aria-label="Clear article search"
                             >
-                              {source.url}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     {isInitialArticlesLoad && (
@@ -1248,8 +1359,14 @@ export default function AiFeedManagementPage() {
                     {!isInitialArticlesLoad && (!articlesData?.articles || articlesData.articles.length === 0) && (
                       <div className="rounded-xl border bg-muted/20 p-10 text-center text-muted-foreground">
                         <FileText className="h-12 w-12 mx-auto mb-4 opacity-60" />
-                        <p className="font-medium mb-1">No articles processed yet.</p>
-                        <p className="text-sm">Add feed sources and wait for the AI to process them.</p>
+                        <p className="font-medium mb-1">
+                          {hasArticleFilters ? 'No articles match your filters.' : 'No articles processed yet.'}
+                        </p>
+                        <p className="text-sm">
+                          {hasArticleFilters
+                            ? 'Try adjusting your search text or source filter.'
+                            : 'Add feed sources and wait for the AI to process them.'}
+                        </p>
                       </div>
                     )}
 
@@ -1589,27 +1706,33 @@ function ArticlesNewsLayout({
 
   const renderMeta = (article: AiFeedArticle) => (
     <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-wide text-muted-foreground">
-      <span className="flex items-center gap-1">
+      <div className="flex items-center gap-1">
         <Calendar className="h-3 w-3" />
         {formatDistanceToNow(new Date(article.createdAt), { addSuffix: true })}
         {article.publishedAt ? ` (Published ${formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })})` : ''}
-      </span>
+      </div>
       {article.sourceUrl && (
-        <span className="flex items-center gap-1">
-          <Rss className="h-3 w-3" />
-          <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-            Original Source
-          </a>
-        </span>
-      )}
-    </div>
+        <div>
+          <span className="flex items-center gap-1">
+            <Rss className="h-3 w-3" />
+            <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="hover:underline text-indigo-600">
+              Original&nbsp;
+              <small>
+                ({new URL(article.sourceUrl).hostname})
+              </small>
+            </a>
+          </span>
+        </div>
+      )
+      }
+    </div >
   );
 
   const renderActions = (article: AiFeedArticle) => {
     const sending = isSendingPush(article.id);
 
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <Button
           size="icon"
           variant="outline"
@@ -1622,9 +1745,9 @@ function ArticlesNewsLayout({
         <Button
           size="icon"
           variant="ghost"
-          className={`h-9 w-9 ${article.isShared
-              ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
-              : 'text-muted-foreground hover:text-foreground'
+          className={`h-9 w-9 border bg-emerald-100 ${article.isShared
+            ? 'text-emerald-600 hover:text-emerald-600 hover:bg-emerald-100/60'
+            : 'text-muted-foreground hover:text-foreground'
             }`}
           onClick={() => onShare(article.id)}
           aria-label={article.isShared ? 'Unshare article' : 'Share article'}
@@ -1670,7 +1793,7 @@ function ArticlesNewsLayout({
         <div className="space-y-6">
           {articles.map((article) => (
             <article key={article.id} className="border-b pb-6 last:border-none last:pb-0">
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
                 <div className="flex-1 space-y-3 md:pr-6">
                   <h3 className="text-xl font-semibold leading-snug text-foreground md:text-2xl md:mr-8">
                     {article.title}
@@ -1681,15 +1804,15 @@ function ArticlesNewsLayout({
                       {truncateSummary(article.summary)}
                     </p>
                   )}
+                </div>
+                <div className="flex w-full flex-col items-end gap-3 self-end md:w-auto md:min-w-[200px] md:self-auto">
+                  {article.imageUrl && (
+                    <div className="w-full overflow-hidden rounded-md border sm:w-[200px]">
+                      <img src={article.imageUrl} alt="" className="h-32 w-full object-cover md:h-36" />
+                    </div>
+                  )}
                   {renderActions(article)}
                 </div>
-                {article.imageUrl && (
-                  <div className="order-first md:order-last md:ml-auto md:pl-4">
-                    <div className="h-32 w-full overflow-hidden rounded-md border md:h-36 md:w-[200px]">
-                      <img src={article.imageUrl} alt="" className="h-full w-full object-cover" />
-                    </div>
-                  </div>
-                )}
               </div>
             </article>
           ))}
