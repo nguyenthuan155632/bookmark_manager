@@ -14,6 +14,92 @@ import { db } from '../db';
 import { getUserId } from './shared';
 
 export function registerAiFeedRoutes(app: Express) {
+  // PUBLIC DISCOVERY ENDPOINT - Get all shared articles (no auth required)
+  app.get('/api/ai-feeds/discovery', async (req, res) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+      const sourceUrl = req.query.sourceUrl as string | undefined;
+      const search = req.query.search as string | undefined;
+      const offset = (page - 1) * limit;
+
+      // Build where clause for public articles
+      let whereClause = and(
+        eq(aiFeedArticles.isShared, true),
+        eq(aiFeedArticles.isDeleted, false)
+      );
+
+      // Filter by source URL if provided
+      if (sourceUrl && sourceUrl.trim()) {
+        whereClause = and(whereClause, eq(aiFeedSources.url, sourceUrl.trim()));
+      }
+
+      // Search in title or summary
+      if (search && search.trim()) {
+        const searchCondition = or(
+          ilike(aiFeedArticles.title, `%${search.trim()}%`),
+          ilike(aiFeedArticles.summary, `%${search.trim()}%`)
+        );
+        whereClause = and(whereClause, searchCondition);
+      }
+
+      // Get articles
+      const articles = await db
+        .select({
+          id: aiFeedArticles.id,
+          sourceId: aiFeedArticles.sourceId,
+          title: aiFeedArticles.title,
+          summary: aiFeedArticles.summary,
+          url: aiFeedArticles.url,
+          imageUrl: aiFeedArticles.imageUrl,
+          publishedAt: aiFeedArticles.publishedAt,
+          createdAt: aiFeedArticles.createdAt,
+          shareId: aiFeedArticles.shareId,
+          isShared: aiFeedArticles.isShared,
+          sourceUrl: aiFeedSources.url,
+        })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(whereClause)
+        .orderBy(desc(aiFeedArticles.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count
+      const totalCount = await db
+        .select({ count: sql`count(*)` })
+        .from(aiFeedArticles)
+        .innerJoin(aiFeedSources, eq(aiFeedArticles.sourceId, aiFeedSources.id))
+        .where(whereClause);
+
+      // Get available source URLs for filtering
+      const availableSources = await db
+        .select({
+          url: aiFeedSources.url,
+          articleCount: sql<number>`count(distinct ${aiFeedArticles.id})`,
+        })
+        .from(aiFeedSources)
+        .innerJoin(aiFeedArticles, eq(aiFeedSources.id, aiFeedArticles.sourceId))
+        .where(and(eq(aiFeedArticles.isShared, true), eq(aiFeedArticles.isDeleted, false)))
+        .groupBy(aiFeedSources.url)
+        .orderBy(desc(sql`count(distinct ${aiFeedArticles.id})`));
+
+      res.json({
+        articles,
+        sources: availableSources,
+        pagination: {
+          page,
+          limit,
+          total: parseInt(totalCount[0].count as string),
+          totalPages: Math.ceil(parseInt(totalCount[0].count as string) / limit),
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching discovery articles:', error);
+      res.status(500).json({ message: 'Failed to fetch discovery articles' });
+    }
+  });
+
   // Get crawler settings for current user
   app.get('/api/ai-feeds/settings', requireAuth, async (req, res) => {
     try {

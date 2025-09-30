@@ -17,17 +17,15 @@ const LazySharedBookmark = lazy(() => import('@/pages/shared-bookmark').then((mo
 const LazySettingsPage = lazy(() => import('@/pages/settings'));
 const LazyDomainTagsPage = lazy(() => import('@/pages/domain-tags'));
 const LazyDocumentationPage = lazy(() => import('@/pages/documentation'));
-const LazyBookmarkDiscovery = lazy(() => import('@/pages/bookmark-discovery'));
-const LazyCategoryDiscovery = lazy(() => import('@/pages/category-discovery'));
+const LazyNewsDiscovery = lazy(() => import('@/pages/news-discovery'));
 const LazyAiFeedManagement = lazy(() => import('@/pages/ai-feed-management'));
 const LazySharedArticle = lazy(() => import('@/pages/shared-article'));
 
 function Router() {
   return (
     <Switch>
-      {/* Public discovery pages (for SEO) */}
-      <Route path="/discover" component={() => <LazyBookmarkDiscovery />} />
-      <Route path="/discover/category/:slug" component={() => <LazyCategoryDiscovery />} />
+      {/* Public discovery page - AI News Feed */}
+      <Route path="/discover" component={() => <LazyNewsDiscovery />} />
 
       {/* Protected routes */}
       <ProtectedRoute path="/" component={() => <LazyBookmarks />} />
