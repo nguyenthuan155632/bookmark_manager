@@ -25,8 +25,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { SEO } from '@/lib/seo';
-import { normaliseTimezone, TIMEZONE_OPTIONS } from '@/lib/timezones';
 import { useTheme } from '@/lib/theme';
+import { normaliseTimezone, TIMEZONE_OPTIONS } from '@/lib/timezones';
 import { BOOKMARK_LANGUAGE_LABELS, BookmarkLanguage } from '@shared/schema';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,12 +40,12 @@ import {
   Eye,
   FileText,
   Loader2,
+  Moon,
   Plus,
   RefreshCw,
   Rss,
   Save,
   Search,
-  Moon,
   Send,
   Settings,
   Share2,
@@ -925,13 +925,13 @@ export default function AiFeedManagementPage() {
 
               <TabsContent value="sources" className="space-y-6">
                 <Card className="shadow-sm border">
-                  <CardHeader>
+                  <CardHeader className="px-4">
                     <CardTitle className="flex items-center gap-2">
                       <Rss className="h-5 w-5" />
                       Feed Sources
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 px-4">
                     {/* Add New Source */}
                     <div className="space-y-4 rounded-xl border border-dashed bg-muted/40 p-4 sm:p-5">
                       <h3 className="text-sm font-medium text-muted-foreground">
@@ -1269,13 +1269,13 @@ export default function AiFeedManagementPage() {
 
               <TabsContent value="articles" className="space-y-6">
                 <Card className="shadow-sm border">
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-3 px-4">
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
                       Articles
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-4">
                     <div className="mb-4 grid gap-3 sm:grid-cols-2 sm:items-end lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
                       <div className="space-y-2">
                         <span className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -1465,13 +1465,13 @@ export default function AiFeedManagementPage() {
 
               <TabsContent value="settings" className="space-y-6">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="px-4">
                     <CardTitle className="flex items-center gap-2">
                       <Settings className="h-5 w-5" />
                       AI Crawler Settings
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-6 px-4">
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
                       {settings && (
                         <div className="rounded-xl border bg-card/80 p-5 shadow-sm space-y-5">
@@ -1795,7 +1795,7 @@ function ArticlesNewsLayout({
             <article key={article.id} className="border-b pb-6 last:border-none last:pb-0">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
                 <div className="flex-1 space-y-3 md:pr-6">
-                  <h3 className="text-xl font-semibold leading-snug text-foreground md:text-2xl md:mr-8">
+                  <h3 className="text-xl font-semibold leading-snug text-foreground md:mr-8 hover:underline cursor-pointer" onClick={() => onShare(article.id)}>
                     {article.title}
                   </h3>
                   {renderMeta(article)}
@@ -1807,7 +1807,7 @@ function ArticlesNewsLayout({
                 </div>
                 <div className="flex w-full flex-col items-end gap-3 self-end md:w-auto md:min-w-[200px] md:self-auto">
                   {article.imageUrl && (
-                    <div className="w-full overflow-hidden rounded-md border sm:w-[200px]">
+                    <div className="w-full overflow-hidden rounded-md border sm:w-[200px] cursor-pointer" onClick={() => onShare(article.id)}>
                       <img src={article.imageUrl} alt="" className="h-32 w-full object-cover md:h-36" />
                     </div>
                   )}
@@ -1822,7 +1822,7 @@ function ArticlesNewsLayout({
   );
 }
 
-function truncateSummary(summary?: string, maxLength: number = 220): string {
+function truncateSummary(summary?: string, maxLength: number = 400): string {
   if (!summary) {
     return '';
   }
