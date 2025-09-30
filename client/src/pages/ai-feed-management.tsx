@@ -49,6 +49,7 @@ import {
   Send,
   Settings,
   Share2,
+  Sparkles,
   Sun,
   Trash2,
   X,
@@ -877,7 +878,18 @@ export default function AiFeedManagementPage() {
               </Link>
               <h1 className="text-xl font-semibold truncate">AI Feeds</h1>
             </div>
-            <div className="ml-auto flex items-center justify-end">
+            <div className="ml-auto flex items-center gap-2">
+              <Link href="/discover">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  aria-label="View Discover page"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">Discover</span>
+                </Button>
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"

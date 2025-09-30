@@ -53,7 +53,9 @@ export default function NewsDiscoveryPage() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
   // Debounce search input
   useEffect(() => {
@@ -119,6 +121,25 @@ export default function NewsDiscoveryPage() {
     return data?.pages[0]?.pagination.total || 0;
   }, [data]);
 
+  // Scroll handler to hide/show header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Show header when scrolling up, hide when scrolling down
+      if (currentScrollY < lastScrollY.current || currentScrollY < 100) {
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 200) {
+        setIsHeaderVisible(false);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Intersection observer for infinite scroll
   useEffect(() => {
     const currentRef = loadMoreRef.current;
@@ -177,7 +198,10 @@ export default function NewsDiscoveryPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20">
       {/* Hero Header */}
-      <header className="border-b border-purple-200/50 dark:border-purple-800/30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-40 shadow-sm">
+      <header
+        className={`border-b border-purple-200/50 dark:border-purple-800/30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-40 shadow-sm transition-transform duration-300 ease-in-out ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+          }`}
+      >
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-6">
             {/* Logo & Title */}

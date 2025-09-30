@@ -252,11 +252,11 @@ export default function SharedArticlePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20">
       {/* Floating Back Button */}
-      <Link href={backUrl} className="fixed bottom-6 right-6 z-50">
+      <Link href={'/discover'} className="fixed bottom-6 right-6 z-50">
         <Button
           size="icon"
           className="h-14 w-14 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-110 p-0"
-          title={backTitle}
+          title="Back to Discover"
         >
           <Home className="h-6 w-6" />
         </Button>
@@ -368,13 +368,13 @@ export default function SharedArticlePage() {
             <p className="text-muted-foreground mb-4">
               Discover trending articles and stay updated with the latest news
             </p>
-            <Link href={backUrl}>
+            <Link href={'/discover'}>
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
-                {user ? 'Back to Home' : 'Explore More Articles'}
+                Explore More Articles
               </Button>
             </Link>
           </div>
