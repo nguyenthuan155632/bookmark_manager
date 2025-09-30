@@ -18,6 +18,7 @@
     "ci": "npm run check && npm run lint && npm run format:check && npm test",
     "seed": "tsx server/scripts/seed.ts && tsx server/scripts/populate-domain-tags.ts",
     "deploy:search": "tsx server/scripts/deploy-fulltext-search.ts",
+    "sitemap:generate": "tsx server/scripts/generate-sitemap.ts",
     "db:delete": "tsx server/scripts/delete-database.ts",
     "db:init": "tsx server/scripts/init-database.ts",
     "db:reset:dev": "npm run db:delete && npm run db:push && npm run db:init && npm run deploy:search && npm run seed",

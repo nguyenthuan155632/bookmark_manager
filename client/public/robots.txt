@@ -1,14 +1,14 @@
 User-agent: *
 Allow: /
 Allow: /discover/
-Allow: /discover/category/
+Allow: /shared-article/
 
 # Block API routes
 Disallow: /api/
 Disallow: /auth/
 Disallow: /settings/
 
-# Block dynamic user-specific content
+# Block dynamic user-specific content (but allow shared articles)
 Disallow: /shared/
 Disallow: /domain-tags/
 

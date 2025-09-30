@@ -18,6 +18,7 @@ import { registerLinkCheckerRoutes } from './routes/link-checker-routes';
 import { registerPreferencesRoutes } from './routes/preferences-routes';
 import { registerPushSubscriptionRoutes } from './routes/push-subscription-routes';
 import { registerScreenshotRoutes } from './routes/screenshot-routes';
+import { registerSitemapRoutes } from './routes/sitemap-routes';
 import { registerStatsRoutes } from './routes/stats-routes';
 
 const CANONICAL_BASE_URL =
@@ -110,6 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Register all route modules
+  registerSitemapRoutes(app); // Register first to catch /sitemap.xml before static files
   registerAuthRoutes(app);
   registerBookmarkDiscoveryRoutes(app); // Must be before bookmark routes to avoid conflicts
   registerBookmarkRoutes(app);
