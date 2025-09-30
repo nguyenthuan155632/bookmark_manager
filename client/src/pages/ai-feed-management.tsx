@@ -852,7 +852,7 @@ export default function AiFeedManagementPage() {
   return (
     <div className="flex h-screen overflow-hidden">
       <SEO
-        title="AI Feed Management"
+        title="AI Feeds"
         description="Manage AI feed sources, settings, and view processed articles."
       />
       <Sidebar
@@ -861,9 +861,9 @@ export default function AiFeedManagementPage() {
         onCreateFolder={() => { }}
         stats={stats}
       />
-      <main className="flex-1 flex flex-col min-h-screen overflow-hidden bg-muted/10">
+      <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-muted/10">
         <div className="border-b bg-card/60 backdrop-blur px-4 py-4 sm:px-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <Link href="/">
                 <Button
@@ -875,9 +875,9 @@ export default function AiFeedManagementPage() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
-              <h1 className="text-xl font-semibold truncate">AI Feed Management</h1>
+              <h1 className="text-xl font-semibold truncate">AI Feeds</h1>
             </div>
-            <div className="flex items-center justify-end">
+            <div className="ml-auto flex items-center justify-end">
               <Button
                 variant="ghost"
                 size="sm"
@@ -891,7 +891,7 @@ export default function AiFeedManagementPage() {
           </div>
         </div>
 
-        <div className="w-full overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-y-none">
           <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
               <div className="pb-1">
